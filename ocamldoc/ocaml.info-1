@@ -1,0 +1,1366 @@
+This file has been translated from LaTeX by HeVeA.
+     
+
+Node: Top,	Next: Part I,	Up: (dir)
+  
+   
+                             The Objective Caml system
+                                   release 3.12
+                         Documentation and user's manual
+                                  Xavier Leroy,
+      Damien Doligez, Alain Frisch, Jacques Garrigue, Didier Rémy and Jérôme
+                                   Vouillon
+                                  June 16, 2010
+       Copyright © 2008 Institut National de Recherche en Informatique et en
+                                 Automatique 
+   
+   
+    
+   ---------------------------------------------------------------------------
+   
+    This manual is also available in PDF (1*Note Notes 0::).
+   Postscript (2*Note Notes 0::), DVI (3*Note Notes 0::), plain
+   text (4*Note Notes 0::), as a bundle of HTML files (5*Note Notes 0::),
+   and as a bundle of Emacs Info files (6*Note Notes 0::). 
+   ---------------------------------------------------------------------------
+   
+    
+
+
+Contents
+********
+   
+  
+
+Foreword
+********
+   
+  This manual documents the release 3.12 of the Objective Caml system. It is
+organized as follows. 
+  
+   - Part I*Note Part I::, "An introduction to Objective Caml", gives
+   an overview of the language. 
+   - Part II*Note Part II::, "The Objective Caml language", is the
+   reference description of the language. 
+   - Part III*Note Part III::, "The Objective Caml tools", documents the
+   compilers, toplevel system, and programming utilities. 
+   - Part IV*Note Part IV::, "The Objective Caml library", describes the
+   modules provided in the standard library.  
+  
+
+Conventions
+*=*=*=*=*=*
+
+  
+  Objective Caml runs on several operating systems. The parts of this manual
+that are specific to one operating system are presented as shown below:
+     Unix: 
+    This is material specific to the Unix family of operating systems,
+   including Linux and MacOS X. 
+  
+     Windows: 
+    This is material specific to Microsoft Windows (2000, XP, Vista). 
+  
+
+License
+*=*=*=*
+
+  
+  The Objective Caml system is copyright © 1996, 1997, 1998, 1999, 2000, 2001,
+2002, 2003, 2004, 2005, 2006, 2007, 2008 Institut National de Recherche en
+Informatique et en Automatique (INRIA). INRIA holds all ownership rights to the
+Objective Caml system. 
+  The Objective Caml system is open source and can be freely redistributed. See
+the file LICENSE in the distribution for licensing information.
+  The present documentation is copyright © 2008  Institut National de Recherche
+en Informatique et en Automatique (INRIA). The Objective Caml documentation and
+user's manual may be reproduced and distributed in whole or in part, subject to
+the following conditions:  
+  
+   - The copyright notice above and this permission notice must be preserved
+   complete on all complete or partial copies. 
+   - Any translation or derivative work of the Objective Caml documentation and
+   user's manual must be approved by the authors in writing before
+   distribution.  
+   - If you distribute the Objective Caml documentation and user's manual in
+   part, instructions for obtaining the complete version of this manual must be
+   included, and a means for obtaining a complete version provided. 
+   - Small portions may be reproduced as illustrations for reviews or quotes in
+   other works without this permission notice if proper citation is given. 
+  
+
+Availability
+*=*=*=*=*=*=
+
+  
+  
+   The complete Objective Caml distribution can be accessed via the 
+http://caml.inria.fr/Caml Web site. The http://caml.inria.fr/Caml Web site
+contains a lot of additional information on Objective Caml.  
+* Menu:
+
+* Part I::	An introduction to Objective Caml
+* Part II::	The Objective Caml language
+* Part III::	The Objective Caml tools
+* Part IV::	The Objective Caml library
+* Part V::	Appendix
+
+
+
+-------------------------------------
+This file has been translated from LaTeX by HeVeA.
+
+
+Node: Notes 0
+ ---------------------------------------
+ 
+(1) http://caml.inria.fr/distrib/ocaml-3.12/ocaml-3.12-refman.pdf
+
+(2)
+http://caml.inria.fr/distrib/ocaml-3.12/ocaml-3.12-refman.ps.gz
+
+(3)
+http://caml.inria.fr/distrib/ocaml-3.12/ocaml-3.12-refman.dvi.gz
+
+(4) http://caml.inria.fr/distrib/ocaml-3.12/ocaml-3.12-refman.txt
+
+(5)
+http://caml.inria.fr/distrib/ocaml-3.12/ocaml-3.12-refman.html.tar.gz
+
+(6)
+http://caml.inria.fr/distrib/ocaml-3.12/ocaml-3.12-refman.info.tar.gz
+
+Node: Part I,	Next: Chapter 1,	Prev: Top,	Up: Top
+  
+
+                                    Part: I
+                                    *******
+                       An introduction to Objective Caml
+                      **********************************
+    
+* Menu:
+
+* Chapter 1::	The core language
+* Chapter 2::	The module system
+* Chapter 3::	Objects in Caml
+* Chapter 4::	Labels and variants
+* Chapter 5::	Advanced examples with classes and modules
+
+
+Node: Chapter 1,	Next: Section 1-1,	Prev: Part I,	Up: Part I
+  
+
+Chapter 1     The core language
+*******************************
+    
+  This part of the manual is a tutorial introduction to the Objective Caml
+language. A good familiarity with programming in a conventional languages (say,
+Pascal or C) is assumed, but no prior exposure to functional languages is
+required. The present chapter introduces the core language.
+Chapter 3*Note Chapter 3:: deals with the object-oriented features,
+and chapter 2*Note Chapter 2:: with the module system.
+* Menu:
+
+* Section 1-1::	Basics
+* Section 1-2::	Data types
+* Section 1-3::	Functions as values
+* Section 1-4::	Records and variants
+* Section 1-5::	Imperative features
+* Section 1-6::	Exceptions
+* Section 1-7::	Symbolic processing of expressions
+* Section 1-8::	Pretty-printing and parsing
+* Section 1-9::	Standalone Caml programs
+
+
+Node: Section 1-1,	Next: Section 1-2,	Prev: Chapter 1,	Up: Chapter 1
+  
+
+1.1   Basics
+*=*=*=*=*=*=
+
+   
+  For this overview of Caml, we use the interactive system, which is started by
+running ocaml from the Unix shell, or by launching the OCamlwin.exe application
+under Windows. This tutorial is presented as the transcript of a session with
+the interactive system: lines starting with # represent user input; the system
+responses are printed below, without a leading #.
+  Under the interactive system, the user types Caml phrases, terminated by ;;,
+in response to the # prompt, and the system compiles them on the fly, executes
+them, and prints the outcome of evaluation. Phrases are either simple
+expressions, or let definitions of identifiers (either values or functions). 
+<<#1+2*3;;
+  - : int = 7
+   
+  #let pi = 4.0 *. atan 1.0;;
+  val pi : float = 3.14159265358979312
+   
+  #let square x = x *. x;;
+  val square : float -> float = <fun>
+   
+  #square(sin pi) +. square(cos pi);;
+  - : float = 1.
+>>
+   The Caml system computes both the value and the type for each phrase. Even
+function parameters need no explicit type declaration: the system infers their
+types from their usage in the function. Notice also that integers and
+floating-point numbers are distinct types, with distinct operators: + and *
+operate on integers, but +. and *. operate on floats. 
+<<#1.0 * 2;;
+  Error: This expression has type float but an expression was expected of type
+           int
+>>
+  
+  Recursive functions are defined with the let rec binding: 
+<<#let rec fib n =
+  #  if n < 2 then n else fib(n-1) + fib(n-2);;
+  val fib : int -> int = <fun>
+   
+  #fib 10;;
+  - : int = 55
+>>
+  
+
+Node: Section 1-2,	Next: Section 1-3,	Prev: Section 1-1,	Up: Chapter 1
+  
+
+1.2   Data types
+*=*=*=*=*=*=*=*=
+
+   
+  In addition to integers and floating-point numbers, Caml offers the usual
+basic data types: booleans, characters, and character strings. 
+<<#(1 < 2) = false;;
+  - : bool = false
+   
+  #'a';;
+  - : char = 'a'
+   
+  #"Hello world";;
+  - : string = "Hello world"
+>>
+  
+  Predefined data structures include tuples, arrays, and lists. General
+mechanisms for defining your own data structures are also provided. They will
+be covered in more details later; for now, we concentrate on lists. Lists are
+either given in extension as a bracketed list of semicolon-separated elements,
+or built from the empty list [] (pronounce "nil") by adding elements in front
+using the :: ("cons") operator. 
+<<#let l = ["is"; "a"; "tale"; "told"; "etc."];;
+  val l : string list = ["is"; "a"; "tale"; "told"; "etc."]
+   
+  #"Life" :: l;;
+  - : string list = ["Life"; "is"; "a"; "tale"; "told"; "etc."]
+>>
+   As with all other Caml data structures, lists do not need to be explicitly
+allocated and deallocated from memory: all memory management is entirely
+automatic in Caml. Similarly, there is no explicit handling of pointers: the
+Caml compiler silently introduces pointers where necessary.
+  As with most Caml data structures, inspecting and destructuring lists is
+performed by pattern-matching. List patterns have the exact same shape as list
+expressions, with identifier representing unspecified parts of the list. As an
+example, here is insertion sort on a list: 
+<<#let rec sort lst =
+  #  match lst with
+  #    [] -> []
+  #  | head :: tail -> insert head (sort tail)
+  #and insert elt lst =
+  #  match lst with
+  #    [] -> [elt]
+  #  | head :: tail -> if elt <= head then elt :: lst else head :: insert elt
+tail
+  #;;
+  val sort : 'a list -> 'a list = <fun>
+  val insert : 'a -> 'a list -> 'a list = <fun>
+   
+  #sort l;;
+  - : string list = ["a"; "etc."; "is"; "tale"; "told"]
+>>
+  
+  The type inferred for sort, 'a list -> 'a list, means that sort can actually
+apply to lists of any type, and returns a list of the same type. The type 'a is
+a type variable, and stands for any given type. The reason why sort can apply
+to lists of any type is that the comparisons (=, <=, etc.) are polymorphic in
+Caml: they operate between any two values of the same type. This makes sort
+itself polymorphic over all list types. 
+<<#sort [6;2;5;3];;
+  - : int list = [2; 3; 5; 6]
+   
+  #sort [3.14; 2.718];;
+  - : float list = [2.718; 3.14]
+>>
+  
+  The sort function above does not modify its input list: it builds and returns
+a new list containing the same elements as the input list, in ascending order.
+There is actually no way in Caml to modify in-place a list once it is built: we
+say that lists are immutable data structures. Most Caml data structures are
+immutable, but a few (most notably arrays) are mutable, meaning that they can
+be modified in-place at any time.
+
+Node: Section 1-3,	Next: Section 1-4,	Prev: Section 1-2,	Up: Chapter 1
+  
+
+1.3   Functions as values
+*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Caml is a functional language: functions in the full mathematical sense are
+supported and can be passed around freely just as any other piece of data. For
+instance, here is a deriv function that takes any float function as argument
+and returns an approximation of its derivative function: 
+<<#let deriv f dx = function x -> (f(x +. dx) -. f(x)) /. dx;;
+  val deriv : (float -> float) -> float -> float -> float = <fun>
+   
+  #let sin' = deriv sin 1e-6;;
+  val sin' : float -> float = <fun>
+   
+  #sin' pi;;
+  - : float = -1.00000000013961143
+>>
+   Even function composition is definable: 
+<<#let compose f g = function x -> f(g(x));;
+  val compose : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b = <fun>
+   
+  #let cos2 = compose square cos;;
+  val cos2 : float -> float = <fun>
+>>
+  
+  Functions that take other functions as arguments are called "functionals", or
+"higher-order functions". Functionals are especially useful to provide
+iterators or similar generic operations over a data structure. For instance,
+the standard Caml library provides a List.map functional that applies a given
+function to each element of a list, and returns the list of the results: 
+<<#List.map (function n -> n * 2 + 1) [0;1;2;3;4];;
+  - : int list = [1; 3; 5; 7; 9]
+>>
+   This functional, along with a number of other list and array functionals, is
+predefined because it is often useful, but there is nothing magic with it: it
+can easily be defined as follows. 
+<<#let rec map f l =
+  #  match l with
+  #    [] -> []
+  #  | hd :: tl -> f hd :: map f tl;;
+  val map : ('a -> 'b) -> 'a list -> 'b list = <fun>
+>>
+  
+
+Node: Section 1-4,	Next: Section 1-5,	Prev: Section 1-3,	Up: Chapter 1
+  
+
+1.4   Records and variants
+*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+    
+  User-defined data structures include records and variants. Both are defined
+with the type declaration. Here, we declare a record type to represent rational
+numbers. 
+<<#type ratio = {num: int; denum: int};;
+  type ratio = { num : int; denum : int; }
+   
+  #let add_ratio r1 r2 =
+  #  {num = r1.num * r2.denum + r2.num * r1.denum;
+  #   denum = r1.denum * r2.denum};;
+  val add_ratio : ratio -> ratio -> ratio = <fun>
+   
+  #add_ratio {num=1; denum=3} {num=2; denum=5};;
+  - : ratio = {num = 11; denum = 15}
+>>
+  
+  The declaration of a variant type lists all possible shapes for values of
+that type. Each case is identified by a name, called a constructor, which
+serves both for constructing values of the variant type and inspecting them by
+pattern-matching. Constructor names are capitalized to distinguish them from
+variable names (which must start with a lowercase letter). For instance, here
+is a variant type for doing mixed arithmetic (integers and floats): 
+<<#type number = Int of int | Float of float | Error;;
+  type number = Int of int | Float of float | Error
+>>
+   This declaration expresses that a value of type number is either an integer,
+a floating-point number, or the constant Error representing the result of an
+invalid operation (e.g. a division by zero).
+  Enumerated types are a special case of variant types, where all alternatives
+are constants: 
+<<#type sign = Positive | Negative;;
+  type sign = Positive | Negative
+   
+  #let sign_int n = if n >= 0 then Positive else Negative;;
+  val sign_int : int -> sign = <fun>
+>>
+  
+  To define arithmetic operations for the number type, we use pattern-matching
+on the two numbers involved: 
+<<#let add_num n1 n2 =
+  #  match (n1, n2) with
+  #    (Int i1, Int i2) ->
+  #      (* Check for overflow of integer addition *)
+  #      if sign_int i1 = sign_int i2 && sign_int(i1 + i2) <> sign_int i1
+  #      then Float(float i1 +. float i2)
+  #      else Int(i1 + i2)
+  #  | (Int i1, Float f2) -> Float(float i1 +. f2)
+  #  | (Float f1, Int i2) -> Float(f1 +. float i2)
+  #  | (Float f1, Float f2) -> Float(f1 +. f2)
+  #  | (Error, _) -> Error
+  #  | (_, Error) -> Error;;
+  val add_num : number -> number -> number = <fun>
+   
+  #add_num (Int 123) (Float 3.14159);;
+  - : number = Float 126.14159
+>>
+  
+  The most common usage of variant types is to describe recursive data
+structures. Consider for example the type of binary trees: 
+<<#type 'a btree = Empty | Node of 'a * 'a btree * 'a btree;;
+  type 'a btree = Empty | Node of 'a * 'a btree * 'a btree
+>>
+   This definition reads as follow: a binary tree containing values of type 'a
+(an arbitrary type) is either empty, or is a node containing one value of type
+'a and two subtrees containing also values of type 'a, that is, two 'a btree.
+  Operations on binary trees are naturally expressed as recursive functions
+following the same structure as the type definition itself. For instance, here
+are functions performing lookup and insertion in ordered binary trees (elements
+increase from left to right): 
+<<#let rec member x btree =
+  #  match btree with
+  #    Empty -> false
+  #  | Node(y, left, right) ->
+  #      if x = y then true else
+  #      if x < y then member x left else member x right;;
+  val member : 'a -> 'a btree -> bool = <fun>
+   
+  #let rec insert x btree =
+  #  match btree with
+  #    Empty -> Node(x, Empty, Empty)
+  #  | Node(y, left, right) ->
+  #      if x <= y then Node(y, insert x left, right)
+  #                else Node(y, left, insert x right);;
+  val insert : 'a -> 'a btree -> 'a btree = <fun>
+>>
+  
+
+Node: Section 1-5,	Next: Section 1-6,	Prev: Section 1-4,	Up: Chapter 1
+  
+
+1.5   Imperative features
+*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Though all examples so far were written in purely applicative style, Caml is
+also equipped with full imperative features. This includes the usual while and
+for loops, as well as mutable data structures such as arrays. Arrays are either
+given in extension between [| and |] brackets, or allocated and initialized
+with the Array.create function, then filled up later by assignments. For
+instance, the function below sums two vectors (represented as float arrays)
+componentwise. 
+<<#let add_vect v1 v2 =
+  #  let len = min (Array.length v1) (Array.length v2) in
+  #  let res = Array.create len 0.0 in
+  #  for i = 0 to len - 1 do
+  #    res.(i) <- v1.(i) +. v2.(i)
+  #  done;
+  #  res;;
+  val add_vect : float array -> float array -> float array = <fun>
+   
+  #add_vect [| 1.0; 2.0 |] [| 3.0; 4.0 |];;
+  - : float array = [|4.; 6.|]
+>>
+  
+  Record fields can also be modified by assignment, provided they are declared
+mutable in the definition of the record type: 
+<<#type mutable_point = { mutable x: float; mutable y: float };;
+  type mutable_point = { mutable x : float; mutable y : float; }
+   
+  #let translate p dx dy =
+  #  p.x <- p.x +. dx; p.y <- p.y +. dy;;
+  val translate : mutable_point -> float -> float -> unit = <fun>
+   
+  #let mypoint = { x = 0.0; y = 0.0 };;
+  val mypoint : mutable_point = {x = 0.; y = 0.}
+   
+  #translate mypoint 1.0 2.0;;
+  - : unit = ()
+   
+  #mypoint;;
+  - : mutable_point = {x = 1.; y = 2.}
+>>
+  
+  Caml has no built-in notion of variable -- identifiers whose current value
+can be changed by assignment. (The let binding is not an assignment, it
+introduces a new identifier with a new scope.) However, the standard library
+provides references, which are mutable indirection cells (or one-element
+arrays), with operators ! to fetch the current contents of the reference and :=
+to assign the contents. Variables can then be emulated by let-binding a
+reference. For instance, here is an in-place insertion sort over arrays: 
+<<#let insertion_sort a =
+  #  for i = 1 to Array.length a - 1 do
+  #    let val_i = a.(i) in
+  #    let j = ref i in
+  #    while !j > 0 && val_i < a.(!j - 1) do
+  #      a.(!j) <- a.(!j - 1);
+  #      j := !j - 1
+  #    done;
+  #    a.(!j) <- val_i
+  #  done;;
+  val insertion_sort : 'a array -> unit = <fun>
+>>
+  
+  References are also useful to write functions that maintain a current state
+between two calls to the function. For instance, the following pseudo-random
+number generator keeps the last returned number in a reference: 
+<<#let current_rand = ref 0;;
+  val current_rand : int ref = {contents = 0}
+   
+  #let random () =
+  #  current_rand := !current_rand * 25713 + 1345;
+  #  !current_rand;;
+  val random : unit -> int = <fun>
+>>
+  
+  Again, there is nothing magic with references: they are implemented as a
+one-field mutable record, as follows. 
+<<#type 'a ref = { mutable contents: 'a };;
+  type 'a ref = { mutable contents : 'a; }
+   
+  #let (!) r = r.contents;;
+  val ( ! ) : 'a ref -> 'a = <fun>
+   
+  #let (:=) r newval = r.contents <- newval;;
+  val ( := ) : 'a ref -> 'a -> unit = <fun>
+>>
+  
+  In some special cases, you may need to store a polymorphic function in a data
+structure, keeping its polymorphism. Without user-provided type annotations,
+this is not allowed, as polymorphism is only introduced on a global level.
+However, you can give explicitly polymorphic types to record fields. 
+<<#type idref = { mutable id: 'a. 'a -> 'a };;
+  type idref = { mutable id : 'a. 'a -> 'a; }
+   
+  #let r = {id = fun x -> x};;
+  val r : idref = {id = <fun>}
+   
+  #let g s = (s.id 1, s.id true);;
+  val g : idref -> int * bool = <fun>
+   
+  #r.id <- (fun x -> print_string "called id\n"; x);;
+  - : unit = ()
+   
+  #g r;;
+  called id
+  called id
+  - : int * bool = (1, true)
+>>
+  
+
+Node: Section 1-6,	Next: Section 1-7,	Prev: Section 1-5,	Up: Chapter 1
+  
+
+1.6   Exceptions
+*=*=*=*=*=*=*=*=
+
+   
+  Caml provides exceptions for signalling and handling exceptional conditions.
+Exceptions can also be used as a general-purpose non-local control structure.
+Exceptions are declared with the exception construct, and signalled with the
+raise operator. For instance, the function below for taking the head of a list
+uses an exception to signal the case where an empty list is given. 
+<<#exception Empty_list;;
+  exception Empty_list
+   
+  #let head l =
+  #  match l with
+  #    [] -> raise Empty_list
+  #  | hd :: tl -> hd;;
+  val head : 'a list -> 'a = <fun>
+   
+  #head [1;2];;
+  - : int = 1
+   
+  #head [];;
+  Exception: Empty_list.
+>>
+  
+  Exceptions are used throughout the standard library to signal cases where the
+library functions cannot complete normally. For instance, the List.assoc
+function, which returns the data associated with a given key in a list of (key,
+data) pairs, raises the predefined exception Not_found when the key does not
+appear in the list: 
+<<#List.assoc 1 [(0, "zero"); (1, "one")];;
+  - : string = "one"
+   
+  #List.assoc 2 [(0, "zero"); (1, "one")];;
+  Exception: Not_found.
+>>
+  
+  Exceptions can be trapped with the try...with construct: 
+<<#let name_of_binary_digit digit =
+  #  try
+  #    List.assoc digit [0, "zero"; 1, "one"]
+  #  with Not_found ->
+  #    "not a binary digit";;
+  val name_of_binary_digit : int -> string = <fun>
+   
+  #name_of_binary_digit 0;;
+  - : string = "zero"
+   
+  #name_of_binary_digit (-1);;
+  - : string = "not a binary digit"
+>>
+  
+  The with part is actually a regular pattern-matching on the exception value.
+Thus, several exceptions can be caught by one try...with construct. Also,
+finalization can be performed by trapping all exceptions, performing the
+finalization, then raising again the exception: 
+<<#let temporarily_set_reference ref newval funct =
+  #  let oldval = !ref in
+  #  try
+  #    ref := newval;
+  #    let res = funct () in
+  #    ref := oldval;
+  #    res
+  #  with x ->
+  #    ref := oldval;
+  #    raise x;;
+  val temporarily_set_reference : 'a ref -> 'a -> (unit -> 'b) -> 'b = <fun>
+>>
+  
+
+Node: Section 1-7,	Next: Section 1-8,	Prev: Section 1-6,	Up: Chapter 1
+  
+
+1.7   Symbolic processing of expressions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  We finish this introduction with a more complete example representative of
+the use of Caml for symbolic processing: formal manipulations of arithmetic
+expressions containing variables. The following variant type describes the
+expressions we shall manipulate: 
+<<#type expression =
+  #    Const of float
+  #  | Var of string
+  #  | Sum of expression * expression    (* e1 + e2 *)
+  #  | Diff of expression * expression   (* e1 - e2 *)
+  #  | Prod of expression * expression   (* e1 * e2 *)
+  #  | Quot of expression * expression   (* e1 / e2 *)
+  #;;
+  type expression =
+      Const of float
+    | Var of string
+    | Sum of expression * expression
+    | Diff of expression * expression
+    | Prod of expression * expression
+    | Quot of expression * expression
+>>
+  
+  We first define a function to evaluate an expression given an environment
+that maps variable names to their values. For simplicity, the environment is
+represented as an association list. 
+<<#exception Unbound_variable of string;;
+  exception Unbound_variable of string
+   
+  #let rec eval env exp =
+  #  match exp with
+  #    Const c -> c
+  #  | Var v ->
+  #      (try List.assoc v env with Not_found -> raise(Unbound_variable v))
+  #  | Sum(f, g) -> eval env f +. eval env g
+  #  | Diff(f, g) -> eval env f -. eval env g
+  #  | Prod(f, g) -> eval env f *. eval env g
+  #  | Quot(f, g) -> eval env f /. eval env g;;
+  val eval : (string * float) list -> expression -> float = <fun>
+   
+  #eval [("x", 1.0); ("y", 3.14)] (Prod(Sum(Var "x", Const 2.0), Var "y"));;
+  - : float = 9.42
+>>
+  
+  Now for a real symbolic processing, we define the derivative of an expression
+with respect to a variable dv: 
+<<#let rec deriv exp dv =
+  #  match exp with
+  #    Const c -> Const 0.0
+  #  | Var v -> if v = dv then Const 1.0 else Const 0.0
+  #  | Sum(f, g) -> Sum(deriv f dv, deriv g dv)
+  #  | Diff(f, g) -> Diff(deriv f dv, deriv g dv)
+  #  | Prod(f, g) -> Sum(Prod(f, deriv g dv), Prod(deriv f dv, g))
+  #  | Quot(f, g) -> Quot(Diff(Prod(deriv f dv, g), Prod(f, deriv g dv)),
+  #                       Prod(g, g))
+  #;;
+  val deriv : expression -> string -> expression = <fun>
+   
+  #deriv (Quot(Const 1.0, Var "x")) "x";;
+  - : expression =
+  Quot (Diff (Prod (Const 0., Var "x"), Prod (Const 1., Const 1.)),
+   Prod (Var "x", Var "x"))
+>>
+  
+
+Node: Section 1-8,	Next: Section 1-9,	Prev: Section 1-7,	Up: Chapter 1
+  
+
+1.8   Pretty-printing and parsing
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  As shown in the examples above, the internal representation (also called
+abstract syntax) of expressions quickly becomes hard to read and write as the
+expressions get larger. We need a printer and a parser to go back and forth
+between the abstract syntax and the concrete syntax, which in the case of
+expressions is the familiar algebraic notation (e.g. 2*x+1).
+  For the printing function, we take into account the usual precedence rules
+(i.e. * binds tighter than +) to avoid printing unnecessary parentheses. To
+this end, we maintain the current operator precedence and print parentheses
+around an operator only if its precedence is less than the current precedence. 
+<<#let print_expr exp =
+  #  (* Local function definitions *)
+  #  let open_paren prec op_prec =
+  #    if prec > op_prec then print_string "(" in
+  #  let close_paren prec op_prec =
+  #    if prec > op_prec then print_string ")" in
+  #  let rec print prec exp =     (* prec is the current precedence *)
+  #    match exp with
+  #      Const c -> print_float c
+  #    | Var v -> print_string v
+  #    | Sum(f, g) ->
+  #        open_paren prec 0;
+  #        print 0 f; print_string " + "; print 0 g;
+  #        close_paren prec 0
+  #    | Diff(f, g) ->
+  #        open_paren prec 0;
+  #        print 0 f; print_string " - "; print 1 g;
+  #        close_paren prec 0
+  #    | Prod(f, g) ->
+  #        open_paren prec 2;
+  #        print 2 f; print_string " * "; print 2 g;
+  #        close_paren prec 2
+  #    | Quot(f, g) ->
+  #        open_paren prec 2;
+  #        print 2 f; print_string " / "; print 3 g;
+  #        close_paren prec 2
+  #  in print 0 exp;;
+  val print_expr : expression -> unit = <fun>
+   
+  #let e = Sum(Prod(Const 2.0, Var "x"), Const 1.0);;
+  val e : expression = Sum (Prod (Const 2., Var "x"), Const 1.)
+   
+  #print_expr e; print_newline();;
+  2. * x + 1.
+  - : unit = ()
+   
+  #print_expr (deriv e "x"); print_newline();;
+  2. * 1. + 0. * x + 0.
+  - : unit = ()
+>>
+  
+  Parsing (transforming concrete syntax into abstract syntax) is usually more
+delicate. Caml offers several tools to help write parsers: on the one hand,
+Caml versions of the lexer generator Lex and the parser generator Yacc (see
+chapter 12*Note Chapter 12::), which handle LALR(1) languages using
+push-down automata; on the other hand, a predefined type of streams (of
+characters or tokens) and pattern-matching over streams, which facilitate the
+writing of recursive-descent parsers for LL(1) languages. An example using
+ocamllex and ocamlyacc is given in chapter 12*Note Chapter 12::. Here, we
+will use stream parsers. The syntactic support for stream parsers is provided
+by the Camlp4 preprocessor, which can be loaded into the interactive toplevel
+via the #load directive below.
+<<##load "camlp4o.cma";;
+  Characters -1--1:
+  Error: Reference to undefined global `Dynlink'
+   
+  #open Genlex;;
+   
+  #let lexer = make_lexer ["("; ")"; "+"; "-"; "*"; "/"];;
+  val lexer : char Stream.t -> Genlex.token Stream.t = <fun>
+>>
+   For the lexical analysis phase (transformation of the input text into a
+stream of tokens), we use a "generic" lexer provided in the standard library
+module Genlex. The make_lexer function takes a list of keywords and returns a
+lexing function that "tokenizes" an input stream of characters. Tokens are
+either identifiers, keywords, or literals (integer, floats, characters,
+strings). Whitespace and comments are skipped. 
+<<#let token_stream = lexer(Stream.of_string "1.0 +x");;
+  val token_stream : Genlex.token Stream.t = <abstr>
+   
+  #Stream.next token_stream;;
+  - : Genlex.token = Float 1.
+   
+  #Stream.next token_stream;;
+  - : Genlex.token = Kwd "+"
+   
+  #Stream.next token_stream;;
+  - : Genlex.token = Ident "x"
+>>
+  
+  The parser itself operates by pattern-matching on the stream of tokens. As
+usual with recursive descent parsers, we use several intermediate parsing
+functions to reflect the precedence and associativity of operators.
+Pattern-matching over streams is more powerful than on regular data structures,
+as it allows recursive calls to parsing functions inside the patterns, for
+matching sub-components of the input stream. See the Camlp4 documentation for
+more details.
+<<#let rec parse_expr = parser
+  #    [< e1 = parse_mult; e = parse_more_adds e1 >] -> e
+  #and parse_more_adds e1 = parser
+  #    [< 'Kwd "+"; e2 = parse_mult; e = parse_more_adds (Sum(e1, e2)) >] -> e
+  #  | [< 'Kwd "-"; e2 = parse_mult; e = parse_more_adds (Diff(e1, e2)) >] -> e
+  #  | [< >] -> e1
+  #and parse_mult = parser
+  #    [< e1 = parse_simple; e = parse_more_mults e1 >] -> e
+  #and parse_more_mults e1 = parser
+  #    [< 'Kwd "*"; e2 = parse_simple; e = parse_more_mults (Prod(e1, e2)) >]
+-> e
+  #  | [< 'Kwd "/"; e2 = parse_simple; e = parse_more_mults (Quot(e1, e2)) >]
+-> e
+  #  | [< >] -> e1
+  #and parse_simple = parser
+  #    [< 'Ident s >] -> Var s
+  #  | [< 'Int i >] -> Const(float i)
+  #  | [< 'Float f >] -> Const f
+  #  | [< 'Kwd "("; e = parse_expr; 'Kwd ")" >] -> e;;
+  Error: Syntax error
+   
+  #let parse_expression = parser [< e = parse_expr; _ = Stream.empty >] -> e;;
+  Error: Syntax error
+>>
+  
+  Composing the lexer and parser, we finally obtain a function to read an
+expression from a character string: 
+<<#let read_expression s = parse_expression(lexer(Stream.of_string s));;
+  Error: Unbound value parse_expression
+   
+  #read_expression "2*(x+y)";;
+  Error: Unbound value read_expression
+>>
+   A small puzzle: why do we get different results in the following two
+examples? 
+<<#read_expression "x - 1";;
+  Error: Unbound value read_expression
+   
+  #read_expression "x-1";;
+  Error: Unbound value read_expression
+>>
+   Answer: the generic lexer provided by Genlex recognizes negative integer
+literals as one integer token. Hence, x-1 is read as the token Ident "x"
+followed by the token Int(-1); this sequence does not match any of the parser
+rules. On the other hand,  the second space in x - 1 causes the lexer to return
+the three expected tokens: Ident "x", then Kwd "-", then Int(1).
+
+Node: Section 1-9,	Next: Chapter 2,	Prev: Section 1-8,	Up: Chapter 1
+  
+
+1.9   Standalone Caml programs
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  All examples given so far were executed under the interactive system. Caml
+code can also be compiled separately and executed non-interactively using the
+batch compilers ocamlc or ocamlopt. The source code must be put in a file with
+extension .ml. It consists of a sequence of phrases, which will be evaluated at
+runtime in their order of appearance in the source file. Unlike in interactive
+mode, types and values are not printed automatically; the program must call
+printing functions explicitly to produce some output. Here is a sample
+standalone program to print Fibonacci numbers: 
+<<(* File fib.ml *)
+  let rec fib n =
+    if n < 2 then 1 else fib(n-1) + fib(n-2);;
+  let main () =
+    let arg = int_of_string Sys.argv.(1) in
+    print_int(fib arg);
+    print_newline();
+    exit 0;;
+  main ();;
+>>
+  Sys.argv is an array of strings containing the command-line parameters.
+Sys.argv.(1) is thus the first command-line parameter.  The program above is
+compiled and executed with the following shell commands: 
+<<$ ocamlc -o fib fib.ml
+  $ ./fib 10
+  89
+  $ ./fib 20
+  10946
+>>
+   
+
+Node: Chapter 2,	Next: Section 2-1,	Prev: Chapter 1,	Up: Part I
+  
+
+Chapter 2     The module system
+*******************************
+    
+  This chapter introduces the module system of Objective Caml.
+* Menu:
+
+* Section 2-1::	Structures
+* Section 2-2::	Signatures
+* Section 2-3::	Functors
+* Section 2-4::	Functors and type abstraction
+* Section 2-5::	Modules and separate compilation
+
+
+Node: Section 2-1,	Next: Section 2-2,	Prev: Chapter 2,	Up: Chapter 2
+  
+
+2.1   Structures
+*=*=*=*=*=*=*=*=
+
+   
+  A primary motivation for modules is to package together related definitions
+(such as the definitions of a data type and associated operations over that
+type) and enforce a consistent naming scheme for these definitions. This avoids
+running out of names or accidentally confusing names. Such a package is called
+a structure and is introduced by the struct...end construct, which contains an
+arbitrary sequence of definitions. The structure is usually given a name with
+the module binding. Here is for instance a structure packaging together a type
+of priority queues and their operations: 
+<<#module PrioQueue =
+  #  struct
+  #    type priority = int
+  #    type 'a queue = Empty | Node of priority * 'a * 'a queue * 'a queue
+  #    let empty = Empty
+  #    let rec insert queue prio elt =
+  #      match queue with
+  #        Empty -> Node(prio, elt, Empty, Empty)
+  #      | Node(p, e, left, right) ->
+  #          if prio <= p
+  #          then Node(prio, elt, insert right p e, left)
+  #          else Node(p, e, insert right prio elt, left)
+  #    exception Queue_is_empty
+  #    let rec remove_top = function
+  #        Empty -> raise Queue_is_empty
+  #      | Node(prio, elt, left, Empty) -> left
+  #      | Node(prio, elt, Empty, right) -> right
+  #      | Node(prio, elt, (Node(lprio, lelt, _, _) as left),
+  #                        (Node(rprio, relt, _, _) as right)) ->
+  #          if lprio <= rprio
+  #          then Node(lprio, lelt, remove_top left, right)
+  #          else Node(rprio, relt, left, remove_top right)
+  #    let extract = function
+  #        Empty -> raise Queue_is_empty
+  #      | Node(prio, elt, _, _) as queue -> (prio, elt, remove_top queue)
+  #  end;;
+  module PrioQueue :
+    sig
+      type priority = int
+      type 'a queue = Empty | Node of priority * 'a * 'a queue * 'a queue
+      val empty : 'a queue
+      val insert : 'a queue -> priority -> 'a -> 'a queue
+      exception Queue_is_empty
+      val remove_top : 'a queue -> 'a queue
+      val extract : 'a queue -> priority * 'a * 'a queue
+    end
+>>
+   Outside the structure, its components can be referred to using the "dot
+notation", that is, identifiers qualified by a structure name. For instance,
+PrioQueue.insert in a value context is the function insert defined inside the
+structure PrioQueue. Similarly, PrioQueue.queue in a type context is the type
+queue defined in PrioQueue.  
+<<#PrioQueue.insert PrioQueue.empty 1 "hello";;
+  - : string PrioQueue.queue =
+  PrioQueue.Node (1, "hello", PrioQueue.Empty, PrioQueue.Empty)
+>>
+  
+
+Node: Section 2-2,	Next: Section 2-3,	Prev: Section 2-1,	Up: Chapter 2
+  
+
+2.2   Signatures
+*=*=*=*=*=*=*=*=
+
+   
+  Signatures are interfaces for structures. A signature specifies which
+components of a structure are accessible from the outside, and with which type.
+It can be used to hide some components of a structure  (e.g. local function
+definitions) or export some components with a restricted type. For instance,
+the signature below specifies the three priority queue operations empty, insert
+and extract, but not the auxiliary function remove_top. Similarly, it makes the
+queue type abstract (by not providing its actual representation as a concrete
+type). 
+<<#module type PRIOQUEUE =
+  #  sig
+  #    type priority = int         (* still concrete *)
+  #    type 'a queue               (* now abstract *)
+  #    val empty : 'a queue
+  #    val insert : 'a queue -> int -> 'a -> 'a queue
+  #    val extract : 'a queue -> int * 'a * 'a queue
+  #    exception Queue_is_empty
+  #  end;;
+  module type PRIOQUEUE =
+    sig
+      type priority = int
+      type 'a queue
+      val empty : 'a queue
+      val insert : 'a queue -> int -> 'a -> 'a queue
+      val extract : 'a queue -> int * 'a * 'a queue
+      exception Queue_is_empty
+    end
+>>
+   Restricting the PrioQueue structure by this signature results in another
+view of the PrioQueue structure where the remove_top function is not accessible
+and the actual representation of priority queues is hidden: 
+<<#module AbstractPrioQueue = (PrioQueue : PRIOQUEUE);;
+  module AbstractPrioQueue : PRIOQUEUE
+   
+  #AbstractPrioQueue.remove_top;;
+  Error: Unbound value AbstractPrioQueue.remove_top
+   
+  #AbstractPrioQueue.insert AbstractPrioQueue.empty 1 "hello";;
+  - : string AbstractPrioQueue.queue = <abstr>
+>>
+   The restriction can also be performed during the definition of the
+structure, as in 
+<<module PrioQueue = (struct ... end : PRIOQUEUE);;
+>>
+  An alternate syntax is provided for the above: 
+<<module PrioQueue : PRIOQUEUE = struct ... end;;
+>>
+  
+
+Node: Section 2-3,	Next: Section 2-4,	Prev: Section 2-2,	Up: Chapter 2
+  
+
+2.3   Functors
+*=*=*=*=*=*=*=
+
+   
+  Functors are "functions" from structures to structures. They are used to
+express parameterized structures: a structure A parameterized by a structure B
+is simply a functor F with a formal parameter B (along with the expected
+signature for B) which returns the actual structure A itself. The functor F can
+then be applied to one or several implementations B_1 ...B_n of B, yielding the
+corresponding structures A_1 ...A_n.
+  For instance, here is a structure implementing sets as sorted lists,
+parameterized by a structure providing the type of the set elements and an
+ordering function over this type (used to keep the sets sorted): 
+<<#type comparison = Less | Equal | Greater;;
+  type comparison = Less | Equal | Greater
+   
+  #module type ORDERED_TYPE =
+  #  sig
+  #    type t
+  #    val compare: t -> t -> comparison
+  #  end;;
+  module type ORDERED_TYPE = sig type t val compare : t -> t -> comparison end
+   
+  #module Set =
+  #  functor (Elt: ORDERED_TYPE) ->
+  #    struct
+  #      type element = Elt.t
+  #      type set = element list
+  #      let empty = []
+  #      let rec add x s =
+  #        match s with
+  #          [] -> [x]
+  #        | hd::tl ->
+  #           match Elt.compare x hd with
+  #             Equal   -> s         (* x is already in s *)
+  #           | Less    -> x :: s    (* x is smaller than all elements of s *)
+  #           | Greater -> hd :: add x tl
+  #      let rec member x s =
+  #        match s with
+  #          [] -> false
+  #        | hd::tl ->
+  #            match Elt.compare x hd with
+  #              Equal   -> true     (* x belongs to s *)
+  #            | Less    -> false    (* x is smaller than all elements of s *)
+  #            | Greater -> member x tl
+  #    end;;
+  module Set :
+    functor (Elt : ORDERED_TYPE) ->
+      sig
+        type element = Elt.t
+        type set = element list
+        val empty : 'a list
+        val add : Elt.t -> Elt.t list -> Elt.t list
+        val member : Elt.t -> Elt.t list -> bool
+      end
+>>
+   By applying the Set functor to a structure implementing an ordered type, we
+obtain set operations for this type: 
+<<#module OrderedString =
+  #  struct
+  #    type t = string
+  #    let compare x y = if x = y then Equal else if x < y then Less else
+Greater
+  #  end;;
+  module OrderedString :
+    sig type t = string val compare : 'a -> 'a -> comparison end
+   
+  #module StringSet = Set(OrderedString);;
+  module StringSet :
+    sig
+      type element = OrderedString.t
+      type set = element list
+      val empty : 'a list
+      val add : OrderedString.t -> OrderedString.t list -> OrderedString.t list
+      val member : OrderedString.t -> OrderedString.t list -> bool
+    end
+   
+  #StringSet.member "bar" (StringSet.add "foo" StringSet.empty);;
+  - : bool = false
+>>
+  
+
+Node: Section 2-4,	Next: Section 2-5,	Prev: Section 2-3,	Up: Chapter 2
+  
+
+2.4   Functors and type abstraction
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  As in the PrioQueue example, it would be good style to hide the actual
+implementation of the type set, so that users of the structure will not rely on
+sets being lists, and we can switch later to another, more efficient
+representation of sets without breaking their code. This can be achieved by
+restricting Set by a suitable functor signature: 
+<<#module type SETFUNCTOR =
+  #  functor (Elt: ORDERED_TYPE) ->
+  #    sig
+  #      type element = Elt.t      (* concrete *)
+  #      type set                  (* abstract *)
+  #      val empty : set
+  #      val add : element -> set -> set
+  #      val member : element -> set -> bool
+  #    end;;
+  module type SETFUNCTOR =
+    functor (Elt : ORDERED_TYPE) ->
+      sig
+        type element = Elt.t
+        type set
+        val empty : set
+        val add : element -> set -> set
+        val member : element -> set -> bool
+      end
+   
+  #module AbstractSet = (Set : SETFUNCTOR);;
+  module AbstractSet : SETFUNCTOR
+   
+  #module AbstractStringSet = AbstractSet(OrderedString);;
+  module AbstractStringSet :
+    sig
+      type element = OrderedString.t
+      type set = AbstractSet(OrderedString).set
+      val empty : set
+      val add : element -> set -> set
+      val member : element -> set -> bool
+    end
+   
+  #AbstractStringSet.add "gee" AbstractStringSet.empty;;
+  - : AbstractStringSet.set = <abstr>
+>>
+  
+  In an attempt to write the type constraint above more elegantly, one may wish
+to name the signature of the structure returned by the functor, then use that
+signature in the constraint: 
+<<#module type SET =
+  #  sig
+  #    type element
+  #    type set
+  #    val empty : set
+  #    val add : element -> set -> set
+  #    val member : element -> set -> bool
+  #  end;;
+  module type SET =
+    sig
+      type element
+      type set
+      val empty : set
+      val add : element -> set -> set
+      val member : element -> set -> bool
+    end
+   
+  #module WrongSet = (Set : functor(Elt: ORDERED_TYPE) -> SET);;
+  module WrongSet : functor (Elt : ORDERED_TYPE) -> SET
+   
+  #module WrongStringSet = WrongSet(OrderedString);;
+  module WrongStringSet :
+    sig
+      type element = WrongSet(OrderedString).element
+      type set = WrongSet(OrderedString).set
+      val empty : set
+      val add : element -> set -> set
+      val member : element -> set -> bool
+    end
+   
+  #WrongStringSet.add "gee" WrongStringSet.empty;;
+  Error: This expression has type string but an expression was expected of type
+           WrongStringSet.element = WrongSet(OrderedString).element
+>>
+   The problem here is that SET specifies the type element abstractly, so that
+the type equality between element in the result of the functor and t in its
+argument is forgotten. Consequently, WrongStringSet.element is not the same
+type as string, and the operations of WrongStringSet cannot be applied to
+strings. As demonstrated above, it is important that the type element in the
+signature SET be declared equal to Elt.t; unfortunately, this is impossible
+above since SET is defined in a context where Elt does not exist. To overcome
+this difficulty, Objective Caml provides a with type construct over signatures
+that allows to enrich a signature with extra type equalities: 
+<<#module AbstractSet = 
+  #  (Set : functor(Elt: ORDERED_TYPE) -> (SET with type element = Elt.t));;
+  module AbstractSet :
+    functor (Elt : ORDERED_TYPE) ->
+      sig
+        type element = Elt.t
+        type set
+        val empty : set
+        val add : element -> set -> set
+        val member : element -> set -> bool
+      end
+>>
+  
+  As in the case of simple structures, an alternate syntax is provided for
+defining functors and restricting their result: 
+<<module AbstractSet(Elt: ORDERED_TYPE) : (SET with type element = Elt.t) =
+    struct ... end;;
+>>
+  
+  Abstracting a type component in a functor result is a powerful technique that
+provides a high degree of type safety, as we now illustrate. Consider an
+ordering over character strings that is different from the standard ordering
+implemented in the OrderedString structure. For instance, we compare strings
+without distinguishing upper and lower case. 
+<<#module NoCaseString =
+  #  struct
+  #    type t = string
+  #    let compare s1 s2 =
+  #      OrderedString.compare (String.lowercase s1) (String.lowercase s2)
+  #  end;;
+  module NoCaseString :
+    sig type t = string val compare : string -> string -> comparison end
+   
+  #module NoCaseStringSet = AbstractSet(NoCaseString);;
+  module NoCaseStringSet :
+    sig
+      type element = NoCaseString.t
+      type set = AbstractSet(NoCaseString).set
+      val empty : set
+      val add : element -> set -> set
+      val member : element -> set -> bool
+    end
+   
+  #NoCaseStringSet.add "FOO" AbstractStringSet.empty;;
+  Error: This expression has type
+           AbstractStringSet.set = AbstractSet(OrderedString).set
+         but an expression was expected of type
+           NoCaseStringSet.set = AbstractSet(NoCaseString).set
+>>
+   Notice that the two types AbstractStringSet.set and  NoCaseStringSet.set are
+not compatible, and values of these two types do not match. This is the correct
+behavior: even though both set types contain elements of the same type
+(strings), both are built upon different orderings of that type, and different
+invariants need to be maintained by the operations (being strictly increasing
+for the standard ordering and for the case-insensitive ordering). Applying
+operations from AbstractStringSet to values of type NoCaseStringSet.set could
+give incorrect results, or build lists that violate the invariants of
+NoCaseStringSet.
+
+Node: Section 2-5,	Next: Chapter 3,	Prev: Section 2-4,	Up: Chapter 2
+  
+
+2.5   Modules and separate compilation
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  All examples of modules so far have been given in the context of the
+interactive system. However, modules are most useful for large, batch-compiled
+programs. For these programs, it is a practical necessity to split the source
+into several files, called compilation units, that can be compiled separately,
+thus minimizing recompilation after changes.
+  In Objective Caml, compilation units are special cases of structures and
+signatures, and the relationship between the units can be explained easily in
+terms of the module system. A compilation unit A comprises two files: 
+  
+   - the implementation file A.ml, which contains a sequence of definitions,
+   analogous to the inside of a struct...end construct; 
+   - the interface file A.mli, which contains a sequence of specifications,
+   analogous to the inside of a sig...end construct. 
+   Both files define a structure named A as if the following definition was
+entered at top-level: 
+<<
+  module A: sig (* contents of file A.mli *) end
+          = struct (* contents of file A.ml *) end;;
+>>
+   The files defining the compilation units can be compiled separately using
+the ocamlc -c command (the -c option means "compile only, do not try to link");
+this produces compiled interface files (with extension .cmi) and compiled
+object code files (with extension .cmo). When all units have been compiled,
+their .cmo files are linked together using the ocaml command. For instance, the
+following commands compile and link a program composed of two compilation units
+Aux and Main: 
+<<$ ocamlc -c Aux.mli                     # produces aux.cmi
+  $ ocamlc -c Aux.ml                      # produces aux.cmo
+  $ ocamlc -c Main.mli                    # produces main.cmi
+  $ ocamlc -c Main.ml                     # produces main.cmo
+  $ ocamlc -o theprogram Aux.cmo Main.cmo
+>>
+  The program behaves exactly as if the following phrases were entered at
+top-level: 
+<<
+  module Aux: sig (* contents of Aux.mli *) end
+            = struct (* contents of Aux.ml *) end;;
+  module Main: sig (* contents of Main.mli *) end
+             = struct (* contents of Main.ml *) end;;
+>>
+   In particular, Main can refer to Aux: the definitions and declarations
+contained in Main.ml and Main.mli can refer to definition in Aux.ml, using the
+Aux.ident notation, provided these definitions are exported in Aux.mli.
+  The order in which the .cmo files are given to ocaml during the linking phase
+determines the order in which the module definitions occur. Hence, in the
+example above, Aux appears first and Main can refer to it, but Aux cannot refer
+to Main.
+  Notice that only top-level structures can be mapped to separately-compiled
+files, but not functors nor module types. However, all module-class objects can
+appear as components of a structure, so the solution is to put the functor or
+module type inside a structure, which can then be mapped to a file.  
+
+Node: Chapter 3,	Next: Section 3-1,	Prev: Chapter 2,	Up: Part I
+  
+
+Chapter 3     Objects in Caml
+*****************************
+    
+  (Chapter written by Jérôme Vouillon, Didier Rémy and Jacques Garrigue)
+  
+  
+  
+  This chapter gives an overview of the object-oriented features of Objective
+Caml. Note that the relation between object, class and type in Objective Caml
+is very different from that in main stream object-oriented languages like Java
+or C++, so that you should not assume that similar keywords mean the same
+thing.
+  
+  3.1*Note Section 3-1:: Classes and objects
+  3.2*Note Section 3-2:: Immediate objects
+  3.3*Note Section 3-3:: Reference to self
+  3.4*Note Section 3-4:: Initializers
+  3.5*Note Section 3-5:: Virtual methods
+  3.6*Note Section 3-6:: Private methods
+  3.7*Note Section 3-7:: Class interfaces
+  3.8*Note Section 3-8:: Inheritance
+  3.9*Note Section 3-9:: Multiple inheritance
+  3.10*Note Section 3-10:: Parameterized classes
+  3.11*Note Section 3-11:: Polymorphic methods
+  3.12*Note Section 3-12:: Using coercions
+  3.13*Note Section 3-13:: Functional objects
+  3.14*Note Section 3-14:: Cloning objects
+  3.15*Note Section 3-15:: Recursive classes
+  3.16*Note Section 3-16:: Binary methods
+  3.17*Note Section 3-17:: Friends
+   
+  
+* Menu:
+
+* Section 3-1::	Classes and objects
+* Section 3-2::	Immediate objects
+* Section 3-3::	Reference to self
+* Section 3-4::	Initializers
+* Section 3-5::	Virtual methods
+* Section 3-6::	Private methods
+* Section 3-7::	Class interfaces
+* Section 3-8::	Inheritance
+* Section 3-9::	Multiple inheritance
+* Section 3-10::	Parameterized classes
+* Section 3-11::	Polymorphic methods
+* Section 3-12::	Using coercions
+* Section 3-13::	Functional objects
+* Section 3-14::	Cloning objects
+* Section 3-15::	Recursive classes
+* Section 3-16::	Binary methods
+* Section 3-17::	Friends
+

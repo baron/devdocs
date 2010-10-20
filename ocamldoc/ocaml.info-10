@@ -1,0 +1,1356 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Subsection 15-2-1,	Next: Subsection 15-2-2,	Prev: Section 15-2,	Up: Section 15-2
+  
+
+15.2.1   Placement of documentation comments
+============================================
+   OCamldoc can associate comments to some elements of the language encountered
+in the source files. The association is made according to the locations of
+comments with respect to the language elements. The locations of comments in
+.mli and .ml files are different.
+  
+
+ Comments in .mli files
+-----------------------
+   A special comment is associated to an element if it is placed before or
+after the element.
+  A special comment before an element is associated to this element if : 
+  
+   - There is no blank line or another special comment between the special
+   comment and the element. However, a regular comment can occur between the
+   special comment and the element. 
+   - The special comment is not already associated to the previous element. 
+   - The special comment is not the first one of a toplevel module. 
+  
+  A special comment after an element is associated to this element if there is
+no blank line or comment between the special comment and the element.
+  There are two exceptions: for type constructors and record fields in type
+definitions, the associated comment can only be placed after the constructor or
+field definition, without blank lines or other comments between them. The
+special comment for a type constructor with another type constructor following
+must be placed before the '|' character separating the two constructors.
+  The following sample interface file foo.mli illustrates the placement rules
+for comments in .mli files.
+<<(** The first special comment of the file is the comment associated
+      with the whole module.*)
+  
+  
+  (** Special comments can be placed between elements and are kept
+      by the OCamldoc tool, but are not associated to any element.
+      @-tags in these comments are ignored.*)
+  
+  (*******************************************************************)
+  (** Comments like the one above, with more than two asterisks,
+      are ignored. *)
+  
+  (** The comment for function f. *)
+  val f : int -> int -> int
+  (** The continuation of the comment for function f. *)
+  
+  (** Comment for exception My_exception, even with a simple comment
+      between the special comment and the exception.*)
+  (* Hello, I'm a simple comment :-) *)
+  exception My_exception of (int -> int) * int
+  
+  (** Comment for type weather  *)
+  type weather =
+  | Rain of int (** The comment for construtor Rain *)
+  | Sun (** The comment for constructor Sun *)
+  
+  (** Comment for type weather2  *)
+  type weather2 =
+  | Rain of int (** The comment for construtor Rain *)
+  | Sun (** The comment for constructor Sun *)
+  (** I can continue the comment for type weather2 here
+    because there is already a comment associated to the last constructor.*)
+  
+  (** The comment for type my_record *)
+  type my_record = {
+      val foo : int ;    (** Comment for field foo *)
+      val bar : string ; (** Comment for field bar *)
+    }
+    (** Continuation of comment for type my_record *)
+  
+  (** Comment for foo *)
+  val foo : string
+  (** This comment is associated to foo and not to bar. *)
+  val bar : string
+  (** This comment is assciated to bar. *)
+  
+  (** The comment for class my_class *)
+  class my_class :
+    object
+      (** A comment to describe inheritance from cl *)
+      inherit cl
+  
+      (** The comment for attribute tutu *)
+      val mutable tutu : string
+  
+      (** The comment for attribute toto. *)
+      val toto : int
+  
+      (** This comment is not attached to titi since
+          there is a blank line before titi, but is kept
+          as a comment in the class. *)
+  
+      val titi : string
+  
+      (** Comment for method toto *)
+      method toto : string
+  
+      (** Comment for method m *)
+      method m : float -> int
+    end
+  
+  (** The comment for the class type my_class_type *)
+  class type my_class_type =
+    object
+      (** The comment for variable x. *)
+      val mutable x : int
+  
+      (** The commend for method m. *)
+      method m : int -> int
+  end
+  
+  (** The comment for module Foo *)
+  module Foo =
+    struct
+      (** The comment for x *)
+      val x : int
+  
+      (** A special comment that is kept but not associated to any element *)
+    end
+  
+  (** The comment for module type my_module_type. *)
+  module type my_module_type =
+    sig
+      (** The comment for value x. *)
+      val x : int
+  
+      (** The comment for module M. *)
+      module M =
+        struct
+          (** The comment for value y. *)
+          val y : int
+  
+          (* ... *)
+        end
+  
+    end
+  
+>>
+  
+  
+
+ Comments in .ml files
+----------------------
+  
+  A special comment is associated to an element if it is placed before the
+element and there is no blank line between the comment and the element.
+Meanwhile, there can be a simple comment between the special comment and the
+element. There are two exceptions, for type constructors and record fields in
+type definitions, whose associated comment must be placed after the constructor
+or field definition, without blank line between them. The special comment for a
+type constructor with another type constructor following must be placed before
+the '|' character separating the two constructors.
+  The following example of file toto.ml shows where to place comments in a .ml
+file.
+<<(** The first special comment of the file is the comment associated
+      to the whole module.*)
+  
+  (** The comment for function f *)
+  let f x y = x + y
+  
+  (** This comment is not attached to any element since there is another
+      special comment just before the next element. *)
+  
+  (** Comment for exception My_exception, even with a simple comment
+      between the special comment and the exception.*)
+  (* A simple comment. *)
+  exception My_exception of (int -> int) * int
+  
+  (** Comment for type weather  *)
+  type weather =
+  | Rain of int (** The comment for constructor Rain *)
+  | Sun (** The comment for constructor Sun *)
+  
+  (** The comment for type my_record *)
+  type my_record = {
+      val foo : int ;    (** Comment for field foo *)
+      val bar : string ; (** Comment for field bar *)
+    }
+  
+  (** The comment for class my_class *)
+  class my_class =
+      object
+        (** A comment to describe inheritance from cl *)
+        inherit cl
+  
+        (** The comment for the instance variable tutu *)
+        val mutable tutu = "tutu"
+        (** The comment for toto *)
+        val toto = 1
+        val titi = "titi"
+        (** Comment for method toto *)
+        method toto = tutu ^ "!"
+        (** Comment for method m *)
+        method m (f : float) = 1
+      end
+  
+  (** The comment for class type my_class_type *)
+  class type my_class_type =
+    object
+      (** The comment for the instance variable x. *)
+      val mutable x : int
+      (** The commend for method m. *)
+      method m : int -> int
+    end
+  
+  (** The comment for module Foo *)
+  module Foo =
+    struct
+      (** The comment for x *)
+      val x : int
+      (** A special comment in the class, but not associated to any element. *)
+    end
+  
+  (** The comment for module type my_module_type. *)
+  module type my_module_type =
+    sig
+      (* Comment for value x. *)
+      val x : int
+      (* ... *)
+    end
+>>
+  
+
+Node: Subsection 15-2-2,	Next: Subsection 15-2-3,	Prev: Subsection 15-2-1,	Up: Section 15-2
+  
+
+15.2.2   The Stop special comment
+=================================
+   The special comment (**/**) tells OCamldoc to discard elements placed after
+this comment, up to the end of the current class, class type, module or module
+type, or up to the next stop comment. For instance: 
+<<class type foo =
+    object
+      (** comment for method m *)
+      method m : string
+  
+      (**/**)
+  
+      (** This method won't appear in the documentation *)
+      method bar : int
+    end
+  
+  (** This value appears in the documentation, since the Stop special comment
+      in the class does not affect the parent module of the class.*)
+  val foo : string
+  
+  (**/**)
+  (** The value bar does not appear in the documentation.*)
+  val bar : string
+  (**/**)
+  
+  (** The type t appears since in the documentation since the previous stop
+comment
+  toggled off the "no documentation mode". *)
+  type t = string
+>>
+  
+  The -no-stop option to ocamldoc causes the Stop special comments to be
+ignored.
+
+Node: Subsection 15-2-3,	Next: Subsection 15-2-4,	Prev: Subsection 15-2-2,	Up: Section 15-2
+  
+
+15.2.3   Syntax of documentation comments
+=========================================
+  
+  The inside of documentation comments (**...*) consists of free-form text with
+optional formatting annotations, followed by optional tags giving more specific
+information about parameters, version, authors, ... The tags are distinguished
+by a leading @ character. Thus, a documentation comment has the following
+shape: 
+<<(** The comment begins with a description, which is text formatted
+     according to the rules described in the next section.
+     The description continues until the first non-escaped '@' character.
+     @author Mr Smith
+     @param x description for parameter x
+  *)
+>>
+  Some elements support only a subset of all @-tags. Tags that are not relevant
+to the documented element are simply ignored. For instance, all tags are
+ignored when documenting type constructors, record fields, and class
+inheritance clauses. Similarly, a @param tag on a class instance variable is
+ignored.
+  At last, (**) is the empty documentation comment.
+
+Node: Subsection 15-2-4,	Next: Subsection 15-2-5,	Prev: Subsection 15-2-3,	Up: Section 15-2
+  
+
+15.2.4   Text formatting
+========================
+  
+  Here is the BNF grammar for the simple markup language used to format text
+descriptions.
+  text ::= (text_element)+
+   text_element ::=
+ | {[0-9]+ text}                 format text as a section     
+                                 header; the integer          
+                                 following { indicates the    
+                                 sectioning level.            
+ | {[0-9]+:label text}            same, but also associate    
+                                 the name label to the        
+                                 current point. This point    
+                                 can be referenced by its     
+                                 fully-qualified label in a   
+                                 {! command, just like any    
+                                 other element.               
+ | {b text}                      set text in bold.            
+ | {i text}                      set text in italic.          
+ | {e text}                      emphasize text.              
+ | {C text}                      center text.                 
+ | {L text}                      left align text.             
+ | {R text}                      right align text.            
+ | {ul list}                     build a list.                
+ | {ol list}                     build an enumerated list.    
+ | {{:string}text}               put a link to the given      
+                                 address (given as a string)  
+                                 on the given text.           
+ | [string]                      set the given string in      
+                                 source code style.           
+ | {[string]}                    set the given string in      
+                                 preformatted 				source code 
+                                 style.                       
+ | {v string v}                  set the given string in      
+                                 verbatim style.              
+ | {% string %}                  take the given string as raw 
+                                 LaTeX code.                  
+ | {!string}                     insert a reference to the    
+                                 element named string. string 
+                                 must be a fully qualified    
+                                 element name, for example    
+                                 Foo.Bar.t. The kind of the   
+                                 referenced element can be    
+                                 forced (useful when various  
+                                 elements have the same       
+                                 qualified name) with the     
+                                 following syntax: {!kind:    
+                                 Foo.Bar.t} where kind can be 
+                                 module, modtype, class,      
+                                 classtype, val, type,        
+                                 exception, attribute, method 
+                                 or section.                  
+ | {!modules: string string ...} insert an index table for    
+                                 the given module names. Used 
+                                 in HTML only.                
+ | {!indexlist}                  insert a table of links to   
+                                 the various indexes (types,  
+                                 values, modules, ...). Used  
+                                 in HTML only.                
+ | {^ text}                      set text in superscript.     
+ | {_ text}                      set text in subscript.       
+ | escaped_string                typeset the given string as  
+                                 is; special characters ('{', 
+                                 '}', '[', ']' and '@') must  
+                                 be	escaped by a '\'          
+ | blank_line                    force a new line.            
+
+   list ::=
+    | ({- text})+
+    | ({li text})+
+   A shortcut syntax exists for lists and enumerated lists: 
+<<(** Here is a {b list}
+  - item 1
+  - item 2
+  - item 3
+  
+  The list is ended by the blank line.*)
+>>
+  is equivalent to: 
+<<(** Here is a {b list}
+  {ul {- item 1}
+  {- item 2}
+  {- item 3}}
+  The list is ended by the blank line.*)
+>>
+  
+  The same shortcut is available for enumerated lists, using '+' instead of
+'-'. Note that only one list can be defined by this shortcut in nested lists.
+  In the description of a value, type, exception, module, module type, class or
+class type, the first sentence is sometimes used in indexes, or when just a
+part of the description is needed. The first sentence is composed of the first
+characters of the description, until 
+  
+   - the first dot followed by a blank, or 
+   - the first blank line 
+   outside of the following text formatting : {ul list}, {ol list}, [string],
+{[string]}, {v string v}, {% string%}, {!string}, {^ text}, {_ text}.
+
+Node: Subsection 15-2-5,	Next: Section 15-3,	Prev: Subsection 15-2-4,	Up: Section 15-2
+  
+
+15.2.5   Documentation tags (@-tags)
+====================================
+   
+  
+
+ Predefined tags
+----------------
+   The folowing table gives the list of predefined @-tags, with their syntax
+and meaning.
+   
+---------------------------------------------
+|@author string|The author of the element.  |
+|              |One author by @author tag.  |
+|              |There may be several @author|
+|              |tags for the same element.  |
+---------------------------------------------
+| @deprecated  |The text should describe    |
+|text          |when the element was        |
+|              |deprecated, what to use as a|
+|              |replacement, and possibly   |
+|              |the reason for deprecation. |
+---------------------------------------------
+| @param id    |Associate the given         |
+|text          |description (text) to the   |
+|              |given parameter name id.    |
+|              |This tag is used for        |
+|              |functions, methods, classes |
+|              |and functors.               |
+---------------------------------------------
+| @raise Exc   |Explain that the element may|
+|text          |raise the exception Exc.    |
+---------------------------------------------
+| @return text |Describe the return value   |
+|              |and its possible values.    |
+|              |This tag is used for        |
+|              |functions and methods.      |
+---------------------------------------------
+| @see <url>   |Add a reference to the URL  |
+|text          |between '<' and '>' with the|
+|              |given text as comment.      |
+---------------------------------------------
+| @see         |Add a reference to the given|
+|'filename'    |file name (written between  |
+|text          |single quotes), with the    |
+|              |given text as comment.      |
+---------------------------------------------
+| @see         |Add a reference to the given|
+|"document     |document name (written      |
+|name" text    |between double quotes), with|
+|              |the given text as comment.  |
+---------------------------------------------
+| @since string|Indicates when the element  |
+|              |was introduced.             |
+---------------------------------------------
+| @version     |The version number for the  |
+|string        |element.                    |
+---------------------------------------------
+  
+  
+
+ Custom tags
+------------
+    You can use custom tags in the documentation
+comments, but they will have no effect if the generator used does not handle
+them. To use a custom tag, for example foo, just put @foo with some text in
+your comment, as in: 
+<<(** My comment to show you a custom tag.
+  @foo this is the text argument to the [foo] custom tag.
+  *)
+>>
+  
+  To handle custom tags, you need to define a custom generator, as explained in
+section 15.3.2*Note Subsection 15-3-2::.
+
+Node: Section 15-3,	Next: Subsection 15-3-1,	Prev: Section 15-2,	Up: Chapter 15
+  
+
+15.3   Custom generators
+*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  OCamldoc operates in two steps: 
+  
+   1. analysis of the source files; 
+   2. generation of documentation, through a documentation generator, 	which is
+   an object of class Odoc_args.class_generator. 
+   Users can provide their own documentation generator to be used during step 2
+instead of the default generators. All the information retrieved during the
+analysis step is available through the Odoc_info module, which gives access to
+all the types and functions representing the elements found in the given
+modules, with their associated description.
+  The files you can used to define custom generators are installed in the
+ocamldoc sub-directory of the OCaml standard library.
+* Menu:
+
+* Subsection 15-3-1::	The generator class
+* Subsection 15-3-2::	Handling custom tags
+
+
+Node: Subsection 15-3-1,	Next: Subsection 15-3-2,	Prev: Section 15-3,	Up: Section 15-3
+  
+
+15.3.1   The generator class
+============================
+   A generator class is a class of type Odoc_args.doc_generator. It has only
+one method
+  generator : Odoc_info.Module.t_module list -> unit
+  This method will be called with the list of analysed and possibly merged
+Odoc_info.t_module structures. Of course the class can have other methods, but
+the object of this class must be coerced to Odoc_args.doc_generator before
+being passed to the function
+  Odoc_args.set_doc_generator : Odoc_args.doc_generator -> unit
+  which installs the new documentation generator.
+  The following example shows how to define and install a new documentation
+generator. See the odoc_fhtml generator (in the Ocamldoc Hump) for a complete
+example. 
+<<class my_doc_gen =
+    object
+      (* ... *)
+  
+      method generate module_list =
+        (* ... *)
+        ()
+  
+      (* ... *)
+    end
+  
+  let my_generator = new my_doc_gen
+  let _ = Odoc_args.set_doc_generator (my_generator :> Odoc_args.doc_generator)
+>>
+  
+  Note: The new class can inherit from Odoc_html.html, Odoc_latex.latex,
+Odoc_man.man, Odoc_texi.texi or Odoc_dot.dot, and redefine only some methods to
+benefit from the existing methods.
+
+Node: Subsection 15-3-2,	Next: Section 15-4,	Prev: Subsection 15-3-1,	Up: Section 15-3
+  
+
+15.3.2   Handling custom tags
+=============================
+   
+  Making a custom generator handle custom tags (see
+15.2.5*Note Subsection 15-2-5::) is very simple.
+
+For HTML
+--------
+   Here is how to develop a HTML generator handling your custom tags.
+  The class Odoc_html.html inherits from the class Odoc_html.info, containing a
+field tag_functions which is a list pairs composed of a custom tag (e.g. 'foo')
+and a function taking a text and returning HTML code (of type string). To
+handle a new tag bar, create a HTML generator class from the existing one and
+complete the tag_functions field: 
+<<class my_gen =
+    object(self)
+      inherit Odoc_html.html
+  
+      (** Return HTML code for the given text of a bar tag. *)
+      method html_of_bar t = (* your code here *)
+  
+      initializer
+        tag_functions <- ("bar", self#html_of_bar) :: tag_functions
+    end
+>>
+  
+  Another method of the class Odoc_html.info will look for the function
+associated to a custom tag and apply it to the text given to the tag. If no
+function is associated to a custom tag, then the method prints a warning
+message on stderr.
+  
+
+ For other generators
+---------------------
+   As for the HTML custom generator, you can define a new LaTeX(resp. man)
+generator by inheriting from the class Odoc_latex.latex (resp. Odoc_man.man)
+and adding your own tag handler to the field tag_functions.
+
+Node: Section 15-4,	Next: Subsection 15-4-1,	Prev: Section 15-3,	Up: Chapter 15
+  
+
+15.4   Adding command line options
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   The command line analysis is performed after loading the module containing
+the documentation generator, thus allowing command line options to be added to
+the list of existing ones. Adding an option can be done with the function
+  Odoc_args.add_option : string * Arg.spec * string -> unit
+  Note: Existing command line options can be redefined using this function.
+* Menu:
+
+* Subsection 15-4-1::	Compilation and usage
+
+
+Node: Subsection 15-4-1,	Next: Chapter 16,	Prev: Section 15-4,	Up: Section 15-4
+  
+
+15.4.1   Compilation and usage
+==============================
+   
+  
+
+ Defining a custom generator class in one file
+----------------------------------------------
+   Let custom.ml be the file defining a new generator class. Compilation of
+custom.ml can be performed by the following command :
+  ocamlc -I +ocamldoc -c custom.ml
+  The file custom.cmo is created and can be used this way :
+  ocamldoc -g custom.cmo other-options source-files
+  It is important not to give the -html or any other option selecting a built
+in generator to ocamldoc, which would result in using this generator instead of
+the one you just loaded.
+  
+
+ Defining a custom generator class in several files
+---------------------------------------------------
+   It is possible to define a generator class in several modules, which are
+defined in several files file1.ml[i], file2.ml[i], ..., fileN.ml[i]. A .cma
+library file must be created, including all these files.
+  The following commands create the custom.cma file from files file1.ml[i],
+..., fileN.ml[i] :
+  ocamlc -I +ocamldoc -c file1.ml[i]
+  ocamlc -I +ocamldoc -c file2.ml[i]
+  ...
+  ocamlc -I +ocamldoc -c fileN.ml[i]
+  ocamlc -o custom.cma -a file1.cmo file2.cmo ... fileN.cmo
+  Then, the following command uses custom.cma as custom generator:
+  ocamldoc -g custom.cma other-options source-files
+  Again, it is important not to give the -html or any other option selecting a
+built in generator to ocamldoc, which would result in using this generator
+instead of the one you just loaded.  
+
+Node: Chapter 16,	Next: Section 16-1,	Prev: Section 15-4,	Up: Part III
+  
+
+Chapter 16     The debugger (ocamldebug)
+****************************************
+    
+  This chapter describes the Objective Caml source-level replay debugger
+ocamldebug.
+     Unix: 
+    The debugger is available on Unix systems that provide BSD sockets. 
+  
+     Windows: 
+    The debugger is available under the Cygwin port of Objective Caml, but not
+   under the native Win32 ports. 
+  
+* Menu:
+
+* Section 16-1::	Compiling for debugging
+* Section 16-2::	Invocation
+* Section 16-3::	Commands
+* Section 16-4::	Executing a program
+* Section 16-5::	Breakpoints
+* Section 16-6::	The call stack
+* Section 16-7::	Examining variable values
+* Section 16-8::	Controlling the debugger
+* Section 16-9::	Miscellaneous commands
+* Section 16-10::	Running the debugger under Emacs
+
+
+Node: Section 16-1,	Next: Section 16-2,	Prev: Chapter 16,	Up: Chapter 16
+  
+
+16.1   Compiling for debugging
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  Before the debugger can be used, the program must be compiled and linked with
+the -g option: all .cmo and .cma files that are part of the program should have
+been created with ocamlc -g, and they must be linked together with ocamlc -g.
+  Compiling with -g entails no penalty on the running time of programs: object
+files and bytecode executable files are bigger and take longer to produce, but
+the executable files run at exactly the same speed as if they had been compiled
+without -g.
+
+Node: Section 16-2,	Next: Subsection 16-2-1,	Prev: Section 16-1,	Up: Chapter 16
+  
+
+16.2   Invocation
+*=*=*=*=*=*=*=*=*
+
+  
+* Menu:
+
+* Subsection 16-2-1::	Starting the debugger
+* Subsection 16-2-2::	Exiting the debugger
+
+
+Node: Subsection 16-2-1,	Next: Subsection 16-2-2,	Prev: Section 16-2,	Up: Section 16-2
+  
+
+16.2.1   Starting the debugger
+==============================
+  
+  The Objective Caml debugger is invoked by running the program ocamldebug with
+the name of the bytecode executable file as first argument: 
+<<
+          ocamldebug [options] program [arguments]
+>>
+   The arguments following program are optional, and are passed as command-line
+arguments to the program being debugged. (See also the set arguments command.)
+  The following command-line options are recognized: 
+  
+ -c  count  Set the maximum number of simultaneously live checkpoints to count.
+ 
+ -cd  dir  Run the debugger program from the working directory dir, instead of
+   the current directory. (See also the cd command.)
+ 
+ -emacs  Tell the debugger it is executed under Emacs. (See
+   section 16.10*Note Section 16-10:: for information on how to run the
+   debugger under Emacs.)
+ 
+ -I directory  Add directory to the list of directories searched for source
+   files and compiled files. (See also the directory command.)
+ 
+ -s socket  Use socket for communicating with the debugged program. See the
+   description of the command set socket
+   (section 16.8.6*Note Subsection 16-8-6::) for the format of socket.
+ 
+ -version  Print version string and exit.
+ 
+ -vnum  Print short version number and exit.
+ 
+ -help or --help  Display a short usage summary and exit. 
+  
+
+Node: Subsection 16-2-2,	Next: Section 16-3,	Prev: Subsection 16-2-1,	Up: Section 16-2
+  
+
+16.2.2   Exiting the debugger
+=============================
+  
+  The command quit exits the debugger. You can also exit the debugger by typing
+an end-of-file character (usually ctrl-D).
+  Typing an interrupt character (usually ctrl-C) will not exit the debugger,
+but will terminate the action of any debugger command that is in progress and
+return to the debugger command level. 
+
+Node: Section 16-3,	Next: Subsection 16-3-1,	Prev: Section 16-2,	Up: Chapter 16
+  
+
+16.3   Commands
+*=*=*=*=*=*=*=*
+
+   
+  A debugger command is a single line of input. It starts with a command name,
+which is followed by arguments depending on this name. Examples: 
+<<        run
+          goto 1000
+          set arguments arg1 arg2
+>>
+  
+  A command name can be truncated as long as there is no ambiguity. For
+instance, go 1000 is understood as goto 1000, since there are no other commands
+whose name starts with go. For the most frequently used commands, ambiguous
+abbreviations are allowed. For instance, r stands for run even though there are
+others commands starting with r. You can test the validity of an abbreviation
+using the help command.
+  If the previous command has been successful, a blank line (typing just RET)
+will repeat it.
+* Menu:
+
+* Subsection 16-3-1::	Getting help
+* Subsection 16-3-2::	Accessing the debugger state
+
+
+Node: Subsection 16-3-1,	Next: Subsection 16-3-2,	Prev: Section 16-3,	Up: Section 16-3
+  
+
+16.3.1   Getting help
+=====================
+  
+  The Objective Caml debugger has a simple on-line help system, which gives a
+brief description of each command and variable.
+  
+  
+ help  Print the list of commands.
+ 
+ help command  Give help about the command command.
+ 
+ help set variable, help show variable  Give help about the variable variable.
+   The list of all debugger variables can be obtained with help set.
+ 
+ help info topic  Give help about topic. Use help info to get a list of known
+   topics. 
+  
+
+Node: Subsection 16-3-2,	Next: Section 16-4,	Prev: Subsection 16-3-1,	Up: Section 16-3
+  
+
+16.3.2   Accessing the debugger state
+=====================================
+  
+  
+  
+ set variable value  Set the debugger variable variable to the value value.
+ 
+ show variable  Print the value of the debugger variable variable.
+ 
+ info subject  Give information about the given subject. For instance, info
+   breakpoints will print the list of all breakpoints. 
+  
+
+Node: Section 16-4,	Next: Subsection 16-4-1,	Prev: Section 16-3,	Up: Chapter 16
+  
+
+16.4   Executing a program
+*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+* Menu:
+
+* Subsection 16-4-1::	Events
+* Subsection 16-4-2::	Starting the debugged program
+* Subsection 16-4-3::	Running the program
+* Subsection 16-4-4::	Time travel
+* Subsection 16-4-5::	Killing the program
+
+
+Node: Subsection 16-4-1,	Next: Subsection 16-4-2,	Prev: Section 16-4,	Up: Section 16-4
+  
+
+16.4.1   Events
+===============
+  
+  Events are "interesting" locations in the source code, corresponding to the
+beginning or end of evaluation of "interesting" sub-expressions. Events are the
+unit of single-stepping (stepping goes to the next or previous event
+encountered in the program execution). Also, breakpoints can only be set at
+events. Thus, events play the role of line numbers in debuggers for
+conventional languages.
+  During program execution, a counter is incremented at each event encountered.
+The value of this counter is referred as the current time. Thanks to reverse
+execution, it is possible to jump back and forth to any time of the execution.
+  Here is where the debugger events (written §§) are located in the source
+code: 
+  
+   - Following a function application: 
+   <<
+     (f arg)§§
+   >>
+  
+   - On entrance to a function: 
+   <<
+     fun x y z -> §§ ...
+   >>
+  
+   - On each case of a pattern-matching definition (function, match...with
+   construct, try...with construct): 
+   <<
+     function pat1 -> §§ expr1
+            | ...
+            | patN -> §§ exprN
+   >>
+  
+   - Between subexpressions of a sequence: 
+   <<
+     expr1; §§ expr2; §§ ...; §§ exprN
+   >>
+  
+   - In the two branches of a conditional expression: 
+   <<
+     if cond then §§ expr1 else §§ expr2
+   >>
+  
+   - At the beginning of each iteration of a loop: 
+   <<
+     while cond do §§ body done
+     for i = a to b do §§ body done
+   >>
+  
+   Exceptions: A function application followed by a function return is replaced
+by the compiler by a jump (tail-call optimization). In this case, no event is
+put after the function application. 
+
+Node: Subsection 16-4-2,	Next: Subsection 16-4-3,	Prev: Subsection 16-4-1,	Up: Section 16-4
+  
+
+16.4.2   Starting the debugged program
+======================================
+  
+  The debugger starts executing the debugged program only when needed. This
+allows setting breapoints or assigning debugger variables before execution
+starts. There are several ways to start execution: 
+  
+ run  Run the program until a breakpoint is hit, or the program terminates. 
+ step 0  Load the program and stop on the first event. 
+ goto time  Load the program and execute it until the given time. Useful when
+   you already know approximately at what time the problem appears. Also useful
+   to set breakpoints on function values that have not been computed at time 0
+   (see section 16.5*Note Section 16-5::). 
+  
+  The execution of a program is affected by certain information it receives
+when the debugger starts it, such as the command-line arguments to the program
+and its working directory. The debugger provides commands to specify this
+information (set arguments and cd). These commands must be used before program
+execution starts. If you try to change the arguments or the working directory
+after starting your program, the debugger will kill the program (after asking
+for confirmation).
+
+Node: Subsection 16-4-3,	Next: Subsection 16-4-4,	Prev: Subsection 16-4-2,	Up: Section 16-4
+  
+
+16.4.3   Running the program
+============================
+  
+  The following commands execute the program forward or backward, starting at
+the current time. The execution will stop either when specified by the command
+or when a breakpoint is encountered.
+  
+  
+ run  Execute the program forward from current time. Stops at next breakpoint
+   or when the program terminates. 
+ reverse  Execute the program backward from current time. Mostly useful to go
+   to the last breakpoint encountered before the current time. 
+ step [count]  Run the program and stop at the next event. With an argument, do
+   it count times. 
+ backstep [count]  Run the program backward and stop at the previous event.
+   With an argument, do it count times. 
+ next [count]  Run the program and stop at the next event, skipping over
+   function calls. With an argument, do it count times. 
+ previous [count]  Run the program backward and stop at the previous event,
+   skipping over function calls. With an argument, do it count times. 
+ finish  Run the program until the current function returns. 
+ start  Run the program backward and stop at the first event before the current
+   function invocation. 
+  
+
+Node: Subsection 16-4-4,	Next: Subsection 16-4-5,	Prev: Subsection 16-4-3,	Up: Section 16-4
+  
+
+16.4.4   Time travel
+====================
+  
+  You can jump directly to a given time, without stopping on breakpoints, using
+the goto command.
+  As you move through the program, the debugger maintains an history of the
+successive times you stop at. The last command can be used to revisit these
+times: each last command moves one step back through the history. That is
+useful mainly to undo commands such as step and next.
+  
+  
+ goto time  Jump to the given time. 
+ last [count]  Go back to the latest time recorded in the execution history.
+   With an argument, do it count times. 
+ set history size  Set the size of the execution history. 
+  
+
+Node: Subsection 16-4-5,	Next: Section 16-5,	Prev: Subsection 16-4-4,	Up: Section 16-4
+  
+
+16.4.5   Killing the program
+============================
+  
+  
+  
+ kill  Kill the program being executed. This command is mainly useful if you
+   wish to recompile the program without leaving the debugger. 
+  
+
+Node: Section 16-5,	Next: Section 16-6,	Prev: Section 16-4,	Up: Chapter 16
+  
+
+16.5   Breakpoints
+*=*=*=*=*=*=*=*=*=
+
+   
+  A breakpoint causes the program to stop whenever a certain point in the
+program is reached. It can be set in several ways using the break command.
+Breakpoints are assigned numbers when set, for further reference. The most
+comfortable way to set breakpoints is through the Emacs interface (see
+section 16.10*Note Section 16-10::).
+  
+  
+ break  Set a breakpoint at the current position in the program execution. The
+   current position must be on an event (i.e., neither at the beginning, nor at
+   the end of the program).
+ 
+ break function  Set a breakpoint at the beginning of function. This works only
+   when the functional value of the identifier function has been computed and
+   assigned to the identifier. Hence this command cannot be used at the very
+   beginning of the program execution, when all identifiers are still
+   undefined; use goto time to advance execution until the functional value is
+   available.
+ 
+ break @ [module] line  Set a breakpoint in module module (or in the current
+   module if module is not given), at the first event of line line.
+ 
+ break @ [module] line column  Set a breakpoint in module module (or in the
+   current module if module is not given), at the event closest to line line,
+   column column.
+ 
+ break @ [module] # character  Set a breakpoint in module module at the event
+   closest to character number character.
+ 
+ break address  Set a breakpoint at the code address address.
+ 
+ delete [breakpoint-numbers]  Delete the specified breakpoints. Without
+   argument, all breakpoints are deleted (after asking for confirmation).
+ 
+ info breakpoints  Print the list of all breakpoints. 
+  
+
+Node: Section 16-6,	Next: Section 16-7,	Prev: Section 16-5,	Up: Chapter 16
+  
+
+16.6   The call stack
+*=*=*=*=*=*=*=*=*=*=*
+
+  
+  Each time the program performs a function application, it saves the location
+of the application (the return address) in a block of data called a stack
+frame. The frame also contains the local variables of the caller function. All
+the frames are allocated in a region of memory called the call stack. The
+command backtrace (or bt) displays parts of the call stack.
+  At any time, one of the stack frames is "selected" by the debugger; several
+debugger commands refer implicitly to the selected frame. In particular,
+whenever you ask the debugger for the value of a local variable, the value is
+found in the selected frame. The commands frame, up and down select whichever
+frame you are interested in.
+  When the program stops, the debugger automatically selects the currently
+executing frame and describes it briefly as the frame command does.
+  
+  
+ frame  Describe the currently selected stack frame.
+ 
+ frame frame-number  Select a stack frame by number and describe it. The frame
+   currently executing when the program stopped has number 0; its caller has
+   number 1; and so on up the call stack.
+ 
+ backtrace [count], bt [count]  Print the call stack. This is useful to see
+   which sequence of function calls led to the currently executing frame. With
+   a positive argument, print only the innermost count frames. With a negative
+   argument, print only the outermost -count frames.
+ 
+ up [count]  Select and display the stack frame just "above" the selected
+   frame, that is, the frame that called the selected frame. An argument says
+   how many frames to go up.
+ 
+ down [count]  Select and display the stack frame just "below" the selected
+   frame, that is, the frame that was called by the selected frame. An argument
+   says how many frames to go down. 
+  
+
+Node: Section 16-7,	Next: Section 16-8,	Prev: Section 16-6,	Up: Chapter 16
+  
+
+16.7   Examining variable values
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  The debugger can print the current value of simple expressions. The
+expressions can involve program variables: all the identifiers that are in
+scope at the selected program point can be accessed.
+  Expressions that can be printed are a subset of Objective Caml expressions,
+as described by the following grammar: 
+           simple-expr ::=  lowercase-ident                          
+                        |   { capitalized-ident . }  lowercase-ident 
+                        |   *                                        
+                        |   $ integer                                
+                        |   simple-expr .  lowercase-ident           
+                        |   simple-expr .(  integer )                
+                        |   simple-expr .[  integer ]                
+                        |   ! simple-expr                            
+                        |   ( simple-expr )                          
+   The first two cases refer to a value identifier, either unqualified or
+qualified by the path to the structure that define it. * refers to the result
+just computed (typically, the value of a function application), and is valid
+only if the selected event is an "after" event (typically, a function
+application). $ integer refer to a previously printed value. The remaining four
+forms select part of an expression: respectively, a record field, an array
+element, a string element, and the current contents of a reference.
+  
+  
+ print variables  Print the values of the given variables. print can be
+   abbreviated as p. 
+ display variables  Same as print, but limit the depth of printing to 1. Useful
+   to browse large data structures without printing them in full. display can
+   be abbreviated as d. 
+  
+  When printing a complex expression, a name of the form $integer is
+automatically assigned to its value. Such names are also assigned to parts of
+the value that cannot be printed because the maximal printing depth is
+exceeded. Named values can be printed later on with the commands p $integer or
+d $integer. Named values are valid only as long as the program is stopped. They
+are forgotten as soon as the program resumes execution.
+  
+  
+ set print_depth d  Limit the printing of values to a maximal depth of d.  
+ set print_length l  Limit the printing of values to at most l nodes printed. 
+  
+
+Node: Section 16-8,	Next: Subsection 16-8-1,	Prev: Section 16-7,	Up: Chapter 16
+  
+
+16.8   Controlling the debugger
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+* Menu:
+
+* Subsection 16-8-1::	Setting the program name and arguments
+* Subsection 16-8-2::	How programs are loaded
+* Subsection 16-8-3::	Search path for files
+* Subsection 16-8-4::	Working directory
+* Subsection 16-8-5::	Turning reverse execution on and off
+* Subsection 16-8-6::	Communication between the debugger and the program
+* Subsection 16-8-7::	Fine-tuning the debugger
+* Subsection 16-8-8::	User-defined printers
+
+
+Node: Subsection 16-8-1,	Next: Subsection 16-8-2,	Prev: Section 16-8,	Up: Section 16-8
+  
+
+16.8.1   Setting the program name and arguments
+===============================================
+  
+  
+  
+ set program file  Set the program name to file. 
+ set arguments arguments  Give arguments as command-line arguments for the
+   program. 
+  
+  A shell is used to pass the arguments to the debugged program. You can
+therefore use wildcards, shell variables, and file redirections inside the
+arguments. To debug programs that read from standard input, it is recommended
+to redirect their input from a file (using set arguments < input-file),
+otherwise input to the program and input to the debugger are not properly
+separated, and inputs are not properly replayed when running the program
+backwards.
+
+Node: Subsection 16-8-2,	Next: Subsection 16-8-3,	Prev: Subsection 16-8-1,	Up: Section 16-8
+  
+
+16.8.2   How programs are loaded
+================================
+  
+  The loadingmode variable controls how the program is executed.
+  
+  
+ set loadingmode direct  The program is run directly by the debugger. This is
+   the default mode. 
+ set loadingmode runtime  The debugger execute the Objective Caml runtime
+   ocamlrun on the program. Rarely useful; moreover it prevents the debugging
+   of programs compiled in "custom runtime" mode. 
+ set loadingmode manual  The user starts manually the program, when asked by
+   the debugger. Allows remote debugging (see
+   section 16.8.6*Note Subsection 16-8-6::). 
+  
+
+Node: Subsection 16-8-3,	Next: Subsection 16-8-4,	Prev: Subsection 16-8-2,	Up: Section 16-8
+  
+
+16.8.3   Search path for files
+==============================
+  
+  The debugger searches for source files and compiled interface files in a list
+of directories, the search path. The search path initially contains the current
+directory . and the standard library directory. The directory command adds
+directories to the path.
+  Whenever the search path is modified, the debugger will clear any information
+it may have cached about the files.
+  
+  
+ directory directorynames  Add the given directories to the search path. These
+   directories are added at the front, and will therefore be searched first.
+ 
+ directory directorynames for modulename  Same as directory directorynames, but
+   the given directories will be searched only when looking for the source file
+   of a module that has  been packed into modulename.
+ 
+ directory  Reset the search path. This requires confirmation. 
+  
+
+Node: Subsection 16-8-4,	Next: Subsection 16-8-5,	Prev: Subsection 16-8-3,	Up: Section 16-8
+  
+
+16.8.4   Working directory
+==========================
+  
+  Each time a program is started in the debugger, it inherits its working
+directory from the current working directory of the debugger. This working
+directory is initially whatever it inherited from its parent process (typically
+the shell), but you can specify a new working directory in the debugger with
+the cd command or the -cd command-line option.
+  
+  
+ cd directory  Set the working directory for camldebug to directory.
+ 
+ pwd  Print the working directory for camldebug. 
+  
+
+Node: Subsection 16-8-5,	Next: Subsection 16-8-6,	Prev: Subsection 16-8-4,	Up: Section 16-8
+  
+
+16.8.5   Turning reverse execution on and off
+=============================================
+  
+  In some cases, you may want to turn reverse execution off. This speeds up the
+program execution, and is also sometimes useful for interactive programs. 
+  Normally, the debugger takes checkpoints of the program state from time to
+time. That is, it makes a copy of the current state of the program (using the
+Unix system call fork). If the variable checkpoints is set to off, the debugger
+will not take any checkpoints.
+  
+  
+ set checkpoints on/off  Select whether the debugger makes checkpoints or not. 
+  
+
+Node: Subsection 16-8-6,	Next: Subsection 16-8-7,	Prev: Subsection 16-8-5,	Up: Section 16-8
+  
+
+16.8.6   Communication between the debugger and the program
+===========================================================
+   
+  The debugger communicate with the program being debugged through a Unix
+socket. You may need to change the socket name, for example if you need to run
+the debugger on a machine and your program on another.
+  
+  
+ set socket socket  Use socket for communication with the program. socket can
+   be either a file name, or an Internet port specification host:port, where
+   host is a host name or an Internet address in dot notation, and port is a
+   port number on the host. 
+  
+  On the debugged program side, the socket name is passed through the
+CAML_DEBUG_SOCKET environment variable.
+
+Node: Subsection 16-8-7,	Next: Subsection 16-8-8,	Prev: Subsection 16-8-6,	Up: Section 16-8
+  
+
+16.8.7   Fine-tuning the debugger
+=================================
+   
+  Several variables enables to fine-tune the debugger. Reasonable defaults are
+provided, and you should normally not have to change them.
+  
+  
+ set processcount count  Set the maximum number of checkpoints to count. More
+   checkpoints facilitate going far back in time, but use more memory and
+   create more Unix processes. 
+  
+  As checkpointing is quite expensive, it must not be done too often. On the
+other hand, backward execution is faster when checkpoints are taken more often.
+In particular, backward single-stepping is more responsive when many
+checkpoints have been taken just before the current time. To fine-tune the
+checkpointing strategy, the debugger does not take checkpoints at the same
+frequency for long displacements (e.g. run) and small ones (e.g. step). The two
+variables bigstep and smallstep contain the number of events between two
+checkpoints in each case.
+  
+  
+ set bigstep count  Set the number of events between two checkpoints for long
+   displacements. 
+ set smallstep count  Set the number of events between two checkpoints for
+   small displacements. 
+  
+  The following commands display information on checkpoints and events:
+  
+  
+ info checkpoints  Print a list of checkpoints. 
+ info events [module]  Print the list of events in the given module (the
+   current module, by default). 
+  
+
+Node: Subsection 16-8-8,	Next: Section 16-9,	Prev: Subsection 16-8-7,	Up: Section 16-8
+  
+
+16.8.8   User-defined printers
+==============================
+  
+  Just as in the toplevel system
+(section 9.2*Note Section 9-2::), the user can register
+functions for printing values of certain types. For technical reasons, the
+debugger cannot call printing functions that reside in the program being
+debugged. The code for the printing functions must therefore be loaded
+explicitly in the debugger.
+  
+  
+ load_printer "file-name"  Load in the debugger the indicated .cmo or .cma
+   object file. The file is loaded in an environment consisting only of the
+   Objective Caml standard library plus the definitions provided by object
+   files previously loaded using load_printer. If this file depends on other
+   object files not yet loaded, the debugger automatically loads them if it is
+   able to find them in the search path. The loaded file does not have direct
+   access to the modules of the program being debugged.
+ 
+ install_printer printer-name  Register the function named printer-name (a
+   value path) as a printer for objects whose types match the argument type of
+   the function. That is, the debugger will call printer-name when it has such
+   an object to print. The printing function printer-name must use the Format
+   library module to produce its output, otherwise its output will not be
+   correctly located in the values printed by the toplevel loop.
+ The value path printer-name must refer to one of the functions defined by the
+   object files loaded using load_printer. It cannot reference the functions of
+   the program being debugged.
+ 
+ remove_printer printer-name  Remove the named function from the table of value
+   printers. 
+  
+
+Node: Section 16-9,	Next: Section 16-10,	Prev: Section 16-8,	Up: Chapter 16
+  
+
+16.9   Miscellaneous commands
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  
+  
+ list [module] [beginning] [end]  List the source of module module, from line
+   number beginning to line number end. By default, 20 lines of the current
+   module are displayed, starting 10 lines before the current position. 
+ source filename  Read debugger commands from the script filename. 
+  
+
+Node: Section 16-10,	Next: Chapter 17,	Prev: Section 16-9,	Up: Chapter 16
+  
+
+16.10   Running the debugger under Emacs
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  The most user-friendly way to use the debugger is to run it under Emacs. See
+the file emacs/README in the distribution for information on how to load the
+Emacs Lisp files for Caml support.
+  The Caml debugger is started under Emacs by the command M-x camldebug, with
+argument the name of the executable file progname to debug. Communication with
+the debugger takes place in an Emacs buffer named *camldebug-progname*. The
+editing and history facilities of Shell mode are available for interacting with
+the debugger.
+  In addition, Emacs displays the source files containing the current event
+(the current position in the program execution) and highlights the location of
+the event. This display is updated synchronously with the debugger action.
+  The following bindings for the most common debugger commands are available in
+the *camldebug-progname* buffer:
+  
+  
+ C-c C-s  (command step): execute the program one step forward. 
+ C-c C-k  (command backstep): execute the program one step backward. 
+ C-c C-n  (command next): execute the program one step forward, skipping over
+   function calls. 
+ Middle mouse button  (command display): display named value. $n under mouse
+   cursor (support incremental browsing of large data structures). 
+ C-c C-p  (command print): print value of identifier at point. 
+ C-c C-d  (command display): display value of identifier at point. 
+ C-c C-r  (command run): execute the program forward to next breakpoint. 
+ C-c C-v  (command reverse): execute the program backward to latest breakpoint.
+   
+ C-c C-l  (command last): go back one step in the command history. 
+ C-c C-t  (command backtrace): display backtrace of function calls. 
+ C-c C-f  (command finish): run forward till the current function returns. 
+ C-c <  (command up): select the stack frame below the current frame. 
+ C-c >  (command down): select the stack frame above the current frame. 
+  
+  In all buffers in Caml editing mode, the following debugger commands are also
+available:
+  
+  
+ C-x C-a C-b  (command break): set a breakpoint at event closest to point 
+ C-x C-a C-p  (command print): print value of identifier at point 
+ C-x C-a C-d  (command display): display value of identifier at point 
+    

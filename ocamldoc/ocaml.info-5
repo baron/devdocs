@@ -1,0 +1,1126 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Subsection 6-7-1,	Next: Subsection 6-7-2,	Prev: Section 6-7,	Up: Section 6-7
+  
+
+6.7.1   Basic expressions
+=========================
+  
+
+Constants
+---------
+  
+  Expressions consisting in a constant evaluate to this constant.
+
+Value paths
+-----------
+   
+  Expressions consisting in an access path evaluate to the value bound to this
+path in the current evaluation environment. The path can be either a value name
+or an access path to a value component of a module.
+
+Parenthesized expressions
+-------------------------
+    
+  The expressions ( expr ) and begin expr end have the same value as expr. Both
+constructs are semantically equivalent, but it is good style to use begin ...
+end inside control structures: 
+<<
+          if ... then begin ... ; ... end else begin ... ; ... end
+>>
+   and ( ... ) for the other grouping situations.
+  Parenthesized expressions can contain a type constraint, as in ( expr :
+ typexpr ). This constraint forces the type of expr to be compatible with
+typexpr.
+  Parenthesized expressions can also contain coercions ( expr  [: typexpr] :>
+ typexpr) (see subsection 6.7.6*Note Subsection 6-7-6:: below).
+
+Function application
+--------------------
+  
+  Function application is denoted by juxtaposition of (possibly labeled)
+expressions. The expression expr  argument_1 ...  argument_n evaluates the
+expression expr and those appearing in argument_1 to argument_n. The expression
+expr must evaluate to a functional value f, which is then applied to the values
+of  argument_1, ...,  argument_n.
+  The order in which the expressions expr,  argument_1, ...,  argument_n are
+evaluated is not specified.
+  Arguments and parameters are matched according to their respective labels.
+Argument order is irrelevant, except among arguments with the same label, or no
+label.
+  If a parameter is specified as optional (label prefixed by ?) in the type of
+expr, the corresponding argument will be automatically wrapped with the
+constructor Some, except if the argument itself is also prefixed by ?, in which
+case it is passed as is. If a non-labeled argument is passed, and its
+corresponding parameter is preceded by one or several optional parameters, then
+these parameters are defaulted, i.e. the value None will be passed for them.
+All other missing parameters (without corresponding argument), both optional
+and non-optional, will be kept, and the result of the function will still be a
+function of these missing parameters to the body of f.
+  As a special case, if the function has a known arity, all the arguments are
+unlabeled, and their number matches the number of non-optional parameters, then
+labels are ignored and non-optional parameters are matched in their definition
+order. Optional arguments are defaulted.
+  In all cases but exact match of order and labels, without optional
+parameters, the function type should be known at the application point. This
+can be ensured by adding a type constraint. Principality of the derivation can
+be checked in the -principal mode.
+
+Function definition
+-------------------
+  
+  Two syntactic forms are provided to define functions. The first form is
+introduced by the keyword function: 
+                                                     
+                          function pattern  -> expr  
+                                          1        1 
+                                 | ...               
+                                                     
+                                 | pattern  -> expr  
+                                          n        n 
+   This expression evaluates to a functional value with one argument. When this
+function is applied to a value v, this value is matched against each pattern
+pattern_1 to pattern_n. If one of these matchings succeeds, that is, if the
+value v matches the pattern pattern_i for some i, then the expression expr_i
+associated to the selected pattern is evaluated, and its value becomes the
+value of the function application. The evaluation of expr_i takes place in an
+environment enriched by the bindings performed during the matching.
+  If several patterns match the argument v, the one that occurs first in the
+function definition is selected. If none of the patterns matches the argument,
+the exception Match_failure is raised. 
+  
+  
+  The other form of function definition is introduced by the keyword fun:
+ 
+                    fun parameter_1 ...  parameter_n ->  expr 
+   This expression is equivalent to: 
+                fun parameter_1 -> ... fun  parameter_n ->  expr 
+  
+  The parameter patterns ~var and ~(var [: typexpr]) are shorthands for
+respectively ~var:var and ~var:(var [: typexpr]), and similarly for their
+optional counterparts.
+  Functions of the form fun ?lab:( pattern =  expr_0 ) ->  expr are equivalent
+to 
+    fun ?lab:ident -> let  pattern = match  ident with Some  ident ->  ident |
+                           None ->  expr_0 in  expr 
+   where ident is a fresh variable. When expr_0 will be evaluated is left
+unspecified.
+  After these two transformations, expressions are of the form 
+       fun [label_1]  pattern_1 -> ... fun  [label_n]  pattern_n ->  expr 
+   If we ignore labels, which will only be meaningful at function application,
+this is equivalent to 
+             function pattern_1 -> ... function  pattern_n ->  expr 
+   That is, the fun expression above evaluates to a curried function with n
+arguments: after applying this function n times to the values v_1 ... v_m, the
+values will be matched in parallel against the patterns pattern_1 ...
+ pattern_n. If the matching succeeds, the function returns the value of expr in
+an environment enriched by the bindings performed during the matchings. If the
+matching fails, the exception Match_failure is raised.
+
+Guards in pattern-matchings
+---------------------------
+  
+ Cases of a pattern matching (in the function, fun, match
+and try constructs) can include guard expressions, which are arbitrary boolean
+expressions that must evaluate to true for the match case to be selected.
+Guards occur just before the -> token and are introduced by the when keyword:
+                                                              
+                 function pattern    [when   cond ]  -> expr  
+                                 1               1          1 
+                        | ...                                 
+                                                              
+                        | pattern     [when   cond ] -> expr  
+                                 n                n         n 
+  
+  Matching proceeds as described before, except that if the value matches some
+pattern pattern_i which has a guard cond_i, then the expression cond_i is
+evaluated (in an environment enriched by the bindings performed during
+matching). If cond_i evaluates to true, then expr_i is evaluated and its value
+returned as the result of the matching, as usual. But if cond_i evaluates to
+false, the matching is resumed against the patterns following pattern_i.
+
+Local definitions
+-----------------
+   
+
+  The let and let rec constructs bind value names locally. The construct 
+        let pattern_1 =  expr_1 and ... and  pattern_n =  expr_n in  expr 
+   evaluates expr_1 ...  expr_n in some unspecified order, then matches their
+values against the patterns pattern_1 ...  pattern_n. If the matchings succeed,
+expr is evaluated in the environment enriched by the bindings performed during
+matching, and the value of expr is returned as the value of the whole let
+expression. If one of the matchings fails, the exception Match_failure is
+raised. 
+  An alternate syntax is provided to bind variables to functional values:
+instead of writing 
+             let ident = fun  parameter_1 ...  parameter_m ->  expr 
+   in a let expression, one may instead write 
+                 let ident  parameter_1 ...  parameter_m =  expr 
+  
+  
+  Recursive definitions of names are introduced by let rec: 
+      let rec pattern_1 =  expr_1 and ... and  pattern_n =  expr_n in  expr 
+   The only difference with the let construct described above is that the
+bindings of names to values performed by the pattern-matching are considered
+already performed when the expressions expr_1 to expr_n are evaluated. That is,
+the expressions expr_1 to expr_n can reference identifiers that are bound by
+one of the patterns pattern_1, ...,  pattern_n, and expect them to have the
+same value as in expr, the body of the let rec construct.
+  The recursive definition is guaranteed to behave as described above if the
+expressions expr_1 to expr_n are function definitions (fun ... or function
+...), and the patterns pattern_1 ...  pattern_n are just value names, as in: 
+         let rec name_1 = fun ... and ... and  name_n = fun ... in  expr 
+   This defines name_1 ...  name_n as mutually recursive functions local to
+expr. 
+  The behavior of other forms of let rec definitions is
+implementation-dependent. The current implementation also supports a certain
+class of recursive definitions of non-functional values, as explained in
+section 7.3*Note Section 7-3::.
+
+Node: Subsection 6-7-2,	Next: Subsection 6-7-3,	Prev: Subsection 6-7-1,	Up: Section 6-7
+  
+
+6.7.2   Control structures
+==========================
+  
+
+Sequence
+--------
+  
+  The expression expr_1 ;  expr_2 evaluates expr_1 first, then expr_2, and
+returns the value of expr_2.
+
+Conditional
+-----------
+   
+  The expression if expr_1 then  expr_2 else  expr_3 evaluates to the value of
+expr_2 if expr_1 evaluates to the boolean true, and to the value of expr_3 if
+expr_1 evaluates to the boolean false.
+  The else expr_3 part can be omitted, in which case it defaults to else ().
+
+Case expression
+---------------
+
+  The expression 
+                            match expr              
+                                                    
+                             with pattern  -> expr  
+                                         1        1 
+                                | ...               
+                                                    
+                                | pattern  -> expr  
+                                         n        n 
+   matches the value of expr against the patterns pattern_1 to pattern_n. If
+the matching against pattern_i succeeds, the associated expression expr_i is
+evaluated, and its value becomes the value of the whole match expression. The
+evaluation of expr_i takes place in an environment enriched by the bindings
+performed during matching. If several patterns match the value of expr, the one
+that occurs first in the match expression is selected. If none of the patterns
+match the value of expr, the exception Match_failure is raised. 
+
+Boolean operators
+-----------------
+  
+  The expression expr_1 &&  expr_2 evaluates to true if both expr_1 and expr_2
+evaluate to true; otherwise, it evaluates to false. The first component,
+expr_1, is evaluated first. The second component, expr_2, is not evaluated if
+the first component evaluates to false. Hence, the expression expr_1 &&  expr_2
+behaves  exactly as 
+                       if expr_1 then  expr_2 else false. 
+  
+  The expression expr_1 ||  expr_2 evaluates to true if one of expr_1 and
+expr_2 evaluates to true; otherwise, it evaluates to false. The first
+component, expr_1, is evaluated first. The second component, expr_2, is not
+evaluated if the first component evaluates to true. Hence, the expression
+expr_1 ||  expr_2 behaves  exactly as 
+                        if expr_1 then true else  expr_2. 
+  
+ The boolean operator & is synonymous for &&. The boolean
+operator or is synonymous for ||.
+
+Loops
+-----
+  
+ The expression while expr_1 do  expr_2 done repeatedly
+evaluates expr_2 while expr_1 evaluates to true. The loop condition expr_1 is
+evaluated and tested at the beginning of each iteration. The whole while ...
+done expression evaluates to the unit value ().
+ The expression for name =  expr_1 to  expr_2 do  expr_3
+done first evaluates the expressions expr_1 and expr_2 (the boundaries) into
+integer values n and p. Then, the loop body expr_3 is repeatedly evaluated in
+an environment where name is successively bound to the values n, n+1, ..., p-1,
+p. The loop body is never evaluated if n > p.
+  The expression for name =  expr_1 downto  expr_2 do  expr_3 done evaluates
+similarly, except that name is successively bound to the values n, n-1, ...,
+p+1, p. The loop body is never evaluated if n < p.
+  In both cases, the whole for expression evaluates to the unit value ().
+
+Exception handling
+------------------
+   
+  The expression 
+                            try  expr              
+                                                   
+                            with pattern  -> expr  
+                                        1        1 
+                               | ...               
+                                                   
+                               | pattern  -> expr  
+                                        n        n 
+   evaluates the expression expr and returns its value if the evaluation of
+expr does not raise any exception. If the evaluation of expr raises an
+exception, the exception value is matched against the patterns pattern_1 to
+pattern_n. If the matching against pattern_i succeeds, the associated
+expression expr_i is evaluated, and its value becomes the value of the whole
+try expression. The evaluation of expr_i takes place in an environment enriched
+by the bindings performed during matching. If several patterns match the value
+of expr, the one that occurs first in the try expression is selected. If none
+of the patterns matches the value of expr, the exception value is raised again,
+thereby transparently "passing through" the try construct.
+
+Node: Subsection 6-7-3,	Next: Subsection 6-7-4,	Prev: Subsection 6-7-2,	Up: Section 6-7
+  
+
+6.7.3   Operations on data structures
+=====================================
+  
+
+Products
+--------
+  
+  The expression expr_1 , ... ,  expr_n evaluates to the n-tuple of the values
+of expressions expr_1 to expr_n. The evaluation order for the subexpressions is
+not specified.
+
+Variants
+--------
+  
+  The expression constr  expr evaluates to the variant value whose constructor
+is constr, and whose argument is the value of expr.
+  For lists, some syntactic sugar is provided. The expression expr_1 ::  expr_2
+stands for the constructor ( :: )  applied to the argument ( expr_1 ,  expr_2
+), and therefore evaluates to the list whose head is the value of expr_1 and
+whose tail is the value of expr_2. The expression [ expr_1 ; ... ;  expr_n ] is
+equivalent to expr_1 :: ... ::  expr_n :: [], and therefore evaluates to the
+list whose elements are the values of expr_1 to expr_n.
+
+Polymorphic variants
+--------------------
+  
+  The expression `tag-name  expr evaluates to the polymorphic variant value
+whose tag is tag-name, and whose argument is the value of expr.
+
+Records
+-------
+  
+  The expression { field_1 =  expr_1 ; ... ;  field_n =  expr_n } evaluates to
+the record value { field_1 = v_1; ...; field_n = v_n } where v_i is the value
+of expr_i for i = 1,... , n. The fields field_1 to field_n must all belong to
+the same record types; all fields belonging to this record type must appear
+exactly once in the record expression, though they can appear in any order. The
+order in which expr_1 to expr_n are evaluated is not specified.
+  The expression { expr with  field_1 =  expr_1 ; ... ;  field_n =  expr_n }
+builds a fresh record with fields field_1 ...  field_n equal to expr_1 ...
+ expr_n, and all other fields having the same value as in the record expr. In
+other terms, it returns a shallow copy of the record expr, except for the
+fields field_1 ...  field_n, which are initialized to expr_1 ...  expr_n.
+  The expression expr_1 .  field evaluates expr_1 to a record value, and
+returns the value associated to field in this record value.
+  The expression expr_1 .  field <-  expr_2 evaluates expr_1 to a record value,
+which is then modified in-place by replacing the value associated to field in
+this record by the value of expr_2. This operation is permitted only if field
+has been declared mutable in the definition of the record type. The whole
+expression expr_1 .  field <-  expr_2 evaluates to the unit value ().
+
+Arrays
+------
+  
+  The expression [| expr_1 ; ... ;  expr_n |] evaluates to a n-element array,
+whose elements are initialized with the values of expr_1 to expr_n
+respectively. The order in which these expressions are evaluated is
+unspecified.
+  The expression expr_1 .(  expr_2 ) returns the value of element number expr_2
+in the array denoted by expr_1. The first element has number 0; the last
+element has number n-1, where n is the size of the array. The exception
+Invalid_argument is raised if the access is out of bounds.
+  The expression expr_1 .(  expr_2 ) <-  expr_3 modifies in-place the array
+denoted by expr_1, replacing element number expr_2 by the value of expr_3. The
+exception Invalid_argument is raised if the access is out of bounds. The value
+of the whole expression is ().
+
+Strings
+-------
+  
+  The expression expr_1 .[  expr_2 ] returns the value of character number
+expr_2 in the string denoted by expr_1. The first character has number 0; the
+last character has number n-1, where n is the length of the string. The
+exception Invalid_argument is raised if the access is out of bounds.
+  The expression expr_1 .[  expr_2 ] <-  expr_3 modifies in-place the string
+denoted by expr_1, replacing character number expr_2 by the value of expr_3.
+The exception Invalid_argument is raised if the access is out of bounds. The
+value of the whole expression is ().
+
+Node: Subsection 6-7-4,	Next: Subsection 6-7-5,	Prev: Subsection 6-7-3,	Up: Section 6-7
+  
+
+6.7.4   Operators
+=================
+  
+  Symbols from the class infix-symbols, as well as the keywords *, =, or and &,
+can appear in infix position (between two expressions). Symbols from the class
+prefix-symbols can appear in prefix position (in front of an expression).
+  Infix and prefix symbols do not have a fixed meaning: they are simply
+interpreted as applications of functions bound to the names corresponding to
+the symbols. The expression prefix-symbol  expr is interpreted as the
+application ( prefix-symbol )  expr. Similarly, the expression expr_1
+ infix-symbol  expr_2 is interpreted as the application ( infix-symbol )
+ expr_1  expr_2.
+  The table below lists the symbols defined in the initial environment and
+their initial meaning. (See the description of the core library module
+Pervasives in chapter 19*Note Chapter 19:: for more details). Their meaning
+may be changed at any time using let ( infix-op )  name_1  name_2 = ...
+                                         
+               ------------------------------------------------
+               | Operator  |         Initial meaning          |
+               ------------------------------------------------
+               | +         |Integer addition.                 |
+               |- (infix)  |Integer subtraction.              |
+               |- (prefix) |Integer negation.                 |
+               |*          |Integer multiplication.           |
+               |/          |Integer division. Raise           |
+               |           |Division_by_zero if second        |
+               |           |argument is zero.                 |
+               |mod        |Integer modulus. Raise            |
+               |           |Division_by_zero if second        |
+               |           |argument is zero.                 |
+               |land       |Bitwise logical "and" on integers.|
+               |           |                                  |
+               |lor        |Bitwise logical "or" on integers. |
+               |lxor       |Bitwise logical "exclusive or" on |
+               |           |integers.                         |
+               |lsl        |Bitwise logical shift left on     |
+               |           |integers.                         |
+               |lsr        |Bitwise logical shift right on    |
+               |           |integers.                         |
+               |asr        |Bitwise arithmetic shift right on |
+               |           |integers.                         |
+               |+.         |Floating-point addition.          |
+               |-. (infix) |Floating-point subtraction.       |
+               |-. (prefix)|Floating-point negation.          |
+               |*.         |Floating-point multiplication.    |
+               |/.         |Floating-point division.          |
+               |**         |Floating-point exponentiation.    |
+               |@          |List concatenation.               |
+               |^          |String concatenation.             |
+               |!          |Dereferencing (return the current |
+               |           |contents of a reference).         |
+               |:=         |Reference assignment (update the  |
+               |           |reference given as first argument |
+               |           |with the value of the second      |
+               |           |argument).                        |
+               |=          |Structural equality test.         |
+               |<>         |Structural inequality test.       |
+               |==         |Physical equality test.           |
+               |!=         |Physical inequality test.         |
+               |<          |Test "less than".                 |
+               |<=         |Test "less than or equal".        |
+               |>          |Test "greater than".              |
+               |>=         |Test "greater than or equal".     |
+               ------------------------------------------------
+  
+
+Node: Subsection 6-7-5,	Next: Subsection 6-7-6,	Prev: Subsection 6-7-4,	Up: Section 6-7
+  
+
+6.7.5   Objects
+===============
+   
+
+Object creation
+---------------
+  
+
+  When class-path evaluates to a class body, new class-path evaluates to an
+object containing the instance variables and methods of this class.
+  When class-path evaluates to a class function, new class-path evaluates to a
+function expecting the same number of arguments and returning a new object of
+this class.
+
+Immediate object creation
+-------------------------
+  
+
+  Creating directly an object through the object class-body end construct is
+operationally equivalent to defining locally a class class-name = object
+ class-body end ---see sections 6.9.2*Note Subsection 6-9-2:: and following
+for the syntax of class-body--- and immediately creating a single object from
+it by new class-name.
+  The typing of immediate objects is slightly different from explicitely
+defining a class in two respects. First, the inferred object type may contain
+free type variables. Second, since the class body of an immediate object will
+never be extended, its self type can be unified with a closed object type.
+
+Message sending
+---------------
+  
+  The expression expr #  method-name invokes the method method-name of the
+object denoted by expr.
+  If method-name is a polymorphic method, its type should be known at the
+invocation site. This is true for instance if expr is the name of a fresh
+object (let ident = new  class-path ... ) or if there is a type constraint.
+Principality of the derivation can be checked in the -principal mode.
+
+Accessing and modifying instance variables
+------------------------------------------
+  
+  The instance variables of a class are visible only in the body of the methods
+defined in the same class or a class that inherits from the class defining the
+instance variables. The expression inst-var-name evaluates to the value of the
+given instance variable. The expression inst-var-name <-  expr assigns the
+value of expr to the instance variable inst-var-name, which must be mutable.
+The whole expression inst-var-name <-  expr evaluates to ().
+
+Object duplication
+------------------
+  
+  An object can be duplicated using the library function Oo.copy (see 
+section 20.21*Note Section 20-21::). Inside a method, the expression  {<
+inst-var-name =  expr  { ; inst-var-name =  expr } >} returns a copy of self
+with the given instance variables replaced by the values of the associated
+expressions; other instance variables have the same value in the returned
+object as in self.
+
+Node: Subsection 6-7-6,	Next: Section 6-8,	Prev: Subsection 6-7-5,	Up: Section 6-7
+  
+
+6.7.6   Coercions
+=================
+   
+  Expressions whose type contains object or polymorphic variant types can be
+explicitly coerced (weakened) to a supertype. The expression (expr :>  typexpr)
+coerces the expression expr to type typexpr. The expression (expr :  typexpr_1
+:>  typexpr_2) coerces the expression expr from type typexpr_1 to type
+typexpr_2.
+  The former operator will sometimes fail to coerce an expression expr from a
+type t_1 to a type t_2 even if type t_1 is a subtype of type t_2: in the
+current implementation it only expands two levels of type abbreviations
+containing objects and/or polymorphic variants, keeping only recursion when it
+is explicit in the class type (for objects). As an exception to the above
+algorithm, if both the inferred type of expr and typexpr are ground (i.e. do
+not contain type variables), the former operator behaves as the latter one,
+taking the inferred type of expr as typexpr_1. In case of failure with the
+former operator, the latter one should be used.
+  It is only possible to coerce an expression expr from type typexpr_1 to type
+typexpr_2, if the type of expr is an instance of typexpr_1 (like for a type
+annotation), and typexpr_1 is a subtype of typexpr_2. The type of the coerced
+expression is an instance of typexpr_2. If the types contain variables, they
+may be instanciated by the subtyping algorithm, but this is only done after
+determining whether typexpr_1 is a potential subtype of typexpr_2. This means
+that typing may fail during this latter unification step, even if some instance
+of typexpr_1 is a subtype of some instance of typexpr_2. In the following
+paragraphs we describe the subtyping relation used.
+
+Object types
+------------
+  
+  A fixed object type admits as subtype any object type including all its
+methods. The types of the methods shall be subtypes of those in the supertype.
+Namely, 
+                 met       typ                met       typ      
+              <         :         ;  ...   ;         :        >  
+                    1         1                  n         n     
+   is a supertype of 
+    met       typ'                met       typ'       met         typ'        
+                           met         typ'                 
+ <         :          ;  ...   ;         :          ;           :            ; 
+                  ...   ;           :           [ ; ..]   > 
+       1          1                  n          n         n+1          n+1     
+                              n+m          n+m              
+   which may contain an ellipsis .., if every typ_i is a supertype of typ'_i.
+  A monomorphic method type can be a supertype of a polymorphic method type.
+Namely, if typ is an instance of typ', then  'a_1 ... 'a_n .typ' is a subtype
+of typ.
+  Inside a class definition, newly defined types are not available for
+subtyping, as the type abbreviations are not yet completely defined. There is
+an exception for coercing self to the (exact) type of its class: this is
+allowed if the type of self does not appear in a contravariant position in the
+class type, i.e. if there are no binary methods.
+
+Polymorphic variant types
+-------------------------
+  
+  A polymorphic variant type typ is subtype of another polymorphic variant type
+typ' if the upper bound of typ (i.e. the maximum set of constructors that may
+appear in an instance of typ) is included in the lower bound of typ', and the
+types of arguments for the constructors of typ are subtypes of those in typ'.
+Namely, 
+                     C        typ                C        typ      
+            [[ <]   '     of         |  ...   | '     of         ] 
+                      1          1                n          n     
+   which may be a shrinkable type, is a subtype of 
+          C        typ'                C        typ'      C          typ'      
+                                 C          typ'        
+ [[ >]   '     of          |  ...   | '     of         | '       of           
+                      |  ...   | '       of            ] 
+           1           1                n           n      n+1           n+1   
+                                  n+m           n+m     
+   which may be an extensible type, if every typ_i is a subtype of typ'_i.
+
+Variance
+--------
+  
+  Other types do not introduce new subtyping, but they may propagate the
+subtyping of their arguments. For instance, typ_1   *  typ_2 is a subtype of
+typ'_1   *  typ'_2 when typ_1 and typ_2 are respectively subtypes of typ'_1 and
+typ'_2. For function types, the relation is more subtle: typ_1 -> typ_2 is a
+subtype of typ'_1 -> typ'_2 if typ_1 is a supertype of typ'_1 and typ_2 is a
+subtype of typ'_2. For this reason, function types are covariant in their
+second argument (like tuples), but contravariant in their first argument.
+Mutable types, like array or ref are neither covariant nor contravariant, they
+are nonvariant, that is they do not propagate subtyping.
+  For user defined types, the variance is automatically inferred: a parameter
+is covariant if it has only covariant occurences, contravariant if it has only
+contravariant occurences, variance-free if it has no occurences, and nonvariant
+otherwise. A variance-free parameter may change freely through subtyping, it
+does not have to be a subtype or a supertype. For abstract and private types,
+the variance must be given explicitly, otherwise the default is nonvariant.
+This is also the case for constrained arguments in type definitions.
+   
+
+Node: Section 6-8,	Next: Subsection 6-8-1,	Prev: Section 6-7,	Up: Chapter 6
+  
+
+6.8   Type and exception definitions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+* Menu:
+
+* Subsection 6-8-1::	Type definitions
+* Subsection 6-8-2::	Exception definitions
+
+
+Node: Subsection 6-8-1,	Next: Subsection 6-8-2,	Prev: Section 6-8,	Up: Section 6-8
+  
+
+6.8.1   Type definitions
+========================
+   
+  Type definitions bind type constructors to data types: either variant types,
+record types, type abbreviations, or abstract data types. They also bind the
+value constructors and record fields associated with the definition.
+
+      type-definition ::=  type typedef  { and typedef }                       
+                                           
+                                                                               
+                                           
+              typedef ::=  [type-params]  typeconstr-name  [type-information]  
+                                           
+                                                                               
+                                           
+          type-information ::=  [type-equation]  [type-representation]  {
+                              type-constraint } 
+                                                                               
+                                           
+        type-equation ::=  = typexpr                                           
+                                           
+                                                                               
+                                           
+  type-representation ::=  = constr-decl  { | constr-decl }                    
+                                           
+                       |   = { field-decl  { ; field-decl } }                  
+                                           
+                                                                               
+                                           
+          type-params ::=  type-param                                          
+                                           
+                       |   ( type-param  { , type-param } )                    
+                                           
+                                                                               
+                                           
+           type-param ::=  ' ident                                             
+                                           
+                       |   + ' ident                                           
+                                           
+                       |   - ' ident                                           
+                                           
+                                                                               
+                                           
+          constr-decl ::=  constr-name                                         
+                                           
+                       |   constr-name of  typexpr  { * typexpr }              
+                                           
+                                                                               
+                                           
+           field-decl ::=  field-name :  poly-typexpr                          
+                                           
+                       |   mutable field-name :  poly-typexpr                  
+                                           
+                                                                               
+                                           
+      type-constraint ::=  constraint ' ident =  typexpr                       
+                                           
+                                                                               
+                                           
+    
+  Type definitions are introduced by the type keyword, and consist in one or
+several simple definitions, possibly mutually recursive, separated by the and
+keyword. Each simple definition defines one type constructor.
+  A simple definition consists in a lowercase identifier, possibly preceded by
+one or several type parameters, and followed by an optional type equation, then
+an optional type representation, and then a constraint clause. The identifier
+is the name of the type constructor being defined.
+  The optional type parameters are either one type variable ' ident, for type
+constructors with one parameter, or a list of type variables
+('ident_1,...,' ident_n), for type constructors with several parameters. Each
+type parameter may be prefixed by a variance constraint + (resp. -) indicating
+that the parameter is covariant (resp. contravariant). These type parameters
+can appear in the type expressions of the right-hand side of the definition,
+restricted eventually by a variance constraint ; i.e. a covariant parameter may
+only appear on the right side of a functional arrow (more precisely, follow the
+left branch of an even number of arrows), and a contravariant parameter only
+the left side (left branch of an odd number of arrows). If the type has either
+a representation or an equation, and the parameter is free (i.e. not bound via
+a type constraint to a constructed type), its variance constraint is checked
+but subtyping etc. will use the inferred variance of the parameter, which may
+be better; otherwise (i.e. for abstract types or non-free parameters), the
+variance must be given explicitly, and the parameter is invariant if no
+variance was given.
+  The optional type equation = typexpr makes the defined type equivalent to the
+type expression typexpr on the right of the = sign: one can be substituted for
+the other during typing. If no type equation is given, a new type is generated:
+the defined type is incompatible with any other type.
+  The optional type representation describes the data structure representing
+the defined type, by giving the list of associated constructors (if it is a
+variant type) or associated fields (if it is a record type). If no type
+representation is given, nothing is assumed on the structure of the type
+besides what is stated in the optional type equation.
+  The type representation = constr-decl  { | constr-decl } describes a variant
+type. The constructor declarations constr-decl_1, ...,  constr-decl_n describe
+the constructors associated to this variant type. The constructor declaration
+constr-name of  typexpr_1, ...,  typexpr_n declares the name constr-name as a
+non-constant constructor, whose arguments have types typexpr_1 ...typexpr_n.
+The constructor declaration constr-name declares the name constr-name as a
+constant constructor. Constructor names must be capitalized.
+  The type representation = { field-decl  { ; field-decl } } describes a record
+type. The field declarations field-decl_1, ...,  field-decl_n describe the
+fields associated to this record type. The field declaration field-name :
+ poly-typexpr declares field-name as a field whose argument has type
+poly-typexpr. The field declaration mutable field-name :  poly-typexpr
+ behaves similarly; in addition, it allows physical
+modification over the argument to this field. Immutable fields are covariant,
+but mutable fields are neither covariant nor contravariant. Both mutable and
+immutable field may have an explicitly polymorphic type. The polymorphism of
+the contents is statically checked whenever a record value is created or
+modified. Extracted values may have their types instanciated.
+  The two components of a type definition, the optional equation and the
+optional representation, can be combined independently, giving rise to four
+typical situations:
+  
+  
+ Abstract type: no equation, no representation.
+ When appearing in a module signature, this definition specifies nothing on the
+   type constructor, besides its number of parameters:  its representation is
+   hidden and it is assumed incompatible with any other type.
+ 
+ Type abbreviation: an equation, no representation.
+ This defines the type constructor as an abbreviation for the type expression
+   on the right of the = sign. 
+ 
+ New variant type or record type: no equation, a representation.
+ This generates a new type constructor and defines associated constructors or
+   fields, through which values of that type can be directly built or
+   inspected.
+ 
+ Re-exported variant type or record type: an equation, a representation.
+ In this case, the type constructor is defined as an abbreviation for the type
+   expression given in the equation, but in addition the constructors or fields
+   given in the representation remain attached to the defined type constructor.
+   The type expression in the equation part must agree with the representation:
+   it must be of the same kind (record or variant) and have exactly the same
+   constructors or fields, in the same order, with the same arguments.  
+  
+  The type variables appearing as type parameters can optionally be prefixed by
++ or - to indicate that the type constructor is covariant or contravariant with
+respect to this parameter. This variance information is used to decide
+subtyping relations when checking the validity of :> coercions (see section
+6.7.6*Note Subsection 6-7-6::).
+  For instance, type +'a t declares t as an abstract type that is covariant in
+its parameter; this means that if the type tau is a subtype of the type sigma,
+then tau   t is a subtype of sigma   t. Similarly, type -'a t declares that the
+abstract type t is contravariant in its parameter: if tau is subtype of sigma,
+then sigma   t is subtype of tau   t. If no + or - variance annotation is
+given, the type constructor is assumed invariant in the corresponding
+parameter. For instance, the abstract type declaration type 'a t means that tau
+  t is neither a subtype nor a supertype of sigma   t if tau is subtype of
+sigma.
+  The variance indicated by the + and - annotations on parameters are required
+only for abstract types. For abbreviations, variant types or record types, the
+variance properties of the type constructor are inferred from its definition,
+and the variance annotations are only checked for conformance with the
+definition.
+ The construct  constraint ' ident =  typexpr  allows to
+specify type parameters. Any actual type argument corresponding to the type
+parameter ident has to be an instance of typexpr (more precisely, ident and
+typexpr are unified). Type variables of typexpr can appear in the type equation
+and the type declaration.
+
+Node: Subsection 6-8-2,	Next: Section 6-9,	Prev: Subsection 6-8-1,	Up: Section 6-8
+  
+
+6.8.2   Exception definitions
+=============================
+    
+  exception-definition ::=  exception constr-name  [of typexpr  { * typexpr }] 
+                        |   exception constr-name =  constr                    
+  
+  Exception definitions add new constructors to the built-in variant type 'exn'
+of exception values. The constructors are declared as for a definition of a
+variant type.
+  The form exception constr-name  [of typexpr  { * typexpr }] generates a new
+exception, distinct from all other exceptions in the system. The form exception
+constr-name =  constr gives an alternate name to an existing exception.  
+
+Node: Section 6-9,	Next: Subsection 6-9-1,	Prev: Section 6-8,	Up: Chapter 6
+  
+
+6.9   Classes
+*=*=*=*=*=*=*
+
+   
+  Classes are defined using a small language, similar to the module language.
+* Menu:
+
+* Subsection 6-9-1::	Class types
+* Subsection 6-9-2::	Class expressions
+* Subsection 6-9-3::	Class definitions
+* Subsection 6-9-4::	Class specification
+* Subsection 6-9-5::	Class type definitions
+
+
+Node: Subsection 6-9-1,	Next: Subsection 6-9-2,	Prev: Section 6-9,	Up: Section 6-9
+  
+
+6.9.1   Class types
+===================
+  
+  Class types are the class-level equivalent of type expressions: they specify
+the general shape and type properties of classes.
+  
+  
+  
+        class-type ::=  class-body-type                                       
+                    |    [[?]label-name:]  typexpr ->  class-type             
+                                                                              
+   class-body-type ::=  object [( typexpr )]  {class-field-spec} end          
+                    |    class-path                                           
+                    |    [ typexpr  {, typexpr} ]  class-path                 
+                                                                              
+  class-field-spec ::=  inherit class-type                                    
+                    |    val [mutable] [virtual] inst-var-name :  typexpr     
+                    |    method [private] method-name :  poly-typexpr         
+                    |    method [private] virtual method-name :  poly-typexpr 
+                    |    constraint typexpr =  typexpr                        
+                                                                              
+  
+
+Simple class expressions
+------------------------
+  
+  The expression class-path is equivalent to the class type bound to the name
+class-path. Similarly, the expression [ typexpr_1 , ...  typexpr_n ]
+ class-path is equivalent to the parametric class type bound to the name
+class-path, in which type parameters have been instanciated to respectively
+typexpr_1, ...typexpr_n.
+
+Class function type
+-------------------
+  
+  The class type expression typexpr ->  class-type is the type of class
+functions (functions from values to classes) that take as argument a value of
+type typexpr and return as result a class of type class-type.
+
+Class body type
+---------------
+  
+  The class type expression object [( typexpr )]  {class-field-spec} end is the
+type of a class body. It specifies its instance variables and methods. In this
+type, typexpr is matched against the self type, therefore providing a binding
+for the self type.
+  A class body will match a class body type if it provides definitions for all
+the components specified in the class type, and these definitions meet the type
+requirements given in the class type. Furthermore, all methods either virtual
+or public present in the class body must also be present in the class type (on
+the other hand, some instance variables and concrete private methods may be
+omitted). A virtual method will match a concrete method, which makes it
+possible to forget its implementation. An immutable instance variable will
+match a mutable instance variable.
+
+Inheritance
+-----------
+  
+
+  The inheritance construct inherit class-type allows to include methods and
+instance variables from other classes types. The instance variable and method
+types from this class type are added into the current class type.
+
+Instance variable specification
+-------------------------------
+  
+  
+  A specification of an instance variable is written val [mutable] [virtual]
+inst-var-name :  typexpr, where inst-var-name is the name of the instance
+variable and typexpr its expected type. The flag mutable indicates whether this
+instance variable can be physically modified. The flag virtual indicates that
+this instance variable is not initialized. It can be initialized later through
+inheritance.
+  An instance variable specification will hide any previous specification of an
+instance variable of the same name.
+
+Method specification
+--------------------
+   
+ 
+  The specification of a method is written method [private] method-name :
+ poly-typexpr, where method-name is the name of the method and poly-typexpr its
+expected type, possibly polymorphic. The flag private indicates that the method
+cannot be accessed from outside the object.
+  The polymorphism may be left implicit in public method specifications: any
+type variable which is not bound to a class parameter and does not appear
+elsewhere inside the class specification will be assumed to be universal, and
+made polymorphic in the resulting method type. Writing an explicit polymorphic
+type will disable this behaviour.
+  Several specification for the same method must have compatible types. Any
+non-private specification of a method forces it to be public.
+
+Virtual method specification
+----------------------------
+  
+  
+  Virtual method specification is written method [private] virtual method-name
+:  poly-typexpr, where method-name is the name of the method and poly-typexpr
+its expected type.
+
+Constraints on type parameters
+------------------------------
+  
+
+  The construct constraint typexpr_1 =  typexpr_2 forces the two type
+expressions to be equals. This is typically used to specify type parameters:
+they can be that way be bound to a specified type expression.
+
+Node: Subsection 6-9-2,	Next: Subsection 6-9-3,	Prev: Subsection 6-9-1,	Up: Section 6-9
+  
+
+6.9.2   Class expressions
+=========================
+  
+  Class expressions are the class-level equivalent of value expressions: they
+evaluate to classes, thus providing implementations for the specifications
+expressed in class types.
+  
+  
+  
+  
+  
+
+   class-expr ::=  class-path                                                  
+                                         
+               |    [ typexpr  {, typexpr} ]  class-path                       
+                                         
+               |    ( class-expr )                                             
+                                         
+               |    ( class-expr :  class-type )                               
+                                         
+                                          +                                    
+                                         
+               |    class-expr  {argument}                                     
+                                         
+                                   +                                           
+                                         
+               |    fun {parameter}  ->  class-expr                            
+                                         
+               |    let [rec] let-binding  {and let-binding} in  class-expr    
+                                         
+               |    object [( pattern  [: typexpr] )]  { class-field } end     
+                                         
+                                                                               
+                                         
+  class-field ::=  inherit class-expr  [as value-name]                         
+                                         
+               |    val [mutable] inst-var-name  [: typexpr] =  expr           
+                                         
+               |    val [mutable] virtual inst-var-name :  typexpr             
+                                         
+                |    method [private] method-name  {parameter}  [: typexpr] = 
+                                     expr 
+               |    method [private] method-name :  poly-typexpr =  expr       
+                                         
+               |    method [private] virtual method-name :  poly-typexpr       
+                                         
+               |    constraint typexpr =  typexpr                              
+                                         
+               |    initializer expr                                           
+                                         
+                                                                               
+                                         
+  
+
+Simple class expressions
+------------------------
+  
+  The expression class-path evaluates to the class bound to the name
+class-path. Similarly, the expression [ typexpr_1 , ...  typexpr_n ]
+ class-path evaluates to the parametric class bound to the name class-path, in
+which type parameters have been instanciated to respectively typexpr_1,
+...typexpr_n.
+  The expression ( class-expr ) evaluates to the same module as class-expr.
+  The expression ( class-expr :  class-type ) checks that class-type match the
+type of class-expr (that is, that the implementation class-expr meets the type
+specification class-type). The whole expression evaluates to the same class as
+class-expr, except that all components not specified in class-type are hidden
+and can no longer be accessed.
+
+Class application
+-----------------
+  
+  Class application is denoted by juxtaposition of (possibly labeled)
+expressions. Evaluation works as for expression application.
+
+Class function
+--------------
+  
+  The expression fun [[?]label-name:] pattern ->  class-expr evaluates to a
+function from values to classes. When this function is applied to a value v,
+this value is matched against the pattern pattern and the result is the result
+of the evaluation of class-expr in the extended environment.
+  Conversion from functions with default values to functions with patterns only
+works identically for class functions as for normal functions.
+  The expression 
+                 fun parameter_1 ...  parameter_n ->  class-expr 
+   is a short form for 
+                fun parameter_1 -> ... fun  parameter_n ->  expr 
+  
+
+Local definitions
+-----------------
+  
+  The let and let rec constructs bind value names locally, as for the core
+language expressions.
+
+Class body
+-------------------------------
+   
+          class-body ::=   [( pattern  [: typexpr] )]  { class-field } 
+   The expression object class-body end denotes a class body. This is the
+prototype for an object : it lists the instance variables and methods of an
+objet of this class.
+  A class body is a class value: it is not evaluated at once. Rather, its
+components are evaluated each time an object is created.
+  In a class body, the pattern ( pattern  [: typexpr] ) is matched against
+self, therefore provinding a binding for self and self type. Self can only be
+used in method and initializers.
+  Self type cannot be a closed object type, so that the class remains
+extensible.
+
+Inheritance
+-----------
+  
+
+  The inheritance construct inherit class-expr allows to reuse methods and
+instance variables from other classes. The class expression class-expr must
+evaluate to a class body. The instance variables, methods and initializers from
+this class body are added into the current class. The addition of a method will
+override any previously defined methods of the same name.
+ An ancestor can be bound by prepending the construct as
+value-name to the inheritance construct above. value-name is not a true
+variable and can only be used to select a method, i.e. in an expression
+value-name #  method-name. This gives access to the method method-name as it
+was defined in the parent class even if it is redefined in the current class. 
+The scope of an ancestor binding is limited to the current class.  The ancestor
+method may be called from a subclass but only indirectly.
+
+Instance variable definition
+----------------------------
+  
+ 
+  The definition val [mutable] inst-var-name =  expr adds an instance variable
+inst-var-name whose initial value is the value of expression expr. The flag
+mutable allows physical modification of this variable by methods.
+  An instance variables can only be used in the following methods and
+initializers of the class.
+  Since version 3.10, redefinitions of a visible instance variable with the
+same name do not create a new variable, but are merged, using the last value
+for initialization. They must have identical types and mutability. However, if
+an instance variable is hidden by omitting it from an interface, it will be
+kept distinct from other instance variables with the same name.
+
+Virtual instance variable definition
+------------------------------------
+  
+  
+  Variable specification is written val [mutable] virtual inst-var-name :
+ typexpr. It specifies whether the variable is modifiable, and gives its type.
+  Virtual instance variables were added in version 3.10.
+
+Method definition
+-----------------
+  
+ 
+  Method definition is written method method-name =  expr. The definition of a
+method overrides any previous definition of this method. The method will be
+public (that is, not private) if any of the definition states so.
+  A private method, method private method-name =  expr, is a method that can
+only be invoked on self (from other methods of the same object, defined in this
+class or one of its subclasses). This invocation is performed using the
+expression value-name #  method-name, where value-name is directly bound to
+self at the beginning of the class definition. Private methods do not appear in
+object types. A method may have both public and private definitions, but as
+soon as there is a public one, all subsequent definitions will be made public.
+  Methods may have an explicitly polymorphic type, allowing them to be used
+polymorphically in programs (even for the same object). The explicit
+declaration may be done in one of three ways: (1) by giving an explicit
+polymorphic type in the method definition, immediately after the method name,
+i.e. method [private] method-name :  {' ident}^+ .  typexpr =  expr; (2) by a
+forward declaration of the explicit polymorphic type through a virtual method
+definition; (3) by importing such a declaration through inheritance and/or
+constraining the type of self.
+  Some special expressions are available in method bodies for manipulating
+instance variables and duplicating self: 
+     expr ::=  ...                                                          
+           |   inst-var-name <-  expr                                       
+           |   {< [ inst-var-name =  expr  { ; inst-var-name =  expr } ] >} 
+                                                                            
+  
+  The expression inst-var-name <-  expr modifies in-place the current object by
+replacing the value associated to inst-var-name by the value of expr. Of
+course, this instance variable must have been declared mutable.
+  The expression {< [ inst-var-name =  expr  { ; inst-var-name =  expr } ] >}
+evaluates to a copy of the current object in which the values of instance
+variables inst-var-name_1, ...,  inst-var-name_n have been replaced by the
+values of the corresponding expressions expr_1, ...,  expr_n.
+
+Virtual method definition
+-------------------------
+  
+  
+  Method specification is written method [private] virtual method-name :
+ poly-typexpr. It specifies whether the method is public or private, and gives
+its type. If the method is intended to be polymorphic, the type should be
+explicit.
+
+Constraints on type parameters
+------------------------------
+  
+
+  The construct constraint typexpr_1 =  typexpr_2 forces the two type
+expressions to be equals. This is typically used to specify type parameters:
+they can be that way be bound to a specified type expression.
+
+Initializers
+------------
+  
+
+  A class initializer initializer expr specifies an expression that will be
+evaluated when an object will be created from the class, once all the instance
+variables have been initialized.

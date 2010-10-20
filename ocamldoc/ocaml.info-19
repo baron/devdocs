@@ -1,0 +1,2751 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 25-1,	Next: Chapter 26,	Prev: Chapter 25,	Up: Chapter 25
+  
+
+25.1   Module Graphics : Machine-independent graphics primitives.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  exception Graphic_failure of string
+>>
+    
+    Raised by the functions below when they encounter an error.
+  
+
+Initializations
+===============
+  
+
+<<
+  val open_graph : string -> unit
+>>
+    
+    Show the graphics window or switch the screen to graphic mode. The graphics
+   window is cleared and the current point is set to (0, 0). The string
+   argument is used to pass optional information on the desired graphics mode,
+   the graphics window size, and so on. Its interpretation is
+   implementation-dependent. If the empty string is given, a sensible default
+   is selected.
+  
+
+<<
+  val close_graph : unit -> unit
+>>
+    
+    Delete the graphics window or switch the screen back to text mode.
+  
+
+<<
+  val set_window_title : string -> unit
+>>
+    
+    Set the title of the graphics window.
+  
+
+<<
+  val resize_window : int -> int -> unit
+>>
+    
+    Resize and erase the graphics window.
+  
+
+<<
+  val clear_graph : unit -> unit
+>>
+    
+    Erase the graphics window.
+  
+
+<<
+  val size_x : unit -> int
+>>
+    
+    See Graphics.size_y[25.1*Note Section 25-1::].
+  
+
+<<
+  val size_y : unit -> int
+>>
+    
+    Return the size of the graphics window. Coordinates of the screen pixels
+   range over 0 .. size_x()-1 and 0 .. size_y()-1. Drawings outside of this
+   rectangle are clipped, without causing an error. The origin (0,0) is at the
+   lower left corner.
+  
+
+Colors
+======
+  
+
+<<
+  type color = int 
+>>
+    
+    A color is specified by its R, G, B components. Each component is in the
+   range 0..255. The three components are packed in an int: 0xRRGGBB, where RR
+   are the two hexadecimal digits for the red component, GG for the green
+   component, BB for the blue component.
+  
+
+<<
+  val rgb : int -> int -> int -> color
+>>
+    
+    rgb r g b returns the integer encoding the color with red component r,
+   green component g, and blue component b. r, g and b are in the range 0..255.
+  
+
+<<
+  val set_color : color -> unit
+>>
+    
+    Set the current drawing color.
+  
+
+<<
+  val background : color
+>>
+    
+    See Graphics.foreground[25.1*Note Section 25-1::].
+  
+
+<<
+  val foreground : color
+>>
+    
+    Default background and foreground colors (usually, either black foreground
+   on a white background or white foreground on a black background).
+   Graphics.clear_graph[25.1*Note Section 25-1::] fills
+   the screen with the background color. The initial drawing color is
+   foreground.
+  
+
+Some predefined colors
+----------------------
+  
+
+<<
+  val black : color
+>>
+   
+
+<<
+  val white : color
+>>
+   
+
+<<
+  val red : color
+>>
+   
+
+<<
+  val green : color
+>>
+   
+
+<<
+  val blue : color
+>>
+   
+
+<<
+  val yellow : color
+>>
+   
+
+<<
+  val cyan : color
+>>
+   
+
+<<
+  val magenta : color
+>>
+   
+
+Point and line drawing
+======================
+  
+
+<<
+  val plot : int -> int -> unit
+>>
+    
+    Plot the given point with the current drawing color.
+  
+
+<<
+  val plots : (int * int) array -> unit
+>>
+    
+    Plot the given points with the current drawing color.
+  
+
+<<
+  val point_color : int -> int -> color
+>>
+    
+    Return the color of the given point in the backing store (see "Double
+   buffering" below).
+  
+
+<<
+  val moveto : int -> int -> unit
+>>
+    
+    Position the current point.
+  
+
+<<
+  val rmoveto : int -> int -> unit
+>>
+    
+    rmoveto dx dy translates the current point by the given vector.
+  
+
+<<
+  val current_x : unit -> int
+>>
+    
+    Return the abscissa of the current point.
+  
+
+<<
+  val current_y : unit -> int
+>>
+    
+    Return the ordinate of the current point.
+  
+
+<<
+  val current_point : unit -> int * int
+>>
+    
+    Return the position of the current point.
+  
+
+<<
+  val lineto : int -> int -> unit
+>>
+    
+    Draw a line with endpoints the current point and the given point, and move
+   the current point to the given point.
+  
+
+<<
+  val rlineto : int -> int -> unit
+>>
+    
+    Draw a line with endpoints the current point and the current point
+   translated of the given vector, and move the current point to this point.
+  
+
+<<
+  val curveto : int * int -> int * int -> int * int -> unit
+>>
+    
+    curveto b c d draws a cubic Bezier curve starting from the current point to
+   point d, with control points b and c, and moves the current point to d.
+  
+
+<<
+  val draw_rect : int -> int -> int -> int -> unit
+>>
+    
+    draw_rect x y w h draws the rectangle with lower left corner at x,y, width
+   w and height h. The current point is unchanged. Raise Invalid_argument if w
+   or h is negative.
+  
+
+<<
+  val draw_poly_line : (int * int) array -> unit
+>>
+    
+    draw_poly_line points draws the line that joins the points given by the
+   array argument. The array contains the coordinates of the vertices of the
+   polygonal line, which need not be closed. The current point is unchanged.
+  
+
+<<
+  val draw_poly : (int * int) array -> unit
+>>
+    
+    draw_poly polygon draws the given polygon. The array contains the
+   coordinates of the vertices of the polygon. The current point is unchanged.
+  
+
+<<
+  val draw_segments : (int * int * int * int) array -> unit
+>>
+    
+    draw_segments segments draws the segments given in the array argument. Each
+   segment is specified as a quadruple (x0, y0, x1, y1) where (x0, y0) and (x1,
+   y1) are the coordinates of the end points of the segment. The current point
+   is unchanged.
+  
+
+<<
+  val draw_arc : int -> int -> int -> int -> int -> int -> unit
+>>
+    
+    draw_arc x y rx ry a1 a2 draws an elliptical arc with center x,y,
+   horizontal radius rx, vertical radius ry, from angle a1 to angle a2 (in
+   degrees). The current point is unchanged. Raise Invalid_argument if rx or ry
+   is negative.
+  
+
+<<
+  val draw_ellipse : int -> int -> int -> int -> unit
+>>
+    
+    draw_ellipse x y rx ry draws an ellipse with center x,y, horizontal radius
+   rx and vertical radius ry. The current point is unchanged. Raise
+   Invalid_argument if rx or ry is negative.
+  
+
+<<
+  val draw_circle : int -> int -> int -> unit
+>>
+    
+    draw_circle x y r draws a circle with center x,y and radius r. The current
+   point is unchanged. Raise Invalid_argument if r is negative.
+  
+
+<<
+  val set_line_width : int -> unit
+>>
+    
+    Set the width of points and lines drawn with the functions above. Under X
+   Windows, set_line_width 0 selects a width of 1 pixel and a faster, but less
+   precise drawing algorithm than the one used when set_line_width 1 is
+   specified. Raise Invalid_argument if the argument is negative.
+  
+
+Text drawing
+============
+  
+
+<<
+  val draw_char : char -> unit
+>>
+    
+    See Graphics.draw_string[25.1*Note Section 25-1::].
+  
+
+<<
+  val draw_string : string -> unit
+>>
+    
+    Draw a character or a character string with lower left corner at current
+   position. After drawing, the current position is set to the lower right
+   corner of the text drawn.
+  
+
+<<
+  val set_font : string -> unit
+>>
+    
+    Set the font used for drawing text. The interpretation of the argument to
+   set_font is implementation-dependent.
+  
+
+<<
+  val set_text_size : int -> unit
+>>
+    
+    Set the character size used for drawing text. The interpretation of the
+   argument to set_text_size is implementation-dependent.
+  
+
+<<
+  val text_size : string -> int * int
+>>
+    
+    Return the dimensions of the given text, if it were drawn with the current
+   font and size.
+  
+
+Filling
+=======
+  
+
+<<
+  val fill_rect : int -> int -> int -> int -> unit
+>>
+    
+    fill_rect x y w h fills the rectangle with lower left corner at x,y, width
+   w and height h, with the current color. Raise Invalid_argument if w or h is
+   negative.
+  
+
+<<
+  val fill_poly : (int * int) array -> unit
+>>
+    
+    Fill the given polygon with the current color. The array contains the
+   coordinates of the vertices of the polygon.
+  
+
+<<
+  val fill_arc : int -> int -> int -> int -> int -> int -> unit
+>>
+    
+    Fill an elliptical pie slice with the current color. The parameters are the
+   same as for Graphics.draw_arc[25.1*Note Section 25-1::].
+  
+
+<<
+  val fill_ellipse : int -> int -> int -> int -> unit
+>>
+    
+    Fill an ellipse with the current color. The parameters are the same as for
+   Graphics.draw_ellipse[25.1*Note Section 25-1::].
+  
+
+<<
+  val fill_circle : int -> int -> int -> unit
+>>
+    
+    Fill a circle with the current color. The parameters are the same as for
+   Graphics.draw_circle[25.1*Note Section 25-1::].
+  
+
+Images
+======
+  
+
+<<
+  type image 
+>>
+    
+    The abstract type for images, in internal representation. Externally,
+   images are represented as matrices of colors.
+  
+
+<<
+  val transp : color
+>>
+    
+    In matrices of colors, this color represent a "transparent" point: when
+   drawing the corresponding image, all pixels on the screen corresponding to a
+   transparent pixel in the image will not be modified, while other points will
+   be set to the color of the corresponding point in the image. This allows
+   superimposing an image over an existing background.
+  
+
+<<
+  val make_image : color array array -> image
+>>
+    
+    Convert the given color matrix to an image. Each sub-array represents one
+   horizontal line. All sub-arrays must have the same length; otherwise,
+   exception Graphic_failure is raised.
+  
+
+<<
+  val dump_image : image -> color array array
+>>
+    
+    Convert an image to a color matrix.
+  
+
+<<
+  val draw_image : image -> int -> int -> unit
+>>
+    
+    Draw the given image with lower left corner at the given point.
+  
+
+<<
+  val get_image : int -> int -> int -> int -> image
+>>
+    
+    Capture the contents of a rectangle on the screen as an image. The
+   parameters are the same as for
+   Graphics.fill_rect[25.1*Note Section 25-1::].
+  
+
+<<
+  val create_image : int -> int -> image
+>>
+    
+    create_image w h returns a new image w pixels wide and h pixels tall, to be
+   used in conjunction with blit_image. The initial image contents are random,
+   except that no point is transparent.
+  
+
+<<
+  val blit_image : image -> int -> int -> unit
+>>
+    
+    blit_image img x y copies screen pixels into the image img, modifying img
+   in-place. The pixels copied are those inside the rectangle with lower left
+   corner at x,y, and width and height equal to those of the image. Pixels that
+   were transparent in img are left unchanged.
+  
+
+Mouse and keyboard events
+=========================
+  
+
+<<
+  type status = {
+    mouse_x : int ;
+>>
+   
+    X coordinate of the mouse 
+   
+<<
+    mouse_y : int ;
+>>
+   
+    Y coordinate of the mouse 
+   
+<<
+    button : bool ;
+>>
+   
+    true if a mouse button is pressed 
+   
+<<
+    keypressed : bool ;
+>>
+   
+    true if a key has been pressed 
+   
+<<
+    key : char ;
+>>
+   
+    the character for the key pressed 
+   
+<<
+  }
+>>
+    
+    To report events.
+  
+
+<<
+  type event =
+    | Button_down
+>>
+   
+    A mouse button is pressed 
+   
+<<
+    | Button_up
+>>
+   
+    A mouse button is released 
+   
+<<
+    | Key_pressed
+>>
+   
+    A key is pressed 
+   
+<<
+    | Mouse_motion
+>>
+   
+    The mouse is moved 
+   
+<<
+    | Poll
+>>
+   
+    Don't wait; return immediately 
+    
+    To specify events to wait for.
+  
+
+<<
+  val wait_next_event : event list -> status
+>>
+    
+    Wait until one of the events specified in the given event list occurs, and
+   return the status of the mouse and keyboard at that time. If Poll is given
+   in the event list, return immediately with the current status. If the mouse
+   cursor is outside of the graphics window, the mouse_x and mouse_y fields of
+   the event are outside the range 0..size_x()-1, 0..size_y()-1. Keypresses are
+   queued, and dequeued one by one when the Key_pressed event is specified.
+  
+
+Mouse and keyboard polling
+==========================
+  
+
+<<
+  val mouse_pos : unit -> int * int
+>>
+    
+    Return the position of the mouse cursor, relative to the graphics window.
+   If the mouse cursor is outside of the graphics window, mouse_pos() returns a
+   point outside of the range 0..size_x()-1, 0..size_y()-1.
+  
+
+<<
+  val button_down : unit -> bool
+>>
+    
+    Return true if the mouse button is pressed, false otherwise.
+  
+
+<<
+  val read_key : unit -> char
+>>
+    
+    Wait for a key to be pressed, and return the corresponding character.
+   Keypresses are queued.
+  
+
+<<
+  val key_pressed : unit -> bool
+>>
+    
+    Return true if a keypress is available; that is, if read_key would not
+   block.
+  
+
+Sound
+=====
+  
+
+<<
+  val sound : int -> int -> unit
+>>
+    
+    sound freq dur plays a sound at frequency freq (in hertz) for a duration
+   dur (in milliseconds).
+  
+
+Double buffering
+================
+  
+
+<<
+  val auto_synchronize : bool -> unit
+>>
+    
+    By default, drawing takes place both on the window displayed on screen, and
+   in a memory area (the "backing store"). The backing store image is used to
+   re-paint the on-screen window when necessary.
+   To avoid flicker during animations, it is possible to turn off on-screen
+   drawing, perform a number of drawing operations in the backing store only,
+   then refresh the on-screen window explicitly.
+   auto_synchronize false turns on-screen drawing off. All subsequent drawing
+   commands are performed on the backing store only.
+   auto_synchronize true refreshes the on-screen window from the backing store
+   (as per synchronize), then turns on-screen drawing back on. All subsequent
+   drawing commands are performed both on screen and in the backing store.
+   The default drawing mode corresponds to auto_synchronize true.
+  
+
+<<
+  val synchronize : unit -> unit
+>>
+    
+    Synchronize the backing store and the on-screen window, by copying the
+   contents of the backing store onto the graphics window.
+  
+
+<<
+  val display_mode : bool -> unit
+>>
+    
+    Set display mode on or off. When turned on, drawings are done in the
+   graphics window; when turned off, drawings do not affect the graphics
+   window. This occurs independently of drawing into the backing store (see the
+   function
+   Graphics.remember_mode[25.1*Note Section 25-1::]
+   below). Default display mode is on.
+  
+
+<<
+  val remember_mode : bool -> unit
+>>
+    
+    Set remember mode on or off. When turned on, drawings are done in the
+   backing store; when turned off, the backing store is unaffected by drawings.
+   This occurs independently of drawing onto the graphics window (see the
+   function
+   Graphics.display_mode[25.1*Note Section 25-1::]
+   above). Default remember mode is on.
+  
+    
+
+Node: Chapter 26,	Next: Section 26-1,	Prev: Chapter 25,	Up: Part IV
+  
+
+Chapter 26     The dbm library: access to NDBM databases
+********************************************************
+   
+  The dbm library provides access to NDBM databases under Unix. NDBM databases
+maintain key/data associations, where both the key and the data are arbitrary
+strings. They support fairly large databases (several gigabytes) and can
+retrieve a keyed item in one or two file system accesses. Refer to the Unix
+manual pages for more information.
+     Unix: 
+    Programs that use the dbm library must be linked as follows: 
+   <<
+             ocamlc other options dbm.cma other files
+             ocamlopt other options dbm.cmxa other files
+   >>
+    For interactive use of the dbm library, do: 
+   <<
+             ocamlmktop -o mytop dbm.cma
+             ./mytop
+   >>
+    
+   or (if dynamic linking of C libraries is supported on your platform), start
+ocaml and type #load "dbm.cma";;.
+     Windows: 
+    This library is not available. 
+  
+* Menu:
+
+* Section 26-1::	Module Dbm : Interface to the NDBM database.
+
+
+Node: Section 26-1,	Next: Chapter 27,	Prev: Chapter 26,	Up: Chapter 26
+  
+
+26.1   Module Dbm : Interface to the NDBM database.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  type t 
+>>
+    
+    The type of file descriptors opened on NDBM databases.
+  
+
+<<
+  type open_flag =
+    | Dbm_rdonly
+    | Dbm_wronly
+    | Dbm_rdwr
+    | Dbm_create
+>>
+   
+    Flags for opening a database (see
+   Dbm.opendbm[26.1*Note Section 26-1::]). 
+   
+
+<<
+  exception Dbm_error of string
+>>
+    
+    Raised by the following functions when an error is encountered.
+  
+
+<<
+  val opendbm : string -> open_flag list -> int -> t
+>>
+    
+    Open a descriptor on an NDBM database. The first argument is the name of
+   the database (without the .dir and .pag suffixes). The second argument is a
+   list of flags: Dbm_rdonly opens the database for reading only, Dbm_wronly
+   for writing only, Dbm_rdwr for reading and writing; Dbm_create causes the
+   database to be created if it does not already exist. The third argument is
+   the permissions to give to the database files, if the database is created.
+  
+
+<<
+  val close : t -> unit
+>>
+    
+    Close the given descriptor.
+  
+
+<<
+  val find : t -> string -> string
+>>
+    
+    find db key returns the data associated with the given key in the database
+   opened for the descriptor db. Raise Not_found if the key has no associated
+   data.
+  
+
+<<
+  val add : t -> string -> string -> unit
+>>
+    
+    add db key data inserts the pair (key, data) in the database db. If the
+   database already contains data associated with key, raise Dbm_error "Entry
+   already exists".
+  
+
+<<
+  val replace : t -> string -> string -> unit
+>>
+    
+    replace db key data inserts the pair (key, data) in the database db. If the
+   database already contains data associated with key, that data is discarded
+   and silently replaced by the new data.
+  
+
+<<
+  val remove : t -> string -> unit
+>>
+    
+    remove db key data removes the data associated with key in db. If key has
+   no associated data, raise Dbm_error "dbm_delete".
+  
+
+<<
+  val firstkey : t -> string
+>>
+    
+    See Dbm.nextkey[26.1*Note Section 26-1::].
+  
+
+<<
+  val nextkey : t -> string
+>>
+    
+    Enumerate all keys in the given database, in an unspecified order. firstkey
+   db returns the first key, and repeated calls to nextkey db return the
+   remaining keys. Not_found is raised when all keys have been enumerated.
+  
+
+<<
+  val iter : (string -> string -> 'a) -> t -> unit
+>>
+    
+    iter f db applies f to each (key, data) pair in the database db. f receives
+   key as first argument and data as second argument.
+  
+   
+   
+
+Node: Chapter 27,	Next: Section 27-1,	Prev: Chapter 26,	Up: Part IV
+  
+
+Chapter 27     The dynlink library: dynamic loading and linking of object files
+*******************************************************************************
+   
+  The dynlink library supports type-safe dynamic loading and linking of
+bytecode object files (.cmo and .cma files) in a running bytecode program, or
+of native plugins (usually .cmxs files) in a running native program. Type
+safety is ensured by limiting the set of modules from the running program that
+the loaded object file can access, and checking that the running program and
+the loaded object file have been compiled against the same interfaces for these
+modules. In native code, there are also some compatibility checks on the
+implementations (to avoid errors with cross-module optimizations); it might be
+useful to hide .cmx files when building native plugins so that they remain
+independent of the implementation of modules in the main program.
+  Programs that use the dynlink library simply need to link dynlink.cma or
+dynlink.cmxa with their object files and other libraries. 
+* Menu:
+
+* Section 27-1::	Module Dynlink : Dynamic loading of object files.
+
+
+Node: Section 27-1,	Next: Chapter 28,	Prev: Chapter 27,	Up: Chapter 27
+  
+
+27.1   Module Dynlink : Dynamic loading of object files.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  
+  
+
+<<
+  val is_native : bool
+>>
+    
+    true if the program is native, false if the program is bytecode.
+  
+
+Dynamic loading of compiled files
+=================================
+  
+
+<<
+  val loadfile : string -> unit
+>>
+    
+    In bytecode: load the given bytecode object file (.cmo file) or bytecode
+   library file (.cma file), and link it with the running program. In native
+   code: load the given OCaml plugin file (usually .cmxs), and link it with the
+   running program. All toplevel expressions in the loaded compilation units
+   are evaluated. No facilities are provided to access value names defined by
+   the unit. Therefore, the unit must register itself its entry points with the
+   main program, e.g. by modifying tables of functions.
+  
+
+<<
+  val loadfile_private : string -> unit
+>>
+    
+    Same as loadfile, except that the compilation units just loaded are hidden
+   (cannot be referenced) from other modules dynamically loaded afterwards.
+  
+
+<<
+  val adapt_filename : string -> string
+>>
+    
+    In bytecode, the identity function. In native code, replace the last
+   extension with .cmxs.
+  
+
+Access control
+==============
+  
+
+<<
+  val allow_only : string list -> unit
+>>
+    
+    allow_only units restricts the compilation units that dynamically-linked
+   units can reference: it only allows references to the units named in list
+   units. References to any other compilation unit will cause a
+   Unavailable_unit error during loadfile or loadfile_private.
+   Initially (just after calling init), all compilation units composing the
+   program currently running are available for reference from
+   dynamically-linked units. allow_only can be used to grant access to some of
+   them only, e.g. to the units that compose the API for dynamically-linked
+   code, and prevent access to all other units, e.g. private, internal modules
+   of the running program.
+  
+
+<<
+  val prohibit : string list -> unit
+>>
+    
+    prohibit units prohibits dynamically-linked units from referencing the
+   units named in list units. This can be used to prevent access to selected
+   units, e.g. private, internal modules of the running program.
+  
+
+<<
+  val default_available_units : unit -> unit
+>>
+    
+    Reset the set of units that can be referenced from dynamically-linked code
+   to its default value, that is, all units composing the currently running
+   program.
+  
+
+<<
+  val allow_unsafe_modules : bool -> unit
+>>
+    
+    Govern whether unsafe object files are allowed to be dynamically linked. A
+   compilation unit is "unsafe" if it contains declarations of external
+   functions, which can break type safety. By default, dynamic linking of
+   unsafe object files is not allowed. In native code, this function does
+   nothing; object files with external functions are always allowed to be
+   dynamically linked.
+  
+
+Deprecated, low-level API for access control
+============================================
+  
+
+<<
+  val add_interfaces : string list -> string list -> unit
+>>
+    
+    add_interfaces units path grants dynamically-linked object files access to
+   the compilation units named in list units. The interfaces (.cmi files) for
+   these units are searched in path (a list of directory names).
+  
+
+<<
+  val add_available_units : (string * Digest.t) list -> unit
+>>
+    
+    Same as
+   Dynlink.add_interfaces[27.1*Note Section 27-1::],
+   but instead of searching .cmi files to find the unit interfaces, uses the
+   interface digests given for each unit. This way, the .cmi interface files
+   need not be available at run-time. The digests can be extracted from .cmi
+   files using the extract_crc program installed in the Objective Caml standard
+   library directory.
+  
+
+<<
+  val clear_available_units : unit -> unit
+>>
+    
+    Empty the list of compilation units accessible to dynamically-linked
+   programs.
+  
+
+Deprecated, initialization
+==========================
+  
+
+<<
+  val init : unit -> unit
+>>
+    
+    Deprecated. Initialize the Dynlink library. This function is called
+   automatically when needed. 
+  
+
+Error reporting
+===============
+  
+
+<<
+  type linking_error =
+    | Undefined_global of string
+    | Unavailable_primitive of string
+    | Uninitialized_global of string
+>>
+   
+
+<<
+  type error =
+    | Not_a_bytecode_file of string
+    | Inconsistent_import of string
+    | Unavailable_unit of string
+    | Unsafe_file
+    | Linking_error of string * linking_error
+    | Corrupted_interface of string
+    | File_not_found of string
+    | Cannot_open_dll of string
+    | Inconsistent_implementation of string
+>>
+   
+
+<<
+  exception Error of error
+>>
+    
+    Errors in dynamic linking are reported by raising the Error exception with
+   a description of the error.
+  
+
+<<
+  val error_message : error -> string
+>>
+    
+    Convert an error description to a printable message.
+  
+   
+   
+
+Node: Chapter 28,	Next: Section 28-1,	Prev: Chapter 27,	Up: Part IV
+  
+
+Chapter 28     The LablTk library: Tcl/Tk GUI interface
+*******************************************************
+   
+  The labltk library provides access to the Tcl/Tk GUI from Objective Caml
+programs. This interface is generated in an automated way, and you should refer
+to Tcl/Tk books and man pages for detailed information on the behavior of the
+numerous functions. We also suggest to use ocamlbrowser to see the types of the
+various functions, that are the best documentation for the library itself. 
+  
+  Programs that use the labltk library must be linked as follows: 
+<<
+          ocamlc other options -I +labltk labltk.cma other files
+          ocamlopt other options -I +labltk labltk.cmxa other files
+>>
+  
+     Unix: 
+    The labltk library is available for any system with Tcl/Tk installed,
+   starting from Tcl 7.5/Tk 4.1 up to Tcl/Tk 8.4. Beware that some beta
+   versions may have compatibility problems.
+   If the library was not compiled correctly, try to run again the configure
+   script with the option -tkdefs switches, where switches is a list of C-style
+   inclusion paths leading to the right tcl.h and tk.h, for instance
+   '-I/usr/local/include/tcl8.4 -I/usr/local/include/tk8.4'.
+   A script is installed, to make easier the use of the labltk library as
+   toplevel. 
+     
+    labltk  This is a toplevel including the labltk library, and the path is
+      already set as to allow the use of the various modules. It also includes
+      code for the Unix and Str libraries. You can use it in place of ocaml. 
+    
+  
+     Windows: 
+    The labltk library has been precompiled for use with Tcl/Tk 8.4. You must
+   first have it installed on your system. It can be downloaded from
+   http://www.activestate.com/products/ActiveTcl/. After installing it, you
+   must put the dynamically loaded libraries tcl84.dll and tk84.dll (from the
+   bin directory of the Tcl installation) in a directory included in you path.
+   No toplevel is available, but you can load the library from the standard
+   toplevel with the following commands. 
+       
+      <<# #directory "+labltk";;
+        # #load "labltk.cma";;
+      >>
+    You can also load it directly from the command line. 
+       
+      <<C:\ocaml\bin> ocaml -I +labltk labltk.cma
+      >>
+    
+  
+  The labltk library is composed of a large number of modules. 
+    
+   <<Bell                Imagebitmap         Place
+     Button              Imagephoto          Radiobutton
+     Canvas              Label               Scale
+     Checkbutton         Listbox             Scrollbar
+     Clipboard           Menu                Selection
+     Dialog              Menubutton          Text
+     Entry               Message             Tk
+     Focus               Option              Tkwait
+     Frame               Optionmenu          Toplevel
+     Grab                Pack                Winfo
+     Grid                Palette             Wm
+   >>
+  
+  Giving a detailed account of each of these module would be impractical here.
+We will just present some of the basic functions in the module Tk. Note that
+for most other modules information can be found in the Tcl man page of their
+name.
+* Menu:
+
+* Section 28-1::	Module Tk : Basic functions and types for LablTk
+
+
+Node: Section 28-1,	Next: Chapter 29,	Prev: Chapter 28,	Up: Chapter 28
+  
+
+28.1   Module Tk : Basic functions and types for LablTk
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+Initialization and termination
+==============================
+  
+
+<<
+  val openTk :
+    ?display:string -> ?clas:string -> unit -> Widget.toplevel Widget.widget
+>>
+    
+    Initialize LablTk and open a toplevel window. display is described
+   according to the X11 conventions. clas is used for the X11 resource
+   mechanism.
+  
+
+<<
+  val mainLoop : unit -> unit
+>>
+    
+    Start the main event loop
+  
+
+<<
+  val closeTk : unit -> unit
+>>
+    
+    Quit the main loop and close all open windows.
+  
+
+<<
+  val destroy : 'a Widget.widget -> unit
+>>
+    
+    Destroy an individual widget.
+  
+
+Application wide commands
+=========================
+  
+
+<<
+  val update : unit -> unit
+>>
+    
+    Synchronize display with internal state.
+  
+
+<<
+  val appname_get : unit -> string
+>>
+   
+
+<<
+  val appname_set : string -> unit
+>>
+    
+    Get or set the application name.
+  
+
+Dimensions
+==========
+  
+
+<<
+  type units = [ `Cm of float | `In of float | `Mm of float | `Pix of int | `Pt
+of float ] 
+>>
+   
+
+<<
+  val pixels : units -> int
+>>
+    
+    Converts various on-screen units to pixels, respective to the default
+   display. Available units are pixels, centimeters, inches, millimeters and
+   points
+  
+
+Widget layout commands
+======================
+  
+
+<<
+  type anchor = [ `Center | `E | `N | `Ne | `Nw | `S | `Se | `Sw | `W ] 
+>>
+   
+
+<<
+  type fillMode = [ `Both | `None | `X | `Y ] 
+>>
+   
+
+<<
+  type side = [ `Bottom | `Left | `Right | `Top ] 
+>>
+   
+
+<<
+  val pack :
+    ?after:'a Widget.widget ->
+    ?anchor:anchor ->
+    ?before:'b Widget.widget ->
+    ?expand:bool ->
+    ?fill:fillMode ->
+    ?inside:'c Widget.widget ->
+    ?ipadx:int ->
+    ?ipady:int ->
+    ?padx:int -> ?pady:int -> ?side:side -> 'd Widget.widget list -> unit
+>>
+    
+    Pack a widget inside its parent, using the standard layout engine.
+  
+
+<<
+  val grid :
+    ?column:int ->
+    ?columnspan:int ->
+    ?inside:'a Widget.widget ->
+    ?ipadx:int ->
+    ?ipady:int ->
+    ?padx:int ->
+    ?pady:int ->
+    ?row:int -> ?rowspan:int -> ?sticky:string -> 'b Widget.widget list -> unit
+>>
+    
+    Pack a widget inside its parent, using the grid layout engine.
+  
+
+<<
+  type borderMode = [ `Ignore | `Inside | `Outside ] 
+>>
+   
+
+<<
+  val place :
+    ?anchor:anchor ->
+    ?bordermode:borderMode ->
+    ?height:int ->
+    ?inside:'a Widget.widget ->
+    ?relheight:float ->
+    ?relwidth:float ->
+    ?relx:float ->
+    ?rely:float -> ?width:int -> ?x:int -> ?y:int -> 'b Widget.widget -> unit
+>>
+    
+    Pack a widget inside its parent, at absolute coordinates.
+  
+
+<<
+  val raise_window : ?above:'a Widget.widget -> 'b Widget.widget -> unit
+>>
+   
+
+<<
+  val lower_window : ?below:'a Widget.widget -> 'b Widget.widget -> unit
+>>
+    
+    Raise or lower the window associated to a widget.
+  
+
+Event handling
+==============
+  
+
+<<
+  type modifier = [ `Alt
+    | `Button1
+    | `Button2
+    | `Button3
+    | `Button4
+    | `Button5
+    | `Control
+    | `Double
+    | `Lock
+    | `Meta
+    | `Mod1
+    | `Mod2
+    | `Mod3
+    | `Mod4
+    | `Mod5
+    | `Shift
+    | `Triple ] 
+>>
+   
+
+<<
+  type event = [ `ButtonPress
+    | `ButtonPressDetail of int
+    | `ButtonRelease
+    | `ButtonReleaseDetail of int
+    | `Circulate
+    | `ColorMap
+    | `Configure
+    | `Destroy
+    | `Enter
+    | `Expose
+    | `FocusIn
+    | `FocusOut
+    | `Gravity
+    | `KeyPress
+    | `KeyPressDetail of string
+    | `KeyRelease
+    | `KeyReleaseDetail of string
+    | `Leave
+    | `Map
+    | `Modified of modifier list * event
+    | `Motion
+    | `Property
+    | `Reparent
+    | `Unmap
+    | `Visibility ] 
+>>
+   
+  An event can be either a basic X event, or modified by a key or mouse
+modifier.
+
+<<
+  type eventInfo = {
+    mutable ev_Above : int ;
+    mutable ev_ButtonNumber : int ;
+    mutable ev_Count : int ;
+    mutable ev_Detail : string ;
+    mutable ev_Focus : bool ;
+    mutable ev_Height : int ;
+    mutable ev_KeyCode : int ;
+    mutable ev_Mode : string ;
+    mutable ev_OverrideRedirect : bool ;
+    mutable ev_Place : string ;
+    mutable ev_State : string ;
+    mutable ev_Time : int ;
+    mutable ev_Width : int ;
+    mutable ev_MouseX : int ;
+    mutable ev_MouseY : int ;
+    mutable ev_Char : string ;
+    mutable ev_BorderWidth : int ;
+    mutable ev_SendEvent : bool ;
+    mutable ev_KeySymString : string ;
+    mutable ev_KeySymInt : int ;
+    mutable ev_RootWindow : int ;
+    mutable ev_SubWindow : int ;
+    mutable ev_Type : int ;
+    mutable ev_Widget : Widget.any Widget.widget ;
+    mutable ev_RootX : int ;
+    mutable ev_RootY : int ;
+  }
+>>
+   
+  Event related information accessible in callbacks.
+
+<<
+  type eventField = [ `Above
+    | `BorderWidth
+    | `ButtonNumber
+    | `Char
+    | `Count
+    | `Detail
+    | `Focus
+    | `Height
+    | `KeyCode
+    | `KeySymInt
+    | `KeySymString
+    | `Mode
+    | `MouseX
+    | `MouseY
+    | `OverrideRedirect
+    | `Place
+    | `RootWindow
+    | `RootX
+    | `RootY
+    | `SendEvent
+    | `State
+    | `SubWindow
+    | `Time
+    | `Type
+    | `Widget
+    | `Width ] 
+>>
+   
+  In order to access the above event information, one has to pass a list of
+required event fields to the bind function.
+
+<<
+  val bind :
+    events:event list ->
+    ?extend:bool ->
+    ?breakable:bool ->
+    ?fields:eventField list ->
+    ?action:(eventInfo -> unit) -> 'a Widget.widget -> unit
+>>
+    
+    Bind a succession of events on a widget to an action. If extend is true
+   then then binding is added after existing ones, otherwise it replaces them.
+   breakable should be true when break is to be called inside the action.
+   action is called with the fields required set in an eventInfo structure.
+   Other fields should not be accessed. If action is omitted then existing
+   bindings are removed.
+  
+
+<<
+  val bind_class :
+    events:event list ->
+    ?extend:bool ->
+    ?breakable:bool ->
+    ?fields:eventField list ->
+    ?action:(eventInfo -> unit) -> ?on:'a Widget.widget -> string -> unit
+>>
+    
+    Same thing for all widgets of a given class. If a widget is given with
+   label ~on:, the binding will be removed as soon as it is destroyed.
+  
+
+<<
+  val bind_tag :
+    events:event list ->
+    ?extend:bool ->
+    ?breakable:bool ->
+    ?fields:eventField list ->
+    ?action:(eventInfo -> unit) -> ?on:'a Widget.widget -> string -> unit
+>>
+    
+    Same thing for all widgets having a given tag
+  
+
+<<
+  val break : unit -> unit
+>>
+    
+    Used inside a bound action, do not call other actions after this one. This
+   is only possible if this action was bound with ~breakable:true.
+  
+   
+   
+
+Node: Chapter 29,	Next: Section 29-1,	Prev: Chapter 28,	Up: Part IV
+  
+
+Chapter 29     The bigarray library
+***********************************
+   
+  The bigarray library implements large, multi-dimensional, numerical arrays.
+These arrays are called "big arrays" to distinguish them from the standard Caml
+arrays described in  section 20.2*Note Section 20-2::. The main differences
+between "big arrays" and standard Caml arrays are as follows: 
+  
+   - Big arrays are not limited in size, unlike Caml arrays (float array are
+   limited to 2097151 elements on a 32-bit platform, other array types to
+   4194303 elements). 
+   - Big arrays are multi-dimensional. Any number of dimensions between 1 and
+   16 is supported. In contrast, Caml arrays are mono-dimensional and require
+   encoding multi-dimensional arrays as arrays of arrays. 
+   - Big arrays can only contain integers and floating-point numbers, while
+   Caml arrays can contain arbitrary Caml data types. However, big arrays
+   provide more space-efficient storage of integer and floating-point elements,
+   in particular because they support "small" types such as single-precision
+   floats and 8 and 16-bit integers, in addition to the standard Caml types of
+   double-precision floats and 32 and 64-bit integers. 
+   - The memory layout of big arrays is entirely compatible with that of arrays
+   in C and Fortran, allowing large arrays to be passed back and forth between
+   Caml code and C / Fortran code with no data copying at all. 
+   - Big arrays support interesting high-level operations that normal arrays do
+   not provide efficiently, such as extracting sub-arrays and "slicing" a
+   multi-dimensional array along certain dimensions, all without any copying. 
+   Programs that use the bigarray library must be linked as follows: 
+<<
+          ocamlc other options bigarray.cma other files
+          ocamlopt other options bigarray.cmxa other files
+>>
+   For interactive use of the bigarray library, do: 
+<<
+          ocamlmktop -o mytop bigarray.cma
+          ./mytop
+>>
+   or (if dynamic linking of C libraries is supported on your platform), start
+ocaml and type #load "bigarray.cma";;.
+* Menu:
+
+* Section 29-1::	Module Bigarray : Large, multi-dimensional, numerical arrays.
+* Section 29-2::	Big arrays in the Caml-C interface
+
+
+Node: Section 29-1,	Next: Section 29-2,	Prev: Chapter 29,	Up: Chapter 29
+  
+
+29.1   Module Bigarray : Large, multi-dimensional, numerical arrays.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  This module implements multi-dimensional arrays of integers and
+floating-point numbers, thereafter referred to as "big arrays". The
+implementation allows efficient sharing of large numerical arrays between Caml
+code and C or Fortran numerical libraries.
+  Concerning the naming conventions, users of this module are encouraged to do
+open Bigarray in their source, then refer to array types and operations via
+short dot notation, e.g. Array1.t or Array2.sub.
+  Big arrays support all the Caml ad-hoc polymorphic operations:
+  
+   - comparisons (=, <>, <=, etc, as well as
+   Pervasives.compare[19.2*Note Section 19-2::]); 
+   - hashing (module Hash); 
+   - and structured input-output
+   (Pervasives.output_value[19.2*Note Section 19-2::]
+   and
+   Pervasives.input_value[19.2*Note Section 19-2::],
+   as well as the functions from the Marshal[20.19*Note Section 20-19::]
+   module). 
+  
+  
+  
+
+Element kinds
+=============
+  
+  Big arrays can contain elements of the following kinds:
+  
+   - IEEE single precision (32 bits) floating-point numbers
+   (Bigarray.float32_elt[29.1*Note Section 29-1::]), 
+   - IEEE double precision (64 bits) floating-point numbers
+   (Bigarray.float64_elt[29.1*Note Section 29-1::]), 
+   - IEEE single precision (2 * 32 bits) floating-point complex numbers
+   (Bigarray.complex32_elt[29.1*Note Section 29-1::
+   ]), 
+   - IEEE double precision (2 * 64 bits) floating-point complex numbers
+   (Bigarray.complex64_elt[29.1*Note Section 29-1::
+   ]), 
+   - 8-bit integers (signed or unsigned)
+   (Bigarray.int8_signed_elt[29.1] or
+   Bigarray.int8_unsigned_elt[29.1]), 
+   - 16-bit integers (signed or unsigned)
+   (Bigarray.int16_signed_elt[29.1] or
+   Bigarray.int16_unsigned_elt[29.1]), 
+   - Caml integers (signed, 31 bits on 32-bit architectures, 63 bits on 64-bit
+   architectures)
+   (Bigarray.int_elt[29.1*Note Section 29-1::]), 
+   - 32-bit signed integer
+   (Bigarray.int32_elt[29.1*Note Section 29-1::]), 
+   - 64-bit signed integers
+   (Bigarray.int64_elt[29.1*Note Section 29-1::]), 
+   - platform-native signed integers (32 bits on 32-bit architectures, 64 bits
+   on 64-bit architectures)
+   (Bigarray.nativeint_elt[29.1*Note Section 29-1::
+   ]). 
+  
+  Each element kind is represented at the type level by one of the abstract
+types defined below.
+
+<<
+  type float32_elt 
+>>
+   
+
+<<
+  type float64_elt 
+>>
+   
+
+<<
+  type complex32_elt 
+>>
+   
+
+<<
+  type complex64_elt 
+>>
+   
+
+<<
+  type int8_signed_elt 
+>>
+   
+
+<<
+  type int8_unsigned_elt 
+>>
+   
+
+<<
+  type int16_signed_elt 
+>>
+   
+
+<<
+  type int16_unsigned_elt 
+>>
+   
+
+<<
+  type int_elt 
+>>
+   
+
+<<
+  type int32_elt 
+>>
+   
+
+<<
+  type int64_elt 
+>>
+   
+
+<<
+  type nativeint_elt 
+>>
+   
+
+<<
+  type ('a, 'b) kind 
+>>
+    
+    To each element kind is associated a Caml type, which is the type of Caml
+   values that can be stored in the big array or read back from it. This type
+   is not necessarily the same as the type of the array elements proper: for
+   instance, a big array whose elements are of kind float32_elt contains 32-bit
+   single precision floats, but reading or writing one of its elements from
+   Caml uses the Caml type float, which is 64-bit double precision floats.
+   The abstract type ('a, 'b) kind captures this association of a Caml type 'a
+   for values read or written in the big array, and of an element kind 'b which
+   represents the actual contents of the big array. The following predefined
+   values of type kind list all possible associations of Caml types with
+   element kinds:
+  
+
+<<
+  val float32 : (float, float32_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val float64 : (float, float64_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val complex32 : (Complex.t, complex32_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val complex64 : (Complex.t, complex64_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int8_signed : (int, int8_signed_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int8_unsigned : (int, int8_unsigned_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int16_signed : (int, int16_signed_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int16_unsigned : (int, int16_unsigned_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int : (int, int_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int32 : (int32, int32_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val int64 : (int64, int64_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val nativeint : (nativeint, nativeint_elt) kind
+>>
+    
+    See Bigarray.char[29.1*Note Section 29-1::].
+  
+
+<<
+  val char : (char, int8_unsigned_elt) kind
+>>
+    
+    As shown by the types of the values above, big arrays of kind float32_elt
+   and float64_elt are accessed using the Caml type float. Big arrays of
+   complex kinds complex32_elt, complex64_elt are accessed with the Caml type
+   Complex.t[20.6*Note Section 20-6::]. Big arrays of integer kinds are
+   accessed using the smallest Caml integer type large enough to represent the
+   array elements: int for 8- and 16-bit integer bigarrays, as well as
+   Caml-integer bigarrays; int32 for 32-bit integer bigarrays; int64 for 64-bit
+   integer bigarrays; and nativeint for platform-native integer bigarrays.
+   Finally, big arrays of kind int8_unsigned_elt can also be accessed as arrays
+   of characters instead of arrays of small integers, by using the kind value
+   char instead of int8_unsigned.
+  
+
+Array layouts
+=============
+  
+
+<<
+  type c_layout 
+>>
+    
+    See
+   Bigarray.fortran_layout[29.1*Note Section 29-1::].
+  
+
+<<
+  type fortran_layout 
+>>
+    
+    To facilitate interoperability with existing C and Fortran code, this
+   library supports two different memory layouts for big arrays, one compatible
+   with the C conventions, the other compatible with the Fortran conventions.
+   In the C-style layout, array indices start at 0, and multi-dimensional
+   arrays are laid out in row-major format. That is, for a two-dimensional
+   array, all elements of row 0 are contiguous in memory, followed by all
+   elements of row 1, etc. In other terms, the array elements at (x,y) and (x,
+   y+1) are adjacent in memory.
+   In the Fortran-style layout, array indices start at 1, and multi-dimensional
+   arrays are laid out in column-major format. That is, for a two-dimensional
+   array, all elements of column 0 are contiguous in memory, followed by all
+   elements of column 1, etc. In other terms, the array elements at (x,y) and
+   (x+1, y) are adjacent in memory.
+   Each layout style is identified at the type level by the abstract types
+   Bigarray.c_layout[29.1*Note Section 29-1::] and
+   fortran_layout respectively.
+  
+
+<<
+  type 'a layout 
+>>
+    
+    The type 'a layout represents one of the two supported memory layouts:
+   C-style if 'a is
+   Bigarray.c_layout[29.1*Note Section 29-1::],
+   Fortran-style if 'a is
+   Bigarray.fortran_layout[29.1*Note Section 29-1::].
+  
+
+Supported layouts
+-----------------
+  
+  The abstract values c_layout and fortran_layout represent the two supported
+layouts at the level of values.
+
+<<
+  val c_layout : c_layout layout
+>>
+   
+
+<<
+  val fortran_layout : fortran_layout layout
+>>
+   
+
+Generic arrays (of arbitrarily many dimensions)
+===============================================
+  
+<<
+  module Genarray : >>
+   
+    sig
+  
+  
+   
+   <<
+     type ('a, 'b, 'c) t 
+   >>
+   
+       The type Genarray.t is the type of big arrays with variable numbers of
+      dimensions. Any number of dimensions between 1 and 16 is supported.
+      The three type parameters to Genarray.t identify the array element kind
+      and layout, as follows:
+        
+         - the first parameter, 'a, is the Caml type for accessing array
+         elements (float, int, int32, int64, nativeint); 
+         - the second parameter, 'b, is the actual kind of array elements
+         (float32_elt, float64_elt, int8_signed_elt, int8_unsigned_elt, etc); 
+         - the third parameter, 'c, identifies the array layout (c_layout or
+         fortran_layout). 
+      
+      For instance, (float, float32_elt, fortran_layout) Genarray.t is the type
+      of generic big arrays containing 32-bit floats in Fortran layout; reads
+      and writes in this array use the Caml type float.
+ 
+   
+   <<
+     val create :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> int array -> ('a, 'b, 'c) t
+   >>
+   
+       Genarray.create kind layout dimensions returns a new big array whose
+      element kind is determined by the parameter kind (one of float32,
+      float64, int8_signed, etc) and whose layout is determined by the
+      parameter layout (one of c_layout or fortran_layout). The dimensions
+      parameter is an array of integers that indicate the size of the big array
+      in each dimension. The length of dimensions determines the number of
+      dimensions of the bigarray.
+      For instance, Genarray.create int32 c_layout [|4;6;8|] returns a fresh
+      big array of 32-bit integers, in C layout, having three dimensions, the
+      three dimensions being 4, 6 and 8 respectively.
+      Big arrays returned by Genarray.create are not initialized: the initial
+      values of array elements is unspecified.
+      Genarray.create raises Invalid_argument if the number of dimensions is
+      not in the range 1 to 16 inclusive, or if one of the dimensions is
+      negative.
+ 
+   
+   <<
+     val num_dims : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the number of dimensions of the given big array.
+ 
+   
+   <<
+     val dims : ('a, 'b, 'c) t -> int array
+   >>
+   
+       Genarray.dims a returns all dimensions of the big array a, as an array
+      of integers of length Genarray.num_dims a.
+ 
+   
+   <<
+     val nth_dim : ('a, 'b, 'c) t -> int -> int
+   >>
+   
+       Genarray.nth_dim a n returns the n-th dimension of the big array a. The
+      first dimension corresponds to n = 0; the second dimension corresponds to
+      n = 1; the last dimension, to n = Genarray.num_dims a - 1. Raise
+      Invalid_argument if n is less than 0 or greater or equal than
+      Genarray.num_dims a.
+ 
+   
+   <<
+     val kind : ('a, 'b, 'c) t -> ('a, 'b) Bigarray.kind
+   >>
+   
+       Return the kind of the given big array.
+ 
+   
+   <<
+     val layout : ('a, 'b, 'c) t -> 'c Bigarray.layout
+   >>
+   
+       Return the layout of the given big array.
+ 
+   
+   <<
+     val get : ('a, 'b, 'c) t -> int array -> 'a
+   >>
+   
+       Read an element of a generic big array. Genarray.get a [|i1; ...; iN|]
+      returns the element of a whose coordinates are i1 in the first dimension,
+      i2 in the second dimension, ..., iN in the N-th dimension.
+      If a has C layout, the coordinates must be greater or equal than 0 and
+      strictly less than the corresponding dimensions of a. If a has Fortran
+      layout, the coordinates must be greater or equal than 1 and less or equal
+      than the corresponding dimensions of a. Raise Invalid_argument if the
+      array a does not have exactly N dimensions, or if the coordinates are
+      outside the array bounds.
+      If N > 3, alternate syntax is provided: you can write a.{i1, i2, ..., iN}
+      instead of Genarray.get a [|i1; ...; iN|]. (The syntax a.{...} with one,
+      two or three coordinates is reserved for accessing one-, two- and
+      three-dimensional arrays as described below.)
+ 
+   
+   <<
+     val set : ('a, 'b, 'c) t -> int array -> 'a -> unit
+   >>
+   
+       Assign an element of a generic big array. Genarray.set a [|i1; ...; iN|]
+      v stores the value v in the element of a whose coordinates are i1 in the
+      first dimension, i2 in the second dimension, ..., iN in the N-th
+      dimension.
+      The array a must have exactly N dimensions, and all coordinates must lie
+      inside the array bounds, as described for Genarray.get; otherwise,
+      Invalid_argument is raised.
+      If N > 3, alternate syntax is provided: you can write a.{i1, i2, ..., iN}
+      <- v instead of Genarray.set a [|i1; ...; iN|] v. (The syntax a.{...} <-
+      v with one, two or three coordinates is reserved for updating one-, two-
+      and three-dimensional arrays as described below.)
+ 
+   
+   <<
+     val sub_left :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.c_layout) t
+   >>
+   
+       Extract a sub-array of the given big array by restricting the first
+      (left-most) dimension. Genarray.sub_left a ofs len returns a big array
+      with the same number of dimensions as a, and the same dimensions as a,
+      except the first dimension, which corresponds to the interval [ofs ...
+      ofs + len - 1] of the first dimension of a. No copying of elements is
+      involved: the sub-array and the original array share the same storage
+      space. In other terms, the element at coordinates [|i1; ...; iN|] of the
+      sub-array is identical to the element at coordinates [|i1+ofs; ...; iN|]
+      of the original array a.
+      Genarray.sub_left applies only to big arrays in C layout. Raise
+      Invalid_argument if ofs and len do not designate a valid sub-array of a,
+      that is, if ofs < 0, or len < 0, or ofs + len > Genarray.nth_dim a 0.
+ 
+   
+   <<
+     val sub_right :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.fortran_layout) t
+   >>
+   
+       Extract a sub-array of the given big array by restricting the last
+      (right-most) dimension. Genarray.sub_right a ofs len returns a big array
+      with the same number of dimensions as a, and the same dimensions as a,
+      except the last dimension, which corresponds to the interval [ofs ... ofs
+      + len - 1] of the last dimension of a. No copying of elements is
+      involved: the sub-array and the original array share the same storage
+      space. In other terms, the element at coordinates [|i1; ...; iN|] of the
+      sub-array is identical to the element at coordinates [|i1; ...; iN+ofs|]
+      of the original array a.
+      Genarray.sub_right applies only to big arrays in Fortran layout. Raise
+      Invalid_argument if ofs and len do not designate a valid sub-array of a,
+      that is, if ofs < 1, or len < 0, or ofs + len > Genarray.nth_dim a
+      (Genarray.num_dims a - 1).
+ 
+   
+   <<
+     val slice_left :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int array -> ('a, 'b, Bigarray.c_layout) t
+   >>
+   
+       Extract a sub-array of lower dimension from the given big array by
+      fixing one or several of the first (left-most) coordinates.
+      Genarray.slice_left a [|i1; ... ; iM|] returns the "slice" of a obtained
+      by setting the first M coordinates to i1, ..., iM. If a has N dimensions,
+      the slice has dimension N - M, and the element at coordinates [|j1; ...;
+      j(N-M)|] in the slice is identical to the element at coordinates [|i1;
+      ...; iM; j1; ...; j(N-M)|] in the original array a. No copying of
+      elements is involved: the slice and the original array share the same
+      storage space.
+      Genarray.slice_left applies only to big arrays in C layout. Raise
+      Invalid_argument if M >= N, or if [|i1; ... ; iM|] is outside the bounds
+      of a.
+ 
+   
+   <<
+     val slice_right :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int array -> ('a, 'b, Bigarray.fortran_layout) t
+   >>
+   
+       Extract a sub-array of lower dimension from the given big array by
+      fixing one or several of the last (right-most) coordinates.
+      Genarray.slice_right a [|i1; ... ; iM|] returns the "slice" of a obtained
+      by setting the last M coordinates to i1, ..., iM. If a has N dimensions,
+      the slice has dimension N - M, and the element at coordinates [|j1; ...;
+      j(N-M)|] in the slice is identical to the element at coordinates [|j1;
+      ...; j(N-M); i1; ...; iM|] in the original array a. No copying of
+      elements is involved: the slice and the original array share the same
+      storage space.
+      Genarray.slice_right applies only to big arrays in Fortran layout. Raise
+      Invalid_argument if M >= N, or if [|i1; ... ; iM|] is outside the bounds
+      of a.
+ 
+   
+   <<
+     val blit : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> unit
+   >>
+   
+       Copy all elements of a big array in another big array. Genarray.blit src
+      dst copies all elements of src into dst. Both arrays src and dst must
+      have the same number of dimensions and equal dimensions. Copying a
+      sub-array of src to a sub-array of dst can be achieved by applying
+      Genarray.blit to sub-array or slices of src and dst.
+ 
+   
+   <<
+     val fill : ('a, 'b, 'c) t -> 'a -> unit
+   >>
+   
+       Set all elements of a big array to a given value. Genarray.fill a v
+      stores the value v in all elements of the big array a. Setting only some
+      elements of a to v can be achieved by applying Genarray.fill to a
+      sub-array or a slice of a.
+ 
+   
+   <<
+     val map_file :
+       Unix.file_descr ->
+       ?pos:int64 ->
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> bool -> int array -> ('a, 'b, 'c) t
+   >>
+   
+       Memory mapping of a file as a big array. Genarray.map_file fd kind
+      layout shared dims returns a big array of kind kind, layout layout, and
+      dimensions as specified in dims. The data contained in this big array are
+      the contents of the file referred to by the file descriptor fd (as opened
+      previously with Unix.openfile, for example). The optional pos parameter
+      is the byte offset in the file of the data being mapped; it defaults to 0
+      (map from the beginning of the file).
+      If shared is true, all modifications performed on the array are reflected
+      in the file. This requires that fd be opened with write permissions. If
+      shared is false, modifications performed on the array are done in memory
+      only, using copy-on-write of the modified pages; the underlying file is
+      not affected.
+      Genarray.map_file is much more efficient than reading the whole file in a
+      big array, modifying that big array, and writing it afterwards.
+      To adjust automatically the dimensions of the big array to the actual
+      size of the file, the major dimension (that is, the first dimension for
+      an array with C layout, and the last dimension for an array with Fortran
+      layout) can be given as -1. Genarray.map_file then determines the major
+      dimension from the size of the file. The file must contain an integral
+      number of sub-arrays as determined by the non-major dimensions, otherwise
+      Failure is raised.
+      If all dimensions of the big array are given, the file size is matched
+      against the size of the big array. If the file is larger than the big
+      array, only the initial portion of the file is mapped to the big array.
+      If the file is smaller than the big array, the file is automatically
+      grown to the size of the big array. This requires write permissions on
+      fd.
+  
+    end
+  
+
+One-dimensional arrays
+======================
+  
+<<
+  module Array1 : >>
+   
+    sig
+  
+  
+   
+   <<
+     type ('a, 'b, 'c) t 
+   >>
+   
+       The type of one-dimensional big arrays whose elements have Caml type 'a,
+      representation kind 'b, and memory layout 'c.
+ 
+   
+   <<
+     val create :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Array1.create kind layout dim returns a new bigarray of one dimension,
+      whose size is dim. kind and layout determine the array element kind and
+      the array layout as described for Genarray.create.
+ 
+   
+   <<
+     val dim : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the size (dimension) of the given one-dimensional big array.
+ 
+   
+   <<
+     val kind : ('a, 'b, 'c) t -> ('a, 'b) Bigarray.kind
+   >>
+   
+       Return the kind of the given big array.
+ 
+   
+   <<
+     val layout : ('a, 'b, 'c) t -> 'c Bigarray.layout
+   >>
+   
+       Return the layout of the given big array.
+ 
+   
+   <<
+     val get : ('a, 'b, 'c) t -> int -> 'a
+   >>
+   
+       Array1.get a x, or alternatively a.{x}, returns the element of a at
+      index x. x must be greater or equal than 0 and strictly less than
+      Array1.dim a if a has C layout. If a has Fortran layout, x must be
+      greater or equal than 1 and less or equal than Array1.dim a. Otherwise,
+      Invalid_argument is raised.
+ 
+   
+   <<
+     val set : ('a, 'b, 'c) t -> int -> 'a -> unit
+   >>
+   
+       Array1.set a x v, also written a.{x} <- v, stores the value v at index x
+      in a. x must be inside the bounds of a as described in
+      Bigarray.Array1.get[29.1*Note Section 29-1::]; otherwise,
+      Invalid_argument is raised.
+ 
+   
+   <<
+     val sub : ('a, 'b, 'c) t ->
+       int -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Extract a sub-array of the given one-dimensional big array. See
+      Genarray.sub_left for more details.
+ 
+   
+   <<
+     val blit : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> unit
+   >>
+   
+       Copy the first big array to the second big array. See Genarray.blit for
+      more details.
+ 
+   
+   <<
+     val fill : ('a, 'b, 'c) t -> 'a -> unit
+   >>
+   
+       Fill the given big array with the given value. See Genarray.fill for
+      more details.
+ 
+   
+   <<
+     val of_array :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> 'a array -> ('a, 'b, 'c) t
+   >>
+   
+       Build a one-dimensional big array initialized from the given array.
+ 
+   
+   <<
+     val map_file :
+       Unix.file_descr ->
+       ?pos:int64 ->
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> bool -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Memory mapping of a file as a one-dimensional big array. See
+      Bigarray.Genarray.map_file[29.1] for more details.
+ 
+   
+   <<
+     val unsafe_get : ('a, 'b, 'c) t -> int -> 'a
+   >>
+   
+       Like Bigarray.Array1.get[29.1*Note Section 29-1::], but
+      bounds checking is not always performed. Use with caution and only when
+      the program logic guarantees that the access is within bounds.
+ 
+   
+   <<
+     val unsafe_set : ('a, 'b, 'c) t -> int -> 'a -> unit
+   >>
+   
+       Like Bigarray.Array1.set[29.1*Note Section 29-1::], but
+      bounds checking is not always performed. Use with caution and only when
+      the program logic guarantees that the access is within bounds.
+  
+    end
+  
+    One-dimensional arrays. The Array1 structure provides operations similar to
+   those of Bigarray.Genarray[29.1*Note Section 29-1::], but
+   specialized to the case of one-dimensional arrays. (The Array2 and Array3
+   structures below provide operations specialized for two- and
+   three-dimensional arrays.) Statically knowing the number of dimensions of
+   the array allows faster operations, and more precise static type-checking.
+  
+
+Two-dimensional arrays
+======================
+  
+<<
+  module Array2 : >>
+   
+    sig
+  
+  
+   
+   <<
+     type ('a, 'b, 'c) t 
+   >>
+   
+       The type of two-dimensional big arrays whose elements have Caml type 'a,
+      representation kind 'b, and memory layout 'c.
+ 
+   
+   <<
+     val create :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> int -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Array2.create kind layout dim1 dim2 returns a new bigarray of two
+      dimension, whose size is dim1 in the first dimension and dim2 in the
+      second dimension. kind and layout determine the array element kind and
+      the array layout as described for
+      Bigarray.Genarray.create[29.1*Note Section 29-1::].
+ 
+   
+   <<
+     val dim1 : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the first dimension of the given two-dimensional big array.
+ 
+   
+   <<
+     val dim2 : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the second dimension of the given two-dimensional big array.
+ 
+   
+   <<
+     val kind : ('a, 'b, 'c) t -> ('a, 'b) Bigarray.kind
+   >>
+   
+       Return the kind of the given big array.
+ 
+   
+   <<
+     val layout : ('a, 'b, 'c) t -> 'c Bigarray.layout
+   >>
+   
+       Return the layout of the given big array.
+ 
+   
+   <<
+     val get : ('a, 'b, 'c) t -> int -> int -> 'a
+   >>
+   
+       Array2.get a x y, also written a.{x,y}, returns the element of a at
+      coordinates (x, y). x and y must be within the bounds of a, as described
+      for Bigarray.Genarray.get[29.1*Note Section 29-1::];
+      otherwise, Invalid_argument is raised.
+ 
+   
+   <<
+     val set : ('a, 'b, 'c) t -> int -> int -> 'a -> unit
+   >>
+   
+       Array2.set a x y v, or alternatively a.{x,y} <- v, stores the value v at
+      coordinates (x, y) in a. x and y must be within the bounds of a, as
+      described for
+      Bigarray.Genarray.set[29.1*Note Section 29-1::]; otherwise,
+      Invalid_argument is raised.
+ 
+   
+   <<
+     val sub_left :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.c_layout) t
+   >>
+   
+       Extract a two-dimensional sub-array of the given two-dimensional big
+      array by restricting the first dimension. See
+      Bigarray.Genarray.sub_left[29.1] for more details. Array2.sub_left applies only to arrays with C
+      layout.
+ 
+   
+   <<
+     val sub_right :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.fortran_layout) t
+   >>
+   
+       Extract a two-dimensional sub-array of the given two-dimensional big
+      array by restricting the second dimension. See
+      Bigarray.Genarray.sub_right[29.1] for more details. Array2.sub_right applies only to arrays with
+      Fortran layout.
+ 
+   
+   <<
+     val slice_left :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int -> ('a, 'b, Bigarray.c_layout) Bigarray.Array1.t
+   >>
+   
+       Extract a row (one-dimensional slice) of the given two-dimensional big
+      array. The integer parameter is the index of the row to extract. See
+      Bigarray.Genarray.slice_left[29.1] for more details. Array2.slice_left applies only to arrays
+      with C layout.
+ 
+   
+   <<
+     val slice_right :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int -> ('a, 'b, Bigarray.fortran_layout) Bigarray.Array1.t
+   >>
+   
+       Extract a column (one-dimensional slice) of the given two-dimensional
+      big array. The integer parameter is the index of the column to extract.
+      See
+      Bigarray.Genarray.slice_right[29.1] for more details. Array2.slice_right applies only to
+      arrays with Fortran layout.
+ 
+   
+   <<
+     val blit : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> unit
+   >>
+   
+       Copy the first big array to the second big array. See
+      Bigarray.Genarray.blit[29.1*Note Section 29-1::] for more
+      details.
+ 
+   
+   <<
+     val fill : ('a, 'b, 'c) t -> 'a -> unit
+   >>
+   
+       Fill the given big array with the given value. See
+      Bigarray.Genarray.fill[29.1*Note Section 29-1::] for more
+      details.
+ 
+   
+   <<
+     val of_array :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> 'a array array -> ('a, 'b, 'c) t
+   >>
+   
+       Build a two-dimensional big array initialized from the given array of
+      arrays.
+ 
+   
+   <<
+     val map_file :
+       Unix.file_descr ->
+       ?pos:int64 ->
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> bool -> int -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Memory mapping of a file as a two-dimensional big array. See
+      Bigarray.Genarray.map_file[29.1] for more details.
+ 
+   
+   <<
+     val unsafe_get : ('a, 'b, 'c) t -> int -> int -> 'a
+   >>
+   
+       Like Bigarray.Array2.get[29.1*Note Section 29-1::], but
+      bounds checking is not always performed.
+ 
+   
+   <<
+     val unsafe_set : ('a, 'b, 'c) t -> int -> int -> 'a -> unit
+   >>
+   
+       Like Bigarray.Array2.set[29.1*Note Section 29-1::], but
+      bounds checking is not always performed.
+  
+    end
+  
+    Two-dimensional arrays. The Array2 structure provides operations similar to
+   those of Bigarray.Genarray[29.1*Note Section 29-1::], but
+   specialized to the case of two-dimensional arrays.
+  
+
+Three-dimensional arrays
+========================
+  
+<<
+  module Array3 : >>
+   
+    sig
+  
+  
+   
+   <<
+     type ('a, 'b, 'c) t 
+   >>
+   
+       The type of three-dimensional big arrays whose elements have Caml type
+      'a, representation kind 'b, and memory layout 'c.
+ 
+   
+   <<
+     val create :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> int -> int -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Array3.create kind layout dim1 dim2 dim3 returns a new bigarray of three
+      dimension, whose size is dim1 in the first dimension, dim2 in the second
+      dimension, and dim3 in the third. kind and layout determine the array
+      element kind and the array layout as described for
+      Bigarray.Genarray.create[29.1*Note Section 29-1::].
+ 
+   
+   <<
+     val dim1 : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the first dimension of the given three-dimensional big array.
+ 
+   
+   <<
+     val dim2 : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the second dimension of the given three-dimensional big array.
+ 
+   
+   <<
+     val dim3 : ('a, 'b, 'c) t -> int
+   >>
+   
+       Return the third dimension of the given three-dimensional big array.
+ 
+   
+   <<
+     val kind : ('a, 'b, 'c) t -> ('a, 'b) Bigarray.kind
+   >>
+   
+       Return the kind of the given big array.
+ 
+   
+   <<
+     val layout : ('a, 'b, 'c) t -> 'c Bigarray.layout
+   >>
+   
+       Return the layout of the given big array.
+ 
+   
+   <<
+     val get : ('a, 'b, 'c) t -> int -> int -> int -> 'a
+   >>
+   
+       Array3.get a x y z, also written a.{x,y,z}, returns the element of a at
+      coordinates (x, y, z). x, y and z must be within the bounds of a, as
+      described for
+      Bigarray.Genarray.get[29.1*Note Section 29-1::]; otherwise,
+      Invalid_argument is raised.
+ 
+   
+   <<
+     val set : ('a, 'b, 'c) t -> int -> int -> int -> 'a -> unit
+   >>
+   
+       Array3.set a x y v, or alternatively a.{x,y,z} <- v, stores the value v
+      at coordinates (x, y, z) in a. x, y and z must be within the bounds of a,
+      as described for
+      Bigarray.Genarray.set[29.1*Note Section 29-1::]; otherwise,
+      Invalid_argument is raised.
+ 
+   
+   <<
+     val sub_left :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.c_layout) t
+   >>
+   
+       Extract a three-dimensional sub-array of the given three-dimensional big
+      array by restricting the first dimension. See
+      Bigarray.Genarray.sub_left[29.1] for more details. Array3.sub_left applies only to arrays with C
+      layout.
+ 
+   
+   <<
+     val sub_right :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.fortran_layout) t
+   >>
+   
+       Extract a three-dimensional sub-array of the given three-dimensional big
+      array by restricting the second dimension. See
+      Bigarray.Genarray.sub_right[29.1] for more details. Array3.sub_right applies only to arrays with
+      Fortran layout.
+ 
+   
+   <<
+     val slice_left_1 :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.c_layout) Bigarray.Array1.t
+   >>
+   
+       Extract a one-dimensional slice of the given three-dimensional big array
+      by fixing the first two coordinates. The integer parameters are the
+      coordinates of the slice to extract. See
+      Bigarray.Genarray.slice_left[29.1] for more details. Array3.slice_left_1 applies only to arrays
+      with C layout.
+ 
+   
+   <<
+     val slice_right_1 :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int -> int -> ('a, 'b, Bigarray.fortran_layout) Bigarray.Array1.t
+   >>
+   
+       Extract a one-dimensional slice of the given three-dimensional big array
+      by fixing the last two coordinates. The integer parameters are the
+      coordinates of the slice to extract. See
+      Bigarray.Genarray.slice_right[29.1] for more details. Array3.slice_right_1 applies only to
+      arrays with Fortran layout.
+ 
+   
+   <<
+     val slice_left_2 :
+       ('a, 'b, Bigarray.c_layout) t ->
+       int -> ('a, 'b, Bigarray.c_layout) Bigarray.Array2.t
+   >>
+   
+       Extract a two-dimensional slice of the given three-dimensional big array
+      by fixing the first coordinate. The integer parameter is the first
+      coordinate of the slice to extract. See
+      Bigarray.Genarray.slice_left[29.1] for more details. Array3.slice_left_2 applies only to arrays
+      with C layout.
+ 
+   
+   <<
+     val slice_right_2 :
+       ('a, 'b, Bigarray.fortran_layout) t ->
+       int -> ('a, 'b, Bigarray.fortran_layout) Bigarray.Array2.t
+   >>
+   
+       Extract a two-dimensional slice of the given three-dimensional big array
+      by fixing the last coordinate. The integer parameter is the coordinate of
+      the slice to extract. See
+      Bigarray.Genarray.slice_right[29.1] for more details. Array3.slice_right_2 applies only to
+      arrays with Fortran layout.
+ 
+   
+   <<
+     val blit : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> unit
+   >>
+   
+       Copy the first big array to the second big array. See
+      Bigarray.Genarray.blit[29.1*Note Section 29-1::] for more
+      details.
+ 
+   
+   <<
+     val fill : ('a, 'b, 'c) t -> 'a -> unit
+   >>
+   
+       Fill the given big array with the given value. See
+      Bigarray.Genarray.fill[29.1*Note Section 29-1::] for more
+      details.
+ 
+   
+   <<
+     val of_array :
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout -> 'a array array array -> ('a, 'b, 'c) t
+   >>
+   
+       Build a three-dimensional big array initialized from the given array of
+      arrays of arrays.
+ 
+   
+   <<
+     val map_file :
+       Unix.file_descr ->
+       ?pos:int64 ->
+       ('a, 'b) Bigarray.kind ->
+       'c Bigarray.layout ->
+       bool -> int -> int -> int -> ('a, 'b, 'c) t
+   >>
+   
+       Memory mapping of a file as a three-dimensional big array. See
+      Bigarray.Genarray.map_file[29.1] for more details.
+ 
+   
+   <<
+     val unsafe_get : ('a, 'b, 'c) t -> int -> int -> int -> 'a
+   >>
+   
+       Like Bigarray.Array3.get[29.1*Note Section 29-1::], but
+      bounds checking is not always performed.
+ 
+   
+   <<
+     val unsafe_set : ('a, 'b, 'c) t -> int -> int -> int -> 'a -> unit
+   >>
+   
+       Like Bigarray.Array3.set[29.1*Note Section 29-1::], but
+      bounds checking is not always performed.
+  
+    end
+  
+    Three-dimensional arrays. The Array3 structure provides operations similar
+   to those of Bigarray.Genarray[29.1*Note Section 29-1::], but
+   specialized to the case of three-dimensional arrays.
+  
+
+Coercions between generic big arrays and fixed-dimension big arrays
+===================================================================
+  
+
+<<
+  val genarray_of_array1 : ('a, 'b, 'c) Array1.t -> ('a, 'b, 'c) Genarray.t
+>>
+    
+    Return the generic big array corresponding to the given one-dimensional big
+   array.
+  
+
+<<
+  val genarray_of_array2 : ('a, 'b, 'c) Array2.t -> ('a, 'b, 'c) Genarray.t
+>>
+    
+    Return the generic big array corresponding to the given two-dimensional big
+   array.
+  
+
+<<
+  val genarray_of_array3 : ('a, 'b, 'c) Array3.t -> ('a, 'b, 'c) Genarray.t
+>>
+    
+    Return the generic big array corresponding to the given three-dimensional
+   big array.
+  
+
+<<
+  val array1_of_genarray : ('a, 'b, 'c) Genarray.t -> ('a, 'b, 'c) Array1.t
+>>
+    
+    Return the one-dimensional big array corresponding to the given generic big
+   array. Raise Invalid_argument if the generic big array does not have exactly
+   one dimension.
+  
+
+<<
+  val array2_of_genarray : ('a, 'b, 'c) Genarray.t -> ('a, 'b, 'c) Array2.t
+>>
+    
+    Return the two-dimensional big array corresponding to the given generic big
+   array. Raise Invalid_argument if the generic big array does not have exactly
+   two dimensions.
+  
+
+<<
+  val array3_of_genarray : ('a, 'b, 'c) Genarray.t -> ('a, 'b, 'c) Array3.t
+>>
+    
+    Return the three-dimensional big array corresponding to the given generic
+   big array. Raise Invalid_argument if the generic big array does not have
+   exactly three dimensions.
+  
+
+Re-shaping big arrays
+=====================
+  
+
+<<
+  val reshape :
+    ('a, 'b, 'c) Genarray.t ->
+    int array -> ('a, 'b, 'c) Genarray.t
+>>
+    
+    reshape b [|d1;...;dN|] converts the big array b to a N-dimensional array
+   of dimensions d1...dN. The returned array and the original array b share
+   their data and have the same layout. For instance, assuming that b is a
+   one-dimensional array of dimension 12, reshape b [|3;4|] returns a
+   two-dimensional array b' of dimensions 3 and 4. If b has C layout, the
+   element (x,y) of b' corresponds to the element x * 3 + y of b. If b has
+   Fortran layout, the element (x,y) of b' corresponds to the element x + (y -
+   1) * 4 of b. The returned big array must have exactly the same number of
+   elements as the original big array b. That is, the product of the dimensions
+   of b must be equal to i1 * ... * iN. Otherwise, Invalid_argument is raised.
+  
+
+<<
+  val reshape_1 : ('a, 'b, 'c) Genarray.t -> int -> ('a, 'b, 'c) Array1.t
+>>
+    
+    Specialized version of Bigarray.reshape[29.1*Note Section 29-1::]
+   for reshaping to one-dimensional arrays.
+  
+
+<<
+  val reshape_2 :
+    ('a, 'b, 'c) Genarray.t ->
+    int -> int -> ('a, 'b, 'c) Array2.t
+>>
+    
+    Specialized version of Bigarray.reshape[29.1*Note Section 29-1::]
+   for reshaping to two-dimensional arrays.
+  
+
+<<
+  val reshape_3 :
+    ('a, 'b, 'c) Genarray.t ->
+    int -> int -> int -> ('a, 'b, 'c) Array3.t
+>>
+    
+    Specialized version of Bigarray.reshape[29.1*Note Section 29-1::]
+   for reshaping to three-dimensional arrays.
+  
+   

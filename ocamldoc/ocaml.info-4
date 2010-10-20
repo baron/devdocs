@@ -1,0 +1,1108 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Part II,	Next: Chapter 6,	Prev: Chapter 5,	Up: Top
+  
+
+                                   Part: II
+                                   ********
+                          The Objective Caml language
+                         ****************************
+    
+* Menu:
+
+* Chapter 6::	The Objective Caml language
+* Chapter 7::	Language extensions
+
+
+Node: Chapter 6,	Next: Section 6-1,	Prev: Part II,	Up: Part II
+  
+
+Chapter 6     The Objective Caml language
+*****************************************
+   
+
+Foreword
+========
+   
+  This document is intended as a reference manual for the Objective Caml
+language. It lists the language constructs, and gives their precise syntax and
+informal semantics. It is by no means a tutorial introduction to the language:
+there is not a single example. A good working knowledge of Caml is assumed.
+  No attempt has been made at mathematical rigor: words are employed with their
+intuitive meaning, without further definition. As a consequence, the typing
+rules have been left out, by lack of the mathematical framework required to
+express them, while they are definitely part of a full formal definition of the
+language.
+
+Notations
+=========
+  
+  The syntax of the language is given in BNF-like notation. Terminal symbols
+are set in typewriter font (like this). Non-terminal symbols are set in italic
+font (like that).  Square brackets [...] denote optional components. Curly
+brackets {...} denotes zero, one or several repetitions of the enclosed
+components. Curly bracket with a trailing plus sign {...}^+ denote one or
+several repetitions of the enclosed components. Parentheses (...) denote
+grouping.
+   
+* Menu:
+
+* Section 6-1::	Lexical conventions
+* Section 6-2::	Values
+* Section 6-3::	Names
+* Section 6-4::	Type expressions
+* Section 6-5::	Constants
+* Section 6-6::	Patterns
+* Section 6-7::	Expressions
+* Section 6-8::	Type and exception definitions
+* Section 6-9::	Classes
+* Section 6-10::	Module types (module specifications)
+* Section 6-11::	Module expressions (module implementations)
+* Section 6-12::	Compilation units
+
+
+Node: Section 6-1,	Next: Section 6-2,	Prev: Chapter 6,	Up: Chapter 6
+  
+
+6.1   Lexical conventions
+*=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+
+Blanks
+------
+  
+  The following characters are considered as blanks: space, newline, horizontal
+tabulation, carriage return, line feed and form feed. Blanks are ignored, but
+they separate adjacent identifiers, literals and keywords that would otherwise
+be confused as one single identifier, literal or keyword.
+
+Comments
+--------
+  
+  Comments are introduced by the two characters (*, with no intervening blanks,
+and terminated by the characters *), with no intervening blanks. Comments are
+treated as blank characters. Comments do not occur inside string or character
+literals. Nested comments are handled correctly.
+
+Identifiers
+-----------
+  
+                 ident ::=  (letter| _) { letter| 0...9| _| ' } 
+                                                                
+                letter ::=  A ... Z |  a ... z                  
+  
+  Identifiers are sequences of letters, digits, _ (the underscore character),
+and ' (the single quote), starting with a letter or an underscore. Letters
+contain at least the 52 lowercase and uppercase letters from the ASCII set. The
+current implementation also recognizes as letters all accented characters from
+the ISO 8859-1 ("ISO Latin 1") set. All characters in an identifier are
+meaningful. The current implementation accepts identifiers up to 16000000
+characters in length.
+
+Integer literals
+----------------
+  
+  integer-literal ::=  [-] (0...9) { 0...9| _ }                                
+                                          
+                      |   [-] (0x| 0X) (0...9| A...F| a...f) { 0...9| A...F|
+                                  a...f| _ } 
+                   |   [-] (0o| 0O) (0...7) { 0...7| _ }                       
+                                          
+                   |   [-] (0b| 0B) (0...1) { 0...1| _ }                       
+                                          
+  
+  An integer literal is a sequence of one or more digits, optionally preceded
+by a minus sign. By default, integer literals are in decimal (radix 10). The
+following prefixes select a different radix: 
+                                         
+                       --------------------------------
+                       |Prefix |        Radix         |
+                       --------------------------------
+                       | 0x, 0X|hexadecimal (radix 16)|
+                       |0o, 0O |octal (radix 8)       |
+                       |0b, 0B |binary (radix 2)      |
+                       --------------------------------
+   (The initial 0 is the digit zero; the O for octal is the letter O.) The
+interpretation of integer literals that fall outside the range of representable
+integer values is undefined.
+  For convenience and readability, underscore characters (_) are accepted (and
+ignored) within integer literals.
+
+Floating-point literals
+-----------------------
+  
+   float-literal ::=  [-] (0...9) { 0...9| _ } [. { 0...9| _ }] [(e| E) [+| -]
+                            (0...9) { 0...9| _ }] 
+  
+  Floating-point decimals consist in an integer part, a decimal part and an
+exponent part. The integer part is a sequence of one or more digits, optionally
+preceded by a minus sign. The decimal part is a decimal point followed by zero,
+one or more digits. The exponent part is the character e or E followed by an
+optional + or - sign, followed by one or more digits. The decimal part or the
+exponent part can be omitted, but not both to avoid ambiguity with integer
+literals. The interpretation of floating-point literals that fall outside the
+range of representable floating-point values is undefined.
+  For convenience and readability, underscore characters (_) are accepted (and
+ignored) within floating-point literals.
+
+Character literals
+------------------
+   
+         char-literal ::=  ' regular-char '                               
+                       |   ' escape-sequence '                            
+                                                                          
+      escape-sequence ::=  \ (\ |  " |  ' |  n |  t |  b |  r)            
+                       |   \ (0...9) (0...9) (0...9)                      
+                       |   \x (0...9| A...F| a...f) (0...9| A...F| a...f) 
+  
+  Character literals are delimited by ' (single quote) characters. The two
+single quotes enclose either one character different from ' and \, or one of
+the escape sequences below: 
+                                         
+          ----------------------------------------------------------
+          |Sequence|               Character denoted               |
+          ----------------------------------------------------------
+          | \\     |backslash (\)                                  |
+          |\"      |double quote (")                               |
+          |\'      |single quote (')                               |
+          |\n      |linefeed (LF)                                  |
+          |\r      |carriage return (CR)                           |
+          |\t      |horizontal tabulation (TAB)                    |
+          |\b      |backspace (BS)                                 |
+          |\space  |space (SPC)                                    |
+          |\ddd    |the character with ASCII code ddd in decimal   |
+          |\xhh    |the character with ASCII code hh in hexadecimal|
+          ----------------------------------------------------------
+  
+
+String literals
+---------------
+   
+                   string-literal ::=  " { string-character } " 
+                                                                
+                 string-character ::=  regular-char-str         
+                                   |   escape-sequence          
+  
+  String literals are delimited by " (double quote) characters. The two double
+quotes enclose a sequence of either characters different from " and \, or
+escape sequences from the table given above for character literals.
+  To allow splitting long string literals across lines, the sequence
+\newline blanks (a \ at end-of-line followed by any number of blanks at the
+beginning of the next line) is ignored inside string literals.
+  The current implementation places practically no restrictions on the length
+of string literals.
+
+Naming labels
+-------------
+  
+  To avoid ambiguities, naming labels in expressions cannot just be defined
+syntactically as the sequence of the three tokens ~, ident and :, and have to
+be defined at the lexical level.
+             label-name  ::=  (a ... z| _) { letter| 0...9| _| ' } 
+                                                                   
+                  label  ::=  ~ label-name :                       
+                                                                   
+               optlabel  ::=  ? label-name :                       
+  
+  Naming labels come in two flavours: label for normal arguments and optlabel
+for optional ones. They are simply distinguished by their first character,
+either ~ or ?.
+  Despite label and optlabel being lexical entities in expressions, their
+expansions ~ label-name : and ? label-name : will be used in grammars, for the
+sake of readability. Note also that inside type expressions, this expansion can
+be taken literally, i.e. there are really 3 tokens, with optional spaces beween
+them.
+
+Prefix and infix symbols
+------------------------
+  
+   infix-symbol ::=  (= |  < |  > |  @ |  ^ |  | |  & |  + |  - |  * |  / |  $
+                         |  %) { operator-char }      
+                                                                               
+                                                     
+  prefix-symbol ::=  (! |  ? |  ~) { operator-char }                           
+                                                     
+                                                                               
+                                                     
+  operator-char ::=  ! |  $ |  % |  & |  * |  + |  - |  . |  / |  : |  < |  = |
+                          > |  ? |  @ |  ^ |  | |  ~ 
+                                                                               
+                                                     
+  
+  Sequences of "operator characters", such as <=> or !!, are read as a single
+token from the infix-symbol or prefix-symbol class. These symbols are parsed as
+prefix and infix operators inside expressions, but otherwise behave much as
+identifiers.
+
+Keywords
+--------
+  
+  The identifiers below are reserved as keywords, and cannot be employed
+otherwise: 
+<<      and         as          assert      asr         begin       class
+        constraint  do          done        downto      else        end
+        exception   external    false       for         fun         function
+        functor     if          in          include     inherit     initializer
+        land        lazy        let         lor         lsl         lsr
+        lxor        match       method      mod         module      mutable
+        new         object      of          open        or          private
+        rec         sig         struct      then        to          true
+        try         type        val         virtual     when        while
+        with        
+>>
+  The following character sequences are also keywords: 
+<<    !=    #     &     &&    '     (     )     *     +     ,     -
+      -.    ->    .     ..    :     ::    :=    :>    ;     ;;    <
+      <-    =     >     >]    >}    ?     ??    [     [<    [>    [|
+      ]     _     `     {     {<    |     |]    }     ~
+>>
+  Note that the following identifiers are keywords of the Camlp4 extensions and
+should be avoided for compatibility reasons. 
+<<    parser    <<    <:    >>    $     $$    $:
+>>
+  
+
+Ambiguities
+-----------
+  
+  Lexical ambiguities are resolved according to the "longest match" rule: when
+a character sequence can be decomposed into two tokens in several different
+ways, the decomposition retained is the one with the longest first token.
+
+Line number directives
+----------------------
+  
+                                            +                          
+          linenum-directive ::=  # {0 ... 9}                           
+                                            +                          
+                             |   # {0 ... 9}  " { string-character } " 
+                                                                       
+  
+  Preprocessors that generate Caml source code can insert line number
+directives in their output so that error messages produced by the compiler
+contain line numbers and file names referring to the source file before
+preprocessing, instead of after preprocessing. A line number directive is
+composed of a # (sharp sign), followed by a positive integer (the source line
+number), optionally followed by a character string (the source file name). Line
+number directives are treated as blank characters during lexical analysis.
+   
+
+Node: Section 6-2,	Next: Subsection 6-2-1,	Prev: Section 6-1,	Up: Chapter 6
+  
+
+6.2   Values
+*=*=*=*=*=*=
+
+   
+  This section describes the kinds of values that are manipulated by Objective
+Caml programs.
+* Menu:
+
+* Subsection 6-2-1::	Base values
+* Subsection 6-2-2::	Tuples
+* Subsection 6-2-3::	Records
+* Subsection 6-2-4::	Arrays
+* Subsection 6-2-5::	Variant values
+* Subsection 6-2-6::	Polymorphic variants
+* Subsection 6-2-7::	Functions
+* Subsection 6-2-8::	Objects
+
+
+Node: Subsection 6-2-1,	Next: Subsection 6-2-2,	Prev: Section 6-2,	Up: Section 6-2
+  
+
+6.2.1   Base values
+===================
+  
+
+Integer numbers
+---------------
+  
+  Integer values are integer numbers from -2^30 to 2^30-1, that is -1073741824
+to 1073741823. The implementation may support a wider range of integer values:
+on 64-bit platforms, the current implementation supports integers ranging from
+-2^62 to 2^62-1.
+
+Floating-point numbers
+----------------------
+  
+  Floating-point values are numbers in floating-point representation. The
+current implementation uses double-precision floating-point numbers conforming
+to the IEEE 754 standard, with 53 bits of mantissa and an exponent ranging from
+-1022 to 1023.
+
+Characters
+----------
+  
+  Character values are represented as 8-bit integers between 0 and 255.
+Character codes between 0 and 127 are interpreted following the ASCII standard.
+The current implementation interprets character codes between 128 and 255
+following the ISO 8859-1 standard.
+
+Character strings
+-----------------
+   
+  String values are finite sequences of characters. The current implementation
+supports strings containing up to 2^24 - 5 characters (16777211 characters); on
+64-bit platforms, the limit is 2^57 - 9.
+
+Node: Subsection 6-2-2,	Next: Subsection 6-2-3,	Prev: Subsection 6-2-1,	Up: Section 6-2
+  
+
+6.2.2   Tuples
+==============
+  
+  Tuples of values are written (v_1, ..., v_n), standing for the n-tuple of
+values v_1 to v_n. The current implementation supports tuple of up to 2^22 - 1
+elements (4194303 elements).
+
+Node: Subsection 6-2-3,	Next: Subsection 6-2-4,	Prev: Subsection 6-2-2,	Up: Section 6-2
+  
+
+6.2.3   Records
+===============
+  
+  Record values are labeled tuples of values. The record value written {
+field_1 = v_1; ...; field_n = v_n } associates the value v_i to the record
+field field_i, for i = 1 ... n. The current implementation supports records
+with up to 2^22 - 1 fields (4194303 fields).
+
+Node: Subsection 6-2-4,	Next: Subsection 6-2-5,	Prev: Subsection 6-2-3,	Up: Section 6-2
+  
+
+6.2.4   Arrays
+==============
+  
+  Arrays are finite, variable-sized sequences of values of the same type. The
+current implementation supports arrays containing up to 2^22 - 1 elements
+(4194303 elements) unless the elements are floating-point numbers (2097151
+elements in this case); on 64-bit platforms, the limit is 2^54 - 1 for all
+arrays.
+
+Node: Subsection 6-2-5,	Next: Subsection 6-2-6,	Prev: Subsection 6-2-4,	Up: Section 6-2
+  
+
+6.2.5   Variant values
+======================
+  
+  Variant values are either a constant constructor, or a pair of a non-constant
+constructor and a value. The former case is written constr; the latter case is
+written constr(v), where v is said to be the argument of the non-constant
+constructor constr.
+  The following constants are treated like built-in constant constructors: 
+                                         
+                         ----------------------------
+                         |Constant|   Constructor   |
+                         ----------------------------
+                         | false  |the boolean false|
+                         |true    |the boolean true |
+                         |()      |the "unit" value |
+                         |[]      |the empty list   |
+                         ----------------------------
+  
+  The current implementation limits each variant type to have at most 246
+non-constant constructors.
+
+Node: Subsection 6-2-6,	Next: Subsection 6-2-7,	Prev: Subsection 6-2-5,	Up: Section 6-2
+  
+
+6.2.6   Polymorphic variants
+============================
+  
+  Polymorphic variants are an alternate form of variant values, not belonging
+explicitly to a predefined variant type, and following specific typing rules.
+They can be either constant, written `tag-name, or non-constant, written
+`tag-name(v).
+
+Node: Subsection 6-2-7,	Next: Subsection 6-2-8,	Prev: Subsection 6-2-6,	Up: Section 6-2
+  
+
+6.2.7   Functions
+=================
+  
+  Functional values are mappings from values to values.
+
+Node: Subsection 6-2-8,	Next: Section 6-3,	Prev: Subsection 6-2-7,	Up: Section 6-2
+  
+
+6.2.8   Objects
+===============
+  
+  Objects are composed of a hidden internal state which is a record of instance
+variables, and a set of methods for accessing and modifying these variables.
+The structure of an object is described by the toplevel class that created it.
+   
+
+Node: Section 6-3,	Next: Section 6-4,	Prev: Section 6-2,	Up: Chapter 6
+  
+
+6.3   Names
+*=*=*=*=*=*
+
+    
+  Identifiers are used to give names to several classes of language objects and
+refer to these objects by name later: 
+  
+   - value names (syntactic class value-name), 
+   - value constructors and exception constructors (class constr-name), 
+   - labels (label-name), 
+   - variant tags (tag-name), 
+   - type constructors (typeconstr-name), 
+   - record fields (field-name), 
+   - class names (class-name), 
+   - method names (method-name), 
+   - instance variable names (inst-var-name), 
+   - module names (module-name), 
+   - module type names (modtype-name). 
+   These eleven name spaces are distinguished both by the context and by the
+capitalization of the identifier: whether the first letter of the identifier is
+in lowercase (written lowercase-ident below) or in uppercase (written
+capitalized-ident). Underscore is considered a lowercase letter for this
+purpose.
+ 
+
+Naming objects
+--------------
+  
+           value-name ::=  lowercase-ident                                 
+                       |   ( operator-name )                               
+                                                                           
+        operator-name ::=  prefix-symbol |  infix-op                       
+                                                                           
+             infix-op ::=  infix-symbol                                    
+                       |   * |  = |  or |  & |  :=                         
+                       |   mod |  land |  lor |  lxor |  lsl |  lsr |  asr 
+                                                                           
+          constr-name ::=  capitalized-ident                               
+                                                                           
+           label-name ::=  lowercase-ident                                 
+                                                                           
+             tag-name ::=  capitalized-ident                               
+                                                                           
+      typeconstr-name ::=  lowercase-ident                                 
+                                                                           
+           field-name ::=  lowercase-ident                                 
+                                                                           
+          module-name ::=  capitalized-ident                               
+                                                                           
+         modtype-name ::=  ident                                           
+                                                                           
+           class-name ::=  lowercase-ident                                 
+                                                                           
+        inst-var-name ::=  lowercase-ident                                 
+                                                                           
+          method-name ::=  lowercase-ident                                 
+   As shown above, prefix and infix symbols as well as some keywords can be
+used as value names, provided they are written between parentheses. The
+capitalization rules are summarized in the table below.
+                                         
+                   -----------------------------------------
+                   |    Name space    |Case of first letter|
+                   -----------------------------------------
+                   | Values           |lowercase           |
+                   |Constructors      |uppercase           |
+                   |Labels            |lowercase           |
+                   |Variant tags      |uppercase           |
+                   |Exceptions        |uppercase           |
+                   |Type constructors |lowercase           |
+                   |Record fields     |lowercase           |
+                   |Classes           |lowercase           |
+                   |Instance variables|lowercase           |
+                   |Methods           |lowercase           |
+                   |Modules           |uppercase           |
+                   |Module types      |any                 |
+                   -----------------------------------------
+  
+  Note on variant tags: the current implementation accepts lowercase variant
+tags in addition to uppercase variant tags, but we suggest you avoid lowercase
+variant tags for portability and compatibility with future OCaml versions.
+
+Referring to named objects
+--------------------------
+  
+              value-path ::=  value-name                                     
+                          |   module-path .  value-name                      
+                                                                             
+                  constr ::=  constr-name                                    
+                          |   module-path .  constr-name                     
+                                                                             
+              typeconstr ::=  typeconstr-name                                
+                          |   extended-module-path .  typeconstr-name        
+                                                                             
+                   field ::=  field-name                                     
+                          |   module-path .  field-name                      
+                                                                             
+             module-path ::=  module-name                                    
+                          |   module-path .  module-name                     
+                                                                             
+    extended-module-path ::=  module-name                                    
+                          |   extended-module-path .  module-name            
+                          |   extended-module-path (  extended-module-path ) 
+                                                                             
+            modtype-path ::=  modtype-name                                   
+                          |   extended-module-path .  modtype-name           
+                                                                             
+              class-path ::=  class-name                                     
+                          |   module-path .  class-name                      
+  
+  A named object can be referred to either by its name (following the usual
+static scoping rules for names) or by an access path prefix .  name, where
+prefix designates a module and name is the name of an object defined in that
+module. The first component of the path, prefix, is either a simple module name
+or an access path name_1 .  name_2 ..., in case the defining module is itself
+nested inside other modules. For referring to type constructors or module
+types, the prefix can also contain simple functor applications (as in the
+syntactic class extended-module-path above), in case the defining module is the
+result of a functor application.
+  Label names, tag names, method names and instance variable names need not be
+qualified: the former three are global labels, while the latter are local to a
+class.
+   
+
+Node: Section 6-4,	Next: Section 6-5,	Prev: Section 6-3,	Up: Chapter 6
+  
+
+6.4   Type expressions
+*=*=*=*=*=*=*=*=*=*=*=
+
+     
+               typexpr ::=  ' ident                                    
+                        |   _                                          
+                        |   ( typexpr )                                
+                        |   [[?]label-name:]  typexpr ->  typexpr      
+                                                  +                    
+                        |   typexpr  { * typexpr }                     
+                        |   typeconstr                                 
+                        |   typexpr  typeconstr                        
+                        |   ( typexpr  { , typexpr } )  typeconstr     
+                        |   typexpr as '  ident                        
+                        |   polymorphic-variant-type                   
+                        |   < [..] >                                   
+                        |   < method-type  { ; method-type }  [; ..] > 
+                        |   # class-path                               
+                        |   typexpr #  class-path                      
+                        |   ( typexpr  { , typexpr } ) #  class-path   
+                                                                       
+          poly-typexpr ::=  typexpr                                    
+                                       +                               
+                        |   { ' ident }  .  typexpr                    
+                                                                       
+           method-type ::=  method-name :  poly-typexpr                
+  
+  The table below shows the relative precedences and associativity of operators
+and non-closed type constructions. The constructions with higher precedences
+come first.  
+                                         
+                 ---------------------------------------------
+                 |          Operator           |Associativity|
+                 ---------------------------------------------
+                 | Type constructor application|--           |
+                 |*                            |--           |
+                 |->                           |right        |
+                 |as                           |--           |
+                 ---------------------------------------------
+  
+  Type expressions denote types in definitions of data types as well as in type
+constraints over patterns and expressions.
+
+Type variables
+--------------
+  
+  The type expression ' ident stands for the type variable named ident. The
+type expression _ stands for an anonymous type variable. In data type
+definitions, type variables are names for the data type parameters. In type
+constraints, they represent unspecified types that can be instantiated by any
+type to satisfy the type constraint. In general the scope of a named type
+variable is the whole enclosing definition; and they can only be generalized
+when leaving this scope. Anonymous variables have no such restriction. In the
+following cases, the scope of named type variables is restricted to the type
+expression where they appear: 1) for universal (explicitly polymorphic) type
+variables; 2) for type variables that only appear in public method
+specifications (as those variables will be made universal, as described in
+section 6.9.1*Note Subsection 6-9-1::); 3) for variables used as aliases, when
+the type they are aliased to would be invalid in the scope of the enclosing
+definition (i.e. when it contains free universal type variables, or locally
+defined types.)
+
+Parenthesized types
+-------------------
+  
+  The type expression ( typexpr ) denotes the same type as typexpr.
+
+Function types
+--------------
+  
+  The type expression typexpr_1 ->  typexpr_2 denotes the type of functions
+mapping arguments of type typexpr_1 to results of type typexpr_2.
+  label-name :  typexpr_1 ->  typexpr_2 denotes the same function type, but the
+argument is labeled label.
+  ? label-name :  typexpr_1 ->  typexpr_2 denotes the type of functions mapping
+an optional labeled argument of type typexpr_1 to results of type typexpr_2.
+That is, the physical type of the function will be typexpr_1 option ->
+ typexpr_2.
+
+Tuple types
+-----------
+  
+  The type expression typexpr_1 * ... *  typexpr_n denotes the type of tuples
+whose elements belong to types typexpr_1, ...  typexpr_n respectively.
+
+Constructed types
+-----------------
+  
+  Type constructors with no parameter, as in typeconstr, are type expressions.
+  The type expression typexpr  typeconstr, where typeconstr is a type
+constructor with one parameter, denotes the application of the unary type
+constructor typeconstr to the type typexpr.
+  The type expression (typexpr_1,..., typexpr_n)  typeconstr, where typeconstr
+is a type constructor with n parameters, denotes the application of the n-ary
+type constructor typeconstr to the types typexpr_1 through typexpr_n.
+
+Aliased and recursive types
+---------------------------
+  
+
+  The type expression typexpr as '  ident denotes the same type as typexpr, and
+also binds the type variable ident to type typexpr both in typexpr and in other
+types. In general the scope of an alias is the same as for a named type
+variable, and covers the whole enclosing definition. If the type variable ident
+actually occurs in typexpr, a recursive type is created. Recursive types for
+which there exists a recursive path that does not contain an object or
+polymorphic variant type constructor are rejected, except when the -rectypes
+mode is selected.
+  If ' ident denotes an explicit polymorphic variable, and typexpr denotes
+either an object or polymorphic variant type, the row variable of typexpr is
+captured by ' ident, and quantified upon.
+
+Polymorphic variant types
+-------------------------
+  
+  polymorphic-variant-type ::=  [ [ | ] tag-spec  { | tag-spec } ]             
+                                                 
+                            |   [> [ tag-spec ]  { | tag-spec } ]              
+                                                 
+                                                                               
+                                           +     
+                            |   [< [ | ] tag-spec-full  { | tag-spec-full }  [
+                             > { `tag-name }  ] ] 
+                                                                               
+                                                 
+                  tag-spec ::=  `tag-name  [ of typexpr ]                      
+                                                 
+                            |   typexpr                                        
+                                                 
+                                                                               
+                                                 
+             tag-spec-full ::=  `tag-name  [ of typexpr ]  { & typexpr }       
+                                                 
+                            |   typexpr                                        
+                                                 
+                                                                               
+                                                 
+  
+  Polymorphic variant types describe the values a polymorphic variant may take.
+  The first case is an exact variant type: all possible tags are known, with
+their associated types, and they can all be present. Its structure is fully
+known.
+  The second case is an open variant type, describing a polymorphic variant
+value: it gives the list of all tags the value could take, with their
+associated types. This type is still compatible with a variant type containing
+more tags. A special case is the unknown type, which does not define any tag,
+and is compatible with any variant type.
+  The third case is a closed variant type. It gives information about all the
+possible tags and their associated types, and which tags are known to
+potentially appear in values. The above exact variant type is just an
+abbreviation for a closed variant type where all possible tags are also
+potentially present.
+  In all three cases, tags may be either specified directly in the `tag-name
+[...] form, or indirectly through a type expression. In this last case, the
+type expression must expand to an exact variant type, whose tag specifications
+are inserted in its place.
+  Full specification of variant tags are only used for non-exact closed types.
+They can be understood as a conjunctive type for the argument: it is intended
+to have all the types enumerated in the specification.
+  Such conjunctive constraints may be unsatisfiable. In such a case the
+corresponding tag may not be used in a value of this type. This does not mean
+that the whole type is not valid: one can still use other available tags.
+
+Object types
+------------
+  
+  An object type < method-type  { ; method-type } > is a record of method
+types.
+  Each method may have an explicit polymorphic type: { ' ident }^+ .  typexpr.
+Explicit polymorphic variables have a local scope, and an explicit polymorphic
+type can only be unified to an equivalent one, with polymorphic variables at
+the same positions.
+  The type < method-type  { ; method-type } ; .. > is the type of an object
+with methods and their associated types are described by method-type_1, ...,
+ method-type_n, and possibly some other methods represented by the ellipsis.
+This ellipsis actually is a special kind of type variable (also called row
+variable in the literature) that stands for any number of extra method types.
+
+#-types
+-------
+   
+  The type # class-path is a special kind of abbreviation. This abbreviation
+unifies with the type of any object belonging to a subclass of class
+class-path. It is handled in a special way as it usually hides a type variable
+(an ellipsis, representing the methods that may be added in a subclass). In
+particular, it vanishes when the ellipsis gets instantiated. Each type
+expression # class-path defines a new type variable, so type # class-path -> #
+ class-path is usually not the same as type (# class-path as '  ident) -> '
+ ident. 
+  Use of #-types to abbreviate polymorphic variant types is deprecated. If t is
+an exact variant type then #t translates to [< t], and #t[> `tag_1 ...`tag_k]
+translates to  [< t > `tag_1 ...`tag_k]
+
+Variant and record types
+------------------------
+  
+  There are no type expressions describing (defined) variant types nor record
+types, since those are always named, i.e. defined before use and referred to by
+name. Type definitions are described in section 6.8.1*Note Subsection 6-8-1::. 
+
+
+Node: Section 6-5,	Next: Section 6-6,	Prev: Section 6-4,	Up: Chapter 6
+  
+
+6.5   Constants
+*=*=*=*=*=*=*=*
+
+   
+                         constant ::=  integer-literal 
+                                   |   float-literal   
+                                   |   char-literal    
+                                   |   string-literal  
+                                   |   constr          
+                                   |   false           
+                                   |   true            
+                                   |   []              
+                                   |   ()              
+                                   |   `tag-name       
+  
+  The syntactic class of constants comprises literals from the four base types
+(integers, floating-point numbers, characters, character strings), and constant
+constructors from both normal and polymorphic variants, as well as the special
+constants false, true, [], and (), which behave like constant constructors.  
+
+Node: Section 6-6,	Next: Section 6-7,	Prev: Section 6-5,	Up: Chapter 6
+  
+
+6.6   Patterns
+*=*=*=*=*=*=*=
+
+      
+           pattern ::=  value-name                                   
+                    |   _                                            
+                    |   constant                                     
+                    |   pattern as  value-name                       
+                    |   ( pattern )                                  
+                    |   ( pattern :  typexpr )                       
+                    |   pattern |  pattern                           
+                    |   constr  pattern                              
+                    |   `tag-name  pattern                           
+                    |   #typeconstr-name                             
+                    |   pattern  { , pattern }                       
+                    |   { field =  pattern  { ; field =  pattern } } 
+                    |   [ pattern  { ; pattern } ]                   
+                    |   pattern ::  pattern                          
+                    |   [| pattern  { ; pattern } |]                 
+                    |   lazy pattern                                 
+  
+  The table below shows the relative precedences and associativity of operators
+and non-closed pattern constructions. The constructions with higher precedences
+come first.  
+                                         
+                   ----------------------------------------
+                   |        Operator        |Associativity|
+                   ----------------------------------------
+                   | Constructor application|--           |
+                   |::                      |right        |
+                   |,                       |--           |
+                   ||                       |left         |
+                   |as                      |--           |
+                   ----------------------------------------
+  
+  Patterns are templates that allow selecting data structures of a given shape,
+and binding identifiers to components of the data structure. This selection
+operation is called pattern matching; its outcome is either "this value does
+not match this pattern", or "this value matches this pattern, resulting in the
+following bindings of names to values".
+
+Variable patterns
+-----------------
+  
+  A pattern that consists in a value name matches any value, binding the name
+to the value. The pattern _ also matches any value, but does not bind any name.
+  Patterns are linear: a variable cannot appear several times in a given
+pattern. In particular, there is no way to test for equality between two parts
+of a data structure using only a pattern (but when guards can be used for this
+purpose).
+
+Constant patterns
+-----------------
+  
+  A pattern consisting in a constant matches the values that are equal to this
+constant.
+
+Alias patterns
+--------------
+   
+  The pattern pattern_1 as  value-name matches the same values as pattern_1. If
+the matching against pattern_1 is successful, the name name is bound to the
+matched value, in addition to the bindings performed by the matching against
+pattern_1.
+
+Parenthesized patterns
+----------------------
+  
+  The pattern ( pattern_1 ) matches the same values as pattern_1. A type
+constraint can appear in a parenthesized pattern, as in ( pattern_1 :  typexpr
+). This constraint forces the type of pattern_1 to be compatible with typexpr.
+
+"Or" patterns
+-------------
+  
+  The pattern pattern_1 |  pattern_2 represents the logical "or" of the two
+patterns pattern_1 and pattern_2. A value matches pattern_1 |  pattern_2 either
+if it matches pattern_1 or if it matches pattern_2. The two sub-patterns
+pattern_1 and pattern_2 must bind exactly the same identifiers to values having
+the same types. Matching is performed from left to right. More precisely, in
+case some value v matches pattern_1 |  pattern_2, the bindings  performed are
+those of pattern_1 when v matches pattern_1. Otherwise, value v matches
+pattern_2 whose bindings are performed.
+
+Variant patterns
+----------------
+  
+  The pattern constr  pattern_1 matches all variants whose constructor is equal
+to constr, and whose argument matches pattern_1.
+  The pattern pattern_1 ::  pattern_2 matches non-empty lists whose heads match
+pattern_1, and whose tails match pattern_2.
+  The pattern [ pattern_1 ; ... ;  pattern_n ] matches lists of length n whose
+elements match pattern_1 ...pattern_n, respectively. This pattern behaves like
+pattern_1 :: ... ::  pattern_n :: [].
+
+Polymorphic variant patterns
+----------------------------
+  
+  The pattern `tag-name pattern_1 matches all polymorphic variants whose tag is
+equal to tag-name, and whose argument matches pattern_1.
+
+Variant abbreviation patterns
+-----------------------------
+  
+  If the type [('a,'b,...)] typeconstr = [`tag_1  typexpr_1 | ... | `tag_n
+ typexpr_n] is defined, then the pattern #typeconstr is a shorthand for the
+or-pattern (`tag_1(_ : typexpr_1) | ... | `tag_n(_ :  typexpr_n)). It matches
+all values of type #typeconstr.
+
+Tuple patterns
+--------------
+  
+  The pattern pattern_1 , ... ,  pattern_n matches n-tuples whose components
+match the patterns pattern_1 through pattern_n. That is, the pattern matches
+the tuple values (v_1, ..., v_n) such that pattern_i matches v_i for i = 1,...
+, n.
+
+Record patterns
+---------------
+  
+  The pattern { field_1 =  pattern_1 ; ... ;  field_n =  pattern_n } matches
+records that define at least the fields field_1 through field_n, and such that
+the value associated to field_i matches the pattern pattern_i, for i = 1,... ,
+n. The record value can define more fields than field_1 ...field_n; the values
+associated to these extra fields are not taken into account for matching.
+
+Array patterns
+--------------
+  
+  The pattern [| pattern_1 ; ... ;  pattern_n |] matches arrays of length n
+such that the i-th array element matches the pattern pattern_i, for i = 1,... ,
+n.
+   
+
+Node: Section 6-7,	Next: Subsection 6-7-1,	Prev: Section 6-6,	Up: Chapter 6
+  
+
+6.7   Expressions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+       
+  
+  
+  
+  
+  
+  
+  
+               expr ::=  value-path                                            
+                                                
+                     |   constant                                              
+                                                
+                     |   ( expr )                                              
+                                                
+                     |   begin expr end                                        
+                                                
+                     |   ( expr :  typexpr )                                   
+                                                
+                     |   expr ,  expr  { , expr }                              
+                                                
+                     |   constr  expr                                          
+                                                
+                     |   `tag-name  expr                                       
+                                                
+                     |   expr ::  expr                                         
+                                                
+                     |   [ expr  { ; expr } ]                                  
+                                                
+                     |   [| expr  { ; expr } |]                                
+                                                
+                     |   { field =  expr  { ; field =  expr } }                
+                                                
+                     |   { expr with  field =  expr  { ; field =  expr } }     
+                                                
+                                           +                                   
+                                                
+                     |   expr  { argument }                                    
+                                                
+                     |   prefix-symbol  expr                                   
+                                                
+                     |   expr  infix-op  expr                                  
+                                                
+                     |   expr .  field                                         
+                                                
+                     |   expr .  field <-  expr                                
+                                                
+                     |   expr .(  expr )                                       
+                                                
+                     |   expr .(  expr ) <-  expr                              
+                                                
+                     |   expr .[  expr ]                                       
+                                                
+                     |   expr .[  expr ] <-  expr                              
+                                                
+                     |   if expr then  expr  [ else expr ]                     
+                                                
+                     |   while expr do  expr done                              
+                                                
+                     |   for ident =  expr  ( to |  downto ) expr do  expr done
+                                                
+                     |   expr ;  expr                                          
+                                                
+                     |   match expr with  pattern-matching                     
+                                                
+                     |   function pattern-matching                             
+                                                
+                     |   fun multiple-matching                                 
+                                                
+                     |   try expr with  pattern-matching                       
+                                                
+                     |   let [rec] let-binding   { and let-binding } in  expr  
+                                                
+                     |   new class-path                                        
+                                                
+                     |   object class-body end                                 
+                                                
+                     |   expr #  method-name                                   
+                                                
+                     |   inst-var-name                                         
+                                                
+                     |   inst-var-name <-  expr                                
+                                                
+                     |   ( expr :>  typexpr )                                  
+                                                
+                     |   ( expr :  typexpr :>  typexpr )                       
+                                                
+                     |   {< inst-var-name =  expr  { ; inst-var-name =  expr }
+                              >}                 
+                     |   assert expr                                           
+                                                
+                     |   lazy expr                                             
+                                                
+                                                                               
+                                                
+           argument ::=  expr                                                  
+                                                
+                     |   ~ label-name                                          
+                                                
+                     |   ~ label-name :  expr                                  
+                                                
+                     |   ? label-name                                          
+                                                
+                     |   ? label-name :  expr                                  
+                                                
+                                                                               
+                                                
+     pattern-matching ::=  [ | ] pattern  [when expr] ->  expr  { | pattern 
+                            [when expr] ->  expr } 
+                                                                               
+                                                
+                                      +                                        
+                                                
+  multiple-matching ::=  { parameter }   [when expr] ->  expr                  
+                                                
+                                                                               
+                                                
+        let-binding ::=  pattern =  expr                                       
+                                                
+                     |   value-name  { parameter }  [: typexpr] =  expr        
+                                                
+                                                                               
+                                                
+          parameter ::=  pattern                                               
+                                                
+                     |   ~ label-name                                          
+                                                
+                     |   ~ ( label-name  [: typexpr] )                         
+                                                
+                     |   ~ label-name :  pattern                               
+                                                
+                     |   ? label-name                                          
+                                                
+                     |   ? ( label-name  [: typexpr]  [= expr] )               
+                                                
+                     |   ? label-name :  pattern                               
+                                                
+                     |   ? label-name : (  pattern  [: typexpr]  [= expr] )    
+                                                
+  
+  The table below shows the relative precedences and associativity of operators
+and non-closed constructions. The constructions with higher precedence come
+first. For infix and prefix symbols, we write "*..." to mean "any symbol
+starting with *".
+
+                                         
+  ---------------------------------------------------------------------------
+  |                 Construction or operator                  |Associativity|
+  ---------------------------------------------------------------------------
+  | prefix-symbol                                             |--           |
+  |.   .(    .[                                               |--           |
+  |function application, constructor application, assert, lazy|left         |
+  |-   -. (prefix)                                            |--           |
+  |**...   lsl   lsr   asr                                    |right        |
+  |*...   /...   %...   mod   land   lor   lxor               |left         |
+  | +...   -...                                               |left         |
+  |::                                                         |right        |
+  |@...   ^...                                                |right        |
+  |=...   <...   >...   |...   &...   $...                    |left         |
+  |&   &&                                                     |right        |
+  |or  ||                                                     |right        |
+  |,                                                          |--           |
+  |<-   :=                                                    |right        |
+  |if                                                         |--           |
+  |;                                                          |right        |
+  |let  match  fun  function  try                             |--           |
+  ---------------------------------------------------------------------------
+  
+* Menu:
+
+* Subsection 6-7-1::	Basic expressions
+* Subsection 6-7-2::	Control structures
+* Subsection 6-7-3::	Operations on data structures
+* Subsection 6-7-4::	Operators
+* Subsection 6-7-5::	Objects
+* Subsection 6-7-6::	Coercions
+

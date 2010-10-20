@@ -1,0 +1,1083 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 7-13,	Next: Section 7-14,	Prev: Section 7-12,	Up: Chapter 7
+  
+
+7.13   Explicit naming of type variables
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+    
+  (Introduced in OCaml 3.12)
+                    parameter ::=  ...                      
+                               |   ( type typeconstr-name ) 
+                                                            
+  
+  The expression fun ( type typeconstr-name ) ->  expr introduces a type
+constructor named typeconstr-name which is considered abstract in the scope of
+the sub-expression, but then replaced by a fresh type variable. Note that
+contrary to what the syntax could suggest, the expression fun ( type
+typeconstr-name ) ->  expr itself does not suspend the evaluation of expr as a
+regular abstraction would. The syntax has been chosen to fit nicely in the
+context of function declarations, where it is generally used. It is possible to
+freely mix regular function parameters with pseudo type parameters, as in: 
+<<        let f = fun (type t) (foo : t list) -> ...
+>>
+  and even use the alternative syntax for declaring functions: 
+<<        let f (type t) (foo : t list) = ...
+>>
+  
+  This construction is useful because the type constructor it introduces can be
+used in places where a type variable is not allowed. For instance, one can use
+it to define an exception in a local module within a polymorphic function. 
+<<        let f (type t) () =
+            let module M = struct exception E of t end in
+            (fun x -> M.E x), (function M.E x -> Some x | _ -> None)
+>>
+  
+  Here is another example: 
+<<        let sort_uniq (type s) (cmp : s -> s -> int) =
+            let module S = Set.Make(struct type t = s let compare = cmp end) in
+            fun l ->
+              S.elements (List.fold_right S.add l S.empty)
+>>
+  
+  This construction by itself does not make polymorphic the type variable it
+introduces, but it can be combined with explicit polymorphic annotations where
+needed. It is also extremely useful for first-class modules.
+
+Node: Section 7-14,	Next: Section 7-15,	Prev: Section 7-13,	Up: Chapter 7
+  
+
+7.14   First-class modules
+*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+     
+  (Introduced in OCaml 3.12)
+                  typexpr ::=  ...                                             
+                                                     
+                           |   (module package-type)                           
+                                                     
+                                                                               
+                                                     
+              module-expr ::=  ...                                             
+                                                     
+                           |   (val expr :  package-type)                      
+                                                     
+                                                                               
+                                                     
+                     expr ::=  ...                                             
+                                                     
+                           |   (module module-expr :  package-type)            
+                                                     
+                                                                               
+                                                     
+             package-type ::=  modtype-path                                    
+                                                     
+                            |   modtype-path with  package-type-constraint  {
+                        and package-type-constraint } 
+                                                                               
+                                                     
+  package-type-constraint ::=  type typeconstr-name =  typexpr                 
+                                                     
+                                                                               
+                                                     
+  
+  Modules are typically thought as static components. This extension makes it
+possible to pack a module as a first-class value, which can later be
+dynamically unpacked into a module.
+  The expression (module module-expr :  package-type) converts the module
+(structure or functor) denoted by module expression module-expr to a value of
+the core language that encapsulates this module. The type of this core language
+value is (module package-type).
+  Conversely, the module expression (val expr :  package-type) evaluates the
+core language expression expr to a value, which must have type module
+package-type, and extracts the module that was encapsulated in this value.
+  The package-type syntactic class appearing in the (module module-expr :
+ package-type) expressions, the (val expr :  package-type) module expressions
+and the (module package-type) type expression represents a subset of module
+types.  This subset consists of named module types with optional constraints of
+a limited form: only non-parametrized types can be specified. For type-checking
+purposes, package types are compared by path equality on the module type name
+component, and normal type equality for constraints.
+  The module expression (val expr :  package-type) cannot be used in the body
+of a functor, because this can cause unsoundness in conjunction with
+applicative functors. It can be used anywhere in the context of a local module
+binding let M = (val expr_1 :  package-type) in  expr_2, however.
+ Basic example
+   A typical use of first-class modules is to select at run-time among several
+implementations of a signatures.  Each implementation is a structure that we
+can encapsulate as a first-class module, then store in a data structure such as
+a hash table: 
+<<        module type DEVICE = sig ... end
+          let devices : (string, module DEVICE) Hashtbl.t = Hashtbl.create 17
+  
+          module SVG = struct ... end
+          let _ = Hashtbl.add devices "SVG" (module SVG : DEVICE)
+  
+          module PDF = struct ... end
+          let _ = Hashtbl.add devices "PDF" (module PDF: DEVICE)
+>>
+  We can then select one implementation based on command-line arguments, for
+instance: 
+<<        module Device =
+            (val (try Hashtbl.find devices (parse_cmdline())
+                  with Not_found -> eprintf "Unknown device %s\n"; exit 2)
+             : DEVICE)
+>>
+  Alternatively, the selection can be performed within a function: 
+<<        let draw_using_device device_name picture =
+            let module Device =
+              (val (Hashtbl.find_devices device_name) : DEVICE)
+            in
+              Device.draw picture
+>>
+  
+ Advanced examples
+   With first-class modules, it is possible to parametrize some code over the
+implementation of a module without using a functor.
+<<        let sort (type s) set l =
+            let module Set = (val set : Set.S with type elt = s) in
+            Set.elements (List.fold_right Set.add l Set.empty)
+>>
+  
+  The type inferred for this function is (module Set.S with type elt = 'a) ->
+'a list -> 'a list. To use this function, one can wrap the Set.Make functor:
+<<        let make_set (type s) cmp =
+            let module S = Set.Make(struct
+              type t = s
+              let compare = cmp
+            end) in
+            (module S : Set.S with type elt = s) 
+>>
+  
+  This function has type ('a -> 'a -> int) -> (module Set.S with type elt =
+'a).
+  Another advanced use of first-class module is to encode existential types. In
+particular, they can be used to simulate generalized algebraic data types
+(GADT). To demonstrate this, we first define a type of witnesses for type
+equalities:
+<<        module TypEq : sig
+            type ('a, 'b) t
+            val apply: ('a, 'b) t -> 'a -> 'b
+            val refl: ('a, 'a) t
+            val sym: ('a, 'b) t -> ('b, 'a) t
+          end = struct
+            type ('a, 'b) t = ('a -> 'b) * ('b -> 'a)
+            let refl = (fun x -> x), (fun x -> x)
+            let apply (f, _) x = f x
+            let sym (f, g) = (g, f)
+          end
+>>
+  
+  We can then define a paramatrized algebraic data type whose constructors
+provide some information about the type parameter:
+<<        module rec Typ : sig
+            module type PAIR = sig
+              type t and t1 and t2
+              val eq: (t, t1 * t2) TypEq.t
+              val t1: t1 Typ.typ
+              val t2: t2 Typ.typ
+            end
+  
+            type 'a typ =
+              | Int of ('a, int) TypEq.t
+              | String of ('a, string) TypEq.t
+              | Pair of (module PAIR with type t = 'a)
+          end = Typ
+>>
+  
+  Values of type 'a typ are supposed to be runtime representations for the type
+'a. The constructors Int and String are easy: they directly give a witness of
+type equality between the parameter 'a and the ground types int (resp. string).
+The constructor Pair is more complex. One wants to give a witness of type
+equality between 'a and a type of the form t1 * t2 together with the
+representations for t1 and t2. However, these two types are unknown. The code
+above should how to use first-class modules to simulate existentials.
+  Here is how to construct values of type 'a typ:
+<<        let int = Typ.Int TypEq.refl
+  
+          let str = Typ.String TypEq.refl
+  
+          let pair (type s1) (type s2) t1 t2 =
+            let module P = struct
+              type t = s1 * s2
+              type t1 = s1
+              type t2 = s2
+              let eq = TypEq.refl
+              let t1 = t1
+              let t2 = t2
+            end in
+            let pair = (module P : Typ.PAIR with type t = s1 * s2) in
+            Typ.Pair pair
+>>
+  
+  And finally, here is an example of a polymorphic function that takes the
+runtime representation of some type 'a and a value of the same type, then
+pretty-print the value as a string:
+<<        open Typ
+          let rec to_string: 'a. 'a Typ.typ -> 'a -> string =
+            fun (type s) t x ->
+              match t with
+              | Int eq -> string_of_int (TypEq.apply eq x)
+              | String eq -> Printf.sprintf "%S" (TypEq.apply eq x)
+              | Pair p ->
+                  let module P = (val p : PAIR with type t = s) in
+                  let (x1, x2) = TypEq.apply P.eq x in
+                  Printf.sprintf "(%s,%s)" (to_string P.t1 x1) (to_string P.t2
+x2)
+>>
+  
+  Note that this function uses an explicit polymorphic annotation to obtain
+polymorphic recursion.
+
+Node: Section 7-15,	Next: Section 7-16,	Prev: Section 7-14,	Up: Chapter 7
+  
+
+7.15   Recovering the type of a module
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  
+  (Introduced in OCaml 3.12)
+                  module-type ::=   ...                       
+                               |   module type of module-expr 
+  
+  The construction module type of module-expr expands to the module type
+(signature or functor type) inferred for the module expression module-expr.
+  A typical use, in conjunction with the signature-level include construct, is
+to extend the signature of an existing structure, as in the following example. 
+<<        module type MYHASH = sig
+            include module type of Hashtbl
+            val replace: ('a, 'b) t -> 'a -> 'b -> unit
+          end
+>>
+  The signature MYHASH, then, contains all the fields of the signature of
+module Hashtbl, plus the new field replace. An implementation of this signature
+can be obtained easily, using the include construct at the structure level this
+time: 
+<<        module MyHash : MYHASH = struct
+            include Hashtbl
+            let replace t k v = remove t k; add t k v
+          end
+>>
+  
+
+Node: Section 7-16,	Next: Section 7-17,	Prev: Section 7-15,	Up: Chapter 7
+  
+
+7.16   Substituting inside a signature
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+     
+  (Introduced in OCaml 3.12)
+  mod-constraint ::=  ...                                                      
+                                               
+                         |   type [type-parameters]  typeconstr-name := 
+                        [type-parameters]  typeconstr 
+                  |   module module-name :=  extended-module-path              
+                                               
+                                                                               
+                                               
+  
+  "Destructive" substitution (with ... :=) behaves essentially like normal
+signature constraints (with ... =), but it additionally removes the redefined
+type or module from the signature. There are a number of restrictions: one can
+only remove types and modules at the outermost level (not inside submodules),
+and the definition must be either another type constructor (with identical type
+parameters), or a module path.
+  A natural application of destructive substitution is merging two signatures
+sharing a type name. 
+<<        module type Printable = sig
+            type t
+            val print : Format.formatter -> t -> unit
+          end
+          module type Comparable = sig
+            type t
+            val compare : t -> t -> int
+          end
+          module type PrintableComparable = sig
+            include Printable
+            include Comparable with type t := t
+          end
+>>
+  
+  One can also use this to completely remove a field: 
+<<#module type S = Comparable with type t := int;;
+  module type S = sig val compare : int -> int -> int end
+>>
+   or to rename one: 
+<<#module type S = sig
+  #  type u
+  #  include Comparable with type t := u
+  #end;;
+  module type S = sig type u val compare : u -> u -> int end
+>>
+  
+  Note that you can also remove manifest types, by substituting with the same
+type. 
+<<#module type ComparableInt = Comparable with type t = int
+  module type ComparableInt = sig type t = int val compare : t -> t -> int end
+  #module type CompareInt = ComparableInt with type t := int ;;
+  module type CompareInt = sig val compare : int -> int -> int end
+>>
+  
+
+Node: Section 7-17,	Next: Part III,	Prev: Section 7-16,	Up: Chapter 7
+  
+
+7.17   Explicit overriding in class definitions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+     
+  (Introduced in OCaml 3.12)
+  class-field ::=  ...                                                         
+                                         
+               |    inherit! class-expr  [as value-name]                       
+                                         
+               |    val! [mutable] inst-var-name  [: typexpr] =  expr          
+                                         
+               |    method! [private] method-name  {parameter}  [: typexpr] = 
+                                     expr 
+               |    method! [private] method-name :  poly-typexpr =  expr      
+                                         
+                                                                               
+                                         
+  
+  The keywords inherit!, val! and method! have the same semantics as inherit,
+val and method, but they additionally require the definition they introduce to
+be an overriding. Namely, method! requires method-name to be already defined in
+this class, val! requires inst-var-name to be already defined in this class,
+and inherit! requires class-expr to override some definitions. If no such
+overriding occurs, an error is signaled.
+  As a side-effect, these 3 keywords avoid the warnings "method override" and "
+instance variable override". As of Objective Caml 3.12, the warning "method
+override" has to be enabled manually for backwards compatibility reasons. 
+
+Node: Part III,	Next: Chapter 8,	Prev: Chapter 7,	Up: Top
+  
+
+                                   Part: III
+                                   *********
+                            The Objective Caml tools
+                           *************************
+   
+  
+* Menu:
+
+* Chapter 8::	Batch compilation (ocamlc)
+* Chapter 9::	The toplevel system (ocaml)
+* Chapter 10::	The runtime system (ocamlrun)
+* Chapter 11::	Native-code compilation (ocamlopt)
+* Chapter 12::	Lexer and parser generators (ocamllex, ocamlyacc)
+* Chapter 13::	Dependency generator (ocamldep)
+* Chapter 14::	The browser/editor (ocamlbrowser)
+* Chapter 15::	The documentation generator (ocamldoc)
+* Chapter 16::	The debugger (ocamldebug)
+* Chapter 17::	Profiling (ocamlprof)
+* Chapter 18::	Interfacing C with Objective Caml
+
+
+Node: Chapter 8,	Next: Section 8-1,	Prev: Part III,	Up: Part III
+  
+
+Chapter 8     Batch compilation (ocamlc)
+****************************************
+    
+  This chapter describes the Objective Caml batch compiler ocamlc, which
+compiles Caml source files to bytecode object files and links these object
+files to produce standalone bytecode executable files. These executable files
+are then run by the bytecode interpreter ocamlrun.
+* Menu:
+
+* Section 8-1::	Overview of the compiler
+* Section 8-2::	Options
+* Section 8-3::	Modules and the file system
+* Section 8-4::	Common errors
+
+
+Node: Section 8-1,	Next: Section 8-2,	Prev: Chapter 8,	Up: Chapter 8
+  
+
+8.1   Overview of the compiler
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  The ocamlc command has a command-line interface similar to the one of most C
+compilers. It accepts several types of arguments and processes them
+sequentially:
+  
+  
+   - Arguments ending in .mli are taken to be source files for compilation unit
+   interfaces. Interfaces specify the names exported by compilation units: they
+   declare value names with their types, define public data types, declare
+   abstract data types, and so on. From the file x.mli, the ocamlc compiler
+   produces a compiled interface in the file x.cmi.
+ 
+   - Arguments ending in .ml are taken to be source files for compilation unit
+   implementations. Implementations provide definitions for the names exported
+   by the unit, and also contain expressions to be evaluated for their
+   side-effects. From the file x.ml, the ocamlc compiler produces compiled
+   object bytecode in the file x.cmo. 
+ If the interface file x.mli exists, the implementation x.ml is checked against
+   the corresponding compiled interface x.cmi, which is assumed to exist. If no
+   interface x.mli is provided, the compilation of x.ml produces a compiled
+   interface file x.cmi in addition to the compiled object code file x.cmo. The
+   file x.cmi produced corresponds to an interface that exports everything that
+   is defined in the implementation x.ml.
+ 
+   - Arguments ending in .cmo are taken to be compiled object bytecode. These
+   files are linked together, along with the object files obtained by compiling
+   .ml arguments (if any), and the Objective Caml standard library, to produce
+   a standalone executable program. The order in which .cmo and .ml arguments
+   are presented on the command line is relevant: compilation units are
+   initialized in that order at run-time, and it is a link-time error to use a
+   component of a unit before having initialized it. Hence, a given x.cmo file
+   must come before all .cmo files that refer to the unit x.
+ 
+   - Arguments ending in .cma are taken to be libraries of object bytecode. A
+   library of object bytecode packs in a single file a set of object bytecode
+   files (.cmo files). Libraries are built with ocamlc -a (see the description
+   of the -a option below). The object files contained in the library are
+   linked as regular .cmo files (see above), in the order specified when the
+   .cma file was built. The only difference is that if an object file contained
+   in a library is not referenced anywhere in the program, then it is not
+   linked in.
+ 
+   - Arguments ending in .c are passed to the C compiler, which generates a .o
+   object file (.obj under Windows). This object file is linked with the
+   program if the -custom flag is set (see the description of -custom below).
+ 
+   - Arguments ending in .o or .a (.obj or .lib under Windows) are assumed to
+   be C object files and libraries. They are passed to the C linker when
+   linking in -custom mode (see the description of -custom below).
+ 
+   - Arguments ending in .so (.dll under Windows) are assumed to be C shared
+   libraries (DLLs). During linking, they are searched for external C functions
+   referenced from the Caml code, and their names are written in the generated
+   bytecode executable. The run-time system ocamlrun then loads them
+   dynamically at program start-up time.
+  
+  The output of the linking phase is a file containing compiled bytecode that
+can be executed by the Objective Caml bytecode interpreter: the command named
+ocamlrun. If caml.out is the name of the file produced by the linking phase,
+the command 
+<<
+          ocamlrun caml.out arg_1 arg_2 ... arg_n
+>>
+   executes the compiled code contained in caml.out, passing it as arguments
+the character strings arg_1 to arg_n. (See chapter 10*Note Chapter 10:: for
+more details.)
+  On most systems, the file produced by the linking phase can be run directly,
+as in: 
+<<
+          ./caml.out arg_1 arg_2 ... arg_n
+>>
+   The produced file has the executable bit set, and it manages to launch the
+bytecode interpreter by itself.
+
+Node: Section 8-2,	Next: Section 8-3,	Prev: Section 8-1,	Up: Chapter 8
+  
+
+8.2   Options
+*=*=*=*=*=*=*
+
+
+  The following command-line options are recognized by ocamlc. The options
+-pack, -a, -c and -output-obj are mutually exclusive.
+  
+ 
+ 
+ -a  Build a library (.cma file) with the object files (.cmo files) given on
+   the command line, instead of linking them into an executable file. The name
+   of the library must be set with the -o option.
+ If -custom, -cclib or -ccopt options are passed on the command line, these
+   options are stored in the resulting .cma library. Then, linking with this
+   library automatically adds back the -custom, -cclib and -ccopt options as if
+   they had been provided on the command line, unless the -noautolink option is
+   given.
+ 
+ -annot  Dump detailed information about the compilation (types, bindings,
+   tail-calls, etc). The information for file src.ml is put into file
+   src.annot. In case of a type error, dump all the information inferred by the
+   type-checker before the error. The src.annot file can be used with the emacs
+   commands given in emacs/caml-types.el to display types and other annotations
+   interactively.
+ 
+ -c  Compile only. Suppress the linking phase of the compilation. Source code
+   files are turned into compiled files, but no executable file is produced.
+   This option is useful to compile modules separately.
+ 
+ -cc ccomp  Use ccomp as the C linker when linking in "custom runtime" mode
+   (see the -custom option) and as the C compiler for compiling .c source
+   files.
+ 
+ -cclib -llibname  Pass the -llibname option to the C linker when linking in
+   "custom runtime" mode (see the -custom option). This causes the given C
+   library to be linked with the program.
+ 
+ -ccopt option  Pass the given option to the C compiler and linker. When
+   linking in "custom runtime" mode, for instance, -ccopt -Ldir causes the C
+   linker to search for C libraries in directory dir. (See the -custom option.)
+   
+ 
+ -config  Print the version number of ocamlc and a detailed summary of its
+   configuration, then exit.
+ 
+ -custom  Link in "custom runtime" mode. In the default linking mode, the
+   linker produces bytecode that is intended to be executed with the shared
+   runtime system, ocamlrun. In the custom runtime mode, the linker produces an
+   output file that contains both the runtime system and the bytecode for the
+   program. The resulting file is larger, but it can be executed directly, even
+   if the ocamlrun command is not installed. Moreover, the "custom runtime"
+   mode enables static linking of Caml code with user-defined C functions, as
+   described in chapter 18*Note Chapter 18::.    Unix: 
+       Never use the strip command on executables produced by ocamlc -custom,
+      this would remove the bytecode part of the executable. 
+ 
+ 
+ -dllib -llibname  Arrange for the C shared library dlllibname.so
+   (dlllibname.dll under Windows) to be loaded dynamically by the run-time
+   system ocamlrun at program start-up time.
+ 
+ -dllpath dir  Adds the directory dir to the run-time search path for shared C
+   libraries. At link-time, shared libraries are searched in the standard
+   search path (the one corresponding to the -I option). The -dllpath option
+   simply stores dir in the produced executable file, where ocamlrun can find
+   it and use it as described in section 10.3*Note Section 10-3::.
+ 
+ -g  Add debugging information while compiling and linking. This option is
+   required in order to be able to debug the program with ocamldebug (see
+   chapter 16*Note Chapter 16::), and to produce stack backtraces when the
+   program terminates on an uncaught exception (see
+   section 10.2*Note Section 10-2::).
+ 
+ -help-warnings  Show description for all available warning numbers.
+ 
+ -i  Cause the compiler to print all defined names (with their inferred types
+   or their definitions) when compiling an implementation (.ml file). No
+   compiled files (.cmo and .cmi files) are produced. This can be useful to
+   check the types inferred by the compiler. Also, since the output follows the
+   syntax of interfaces, it can help in writing an explicit interface (.mli
+   file) for a file: just redirect the standard output of the compiler to a
+   .mli file, and edit that file to remove all declarations of unexported
+   names.
+ 
+ -I directory  Add the given directory to the list of directories searched for
+   compiled interface files (.cmi), compiled object code files (.cmo),
+   libraries (.cma), and C libraries specified with -cclib -lxxx. By default,
+   the current directory is searched first, then the standard library
+   directory. Directories added with -I are searched after the current
+   directory, in the order in which they were given on the command line, but
+   before the standard library directory.
+ If the given directory starts with +, it is taken relative to the standard
+   library directory. For instance, -I +labltk adds the subdirectory labltk of
+   the standard library to the search path.
+ 
+ -impl filename  Compile the file filename as an implementation file, even if
+   its extension is not .ml.
+ 
+ -intf filename  Compile the file filename as an interface file, even if its
+   extension is not .mli.
+ 
+ -intf-suffix string  Recognize file names ending with string as interface
+   files (instead of the default .mli).
+ 
+ -labels  Labels are not ignored in types, labels may be used in applications,
+   and labelled parameters can be given in any order. This is the default.
+ 
+ -linkall  Force all modules contained in libraries to be linked in. If this
+   flag is not given, unreferenced modules are not linked in. When building a
+   library (option -a), setting the -linkall option forces all subsequent links
+   of programs involving that library to link all the modules contained in the
+   library.
+ 
+ -make-runtime  Build a custom runtime system (in the file specified by option
+   -o) incorporating the C object files and libraries given on the command
+   line. This custom runtime system can be used later to execute bytecode
+   executables produced with the ocamlc -use-runtime runtime-name option. See
+   section 18.1.6*Note Subsection 18-1-6:: for more information.
+ 
+ -noassert  Do not compile assertion checks. Note that the special form assert
+   false is always compiled because it is typed specially. This flag has no
+   effect when linking already-compiled files.
+ 
+ -noautolink  When linking .cma libraries, ignore -custom, -cclib and -ccopt
+   options potentially contained in the libraries (if these options were given
+   when building the libraries). This can be useful if a library contains
+   incorrect specifications of C libraries or C options; in this case, during
+   linking, set -noautolink and pass the correct C libraries and options on the
+   command line.
+ 
+ -nolabels  Ignore non-optional labels in types. Labels cannot be used in
+   applications, and parameter order becomes strict.
+ 
+ -o exec-file  Specify the name of the output file produced by the compiler.
+   The default output name is a.out under Unix and camlprog.exe under Windows.
+   If the -a option is given, specify the name of the library produced. If the
+   -pack option is given, specify the name of the packed object file produced.
+   If the -output-obj option is given, specify the name of the output file
+   produced. If the -c option is given, specify the name of the object file
+   produced for the next source file that appears on the command line.
+ 
+ -output-obj  Cause the linker to produce a C object file instead of a bytecode
+   executable file. This is useful to wrap Caml code as a C library, callable
+   from any C program. See chapter 18*Note Chapter 18::,
+   section 18.7.5*Note Subsection 18-7-5::. The name of the output object
+   file is camlprog.o by default; it can be set with the -o option. This option
+   can also be used to produce a C source file (.c extension) or a compiled
+   shared/dynamic library (.so extension, .dll under Windows).
+ 
+ -pack  Build a bytecode object file (.cmo file) and its associated compiled
+   interface (.cmi) that combines the object files given on the command line,
+   making them appear as sub-modules of the output .cmo file. The name of the
+   output .cmo file must be given with the -o option. For instance, 
+   <<        ocamlc -pack -o p.cmo a.cmo b.cmo c.cmo
+   >>
+ generates compiled files p.cmo and p.cmi describing a compilation unit having
+   three sub-modules A, B and C, corresponding to the contents of the object
+   files a.cmo, b.cmo and c.cmo. These contents can be referenced as P.A, P.B
+   and P.C in the remainder of the program.
+ 
+ -pp command  Cause the compiler to call the given command as a preprocessor
+   for each source file. The output of command is redirected to an intermediate
+   file, which is compiled. If there are no compilation errors, the
+   intermediate file is deleted afterwards.
+ 
+ -principal  Check information path during type-checking, to make sure that all
+   types are derived in a principal way. When using labelled arguments and/or
+   polymorphic methods, this flag is required to ensure future versions of the
+   compiler will be able to infer types correctly, even if internal algorithms
+   change. All programs accepted in -principal mode are also accepted in the
+   default mode with equivalent types, but different binary signatures, and
+   this may slow down type checking; yet it is a good idea to use it once
+   before publishing source code.
+ 
+ -rectypes  Allow arbitrary recursive types during type-checking. By default,
+   only recursive types where the recursion goes through an object type are
+   supported. Note that once you have created an interface using this flag, you
+   must use it again for all dependencies.
+ 
+ -thread  Compile or link multithreaded programs, in combination with the
+   system threads library described in chapter 24*Note Chapter 24::.
+ 
+ -unsafe  Turn bound checking off for array and string accesses (the v.(i) and
+   s.[i] constructs). Programs compiled with -unsafe are therefore slightly
+   faster, but unsafe: anything can happen if the program accesses an array or
+   string outside of its bounds.
+ 
+ -use-runtime runtime-name  Generate a bytecode executable file that can be
+   executed on the custom runtime system runtime-name, built earlier with
+   ocamlc -make-runtime runtime-name.  See
+   section 18.1.6*Note Subsection 18-1-6:: for more information.
+ 
+ -v  Print the version number of the compiler and the location of the standard
+   library directory, then exit.
+ 
+ -verbose  Print all external commands before they are executed, in particular
+   invocations of the C compiler and linker in -custom mode. Useful to debug C
+   library problems.
+ 
+ -vnum or -version  Print the version number of the compiler in short form
+   (e.g. 3.11.0), then exit.
+ 
+ -vmthread  Compile or link multithreaded programs, in combination with the
+   VM-level threads library described in chapter 24*Note Chapter 24::.
+ 
+ -w warning-list  Enable, disable, or mark as errors the warnings specified by
+   the argument warning-list. Each warning can be enabled or disabled, and each
+   warning can be marked or unmarked. If a warning is disabled, it isn't
+   displayed and doesn't affect compilation in any way (even if it is marked).
+   If a warning is enabled, it is displayed normally by the compiler whenever
+   the source code triggers it. If it is enabled and marked, the compiler will
+   stop with an error after displaying that warning if the source code triggers
+   it.
+ The warning-list argument is a sequence of warning specifiers, with no
+   separators between them. A warning specifier is one of the following:
+ 
+     
+    +num  Enable warning number num. 
+    -num  Disable warning number num. 
+    @num  Enable and mark warning number num. 
+    +num1..num2  Enable warnings in the given range. 
+    -num1..num2  Disable warnings in the given range. 
+    @num1..num2  Enable and mark warnings in the given range. 
+    +letter  Enable the set of warnings corresponding to letter. The letter may
+      be uppercase or lowercase. 
+    -letter  Disable the set of warnings corresponding to letter. The letter
+      may be uppercase or lowercase. 
+    @letter  Enable and mark the set of warnings corresponding to letter. The
+      letter may be uppercase or lowercase. 
+    uppercase-letter  Enable the set of warnings corresponding to
+      uppercase-letter. 
+    lowercase-letter  Disable the set of warnings corresponding to
+      lowercase-letter. 
+ 
+ Warning numbers which are out of the range of warnings that are currently
+   defined are ignored. The warning numbers are as follows. 
+     
+    1  Suspicious-looking start-of-comment mark. 
+    2  Suspicious-looking end-of-comment mark. 
+    3  Deprecated syntax. 
+    4  Fragile pattern matching: matching that will remain complete even if
+      additional constructors are added to one of the variant types matched. 
+    5  Partially applied function: expression whose result has function type
+      and is ignored. 
+    6  Label omitted in function application. 
+    7  Some methods are overridden in the class where they are defined. 
+    8  Partial match: missing cases in pattern-matching. 
+    9  Missing fields in a record pattern. 
+    10  Expression on the left-hand side of a sequence that doesn't have type
+      "unit" (and that is not a function, see warning number 5). 
+    11  Redundant case in a pattern matching (unused match case). 
+    12  Redundant sub-pattern in a pattern-matching. 
+    13  Override of an instance variable. 
+    14  Illegal backslash escape in a string constant. 
+    15  Private method made public implicitly. 
+    16  Unerasable optional argument. 
+    17  Undeclared virtual method. 
+    18  Non-principal type. 
+    19  Type without principality. 
+    20  Unused function argument. 
+    21  Non-returning statement. 
+    22  Camlp4 warning. 
+    23  Useless record "with" clause. 
+    24  Bad module name: the source file name is not a valid OCaml module name.
+      
+    25  Pattern-matching with all clauses guarded. Exhaustiveness cannot be
+      checked 
+    26  Suspicious unused variable: unused variable that is bound with "let" or
+      "as", and doesn't start with an underscore ("_") character. 
+    27  Innocuous unused variable: unused variable that is not bound with "let"
+      nor "as", and doesn't start with an underscore ("_") character. 
+    28  Wildcard pattern given as argument to a constant constructor. 
+    29  Unescaped end-of-line in a string constant (non-portable code). 
+    30  Two labels or constructors of the same name are defined in two mutually
+      recursive types.  
+ 
+ The letters stand for the following sets of warnings. Any letter not mentioned
+   here corresponds to the empty set.
+ 
+     
+    A  all warnings 
+    C  1, 2 
+    D  3 
+    E  4 
+    F  5 
+    L  6 
+    M  7 
+    P  8 
+    R  9 
+    S  10 
+    U  11, 12 
+    V  13 
+    X  14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 
+    Y  26 
+    Z  27 
+ 
+ The default setting is -w +a-4-6-7-9-27..29. Note that warnings 5 and 10 are
+   not always triggered, depending on the internals of the type checker.
+ 
+ -warn-error warning-list  Mark as errors the warnings specified in the
+   argument warning-list. The compiler will stop with an error when one of
+   these warnings is emitted. The warning-list has the same meaning as for the
+   -w option: a + sign (or an uppercase letter) turns the corresponding
+   warnings into errors, a - sign (or a lowercase letter) turns them back into
+   warnings, and a @ sign both enables and marks the corresponding warnings.
+ Note: it is not recommended to use warning sets (i.e. letters) as arguments to
+   -warn-error in production code, because this can break your build when
+   future versions of OCaml add some new warnings.
+ The default setting is -warn-error -a (none of the warnings is treated as an
+   error).
+ 
+ -where  Print the location of the standard library, then exit.
+ 
+ - file  Process file as a file name, even if it starts with a dash (-)
+   character.
+ 
+ -help or --help  Display a short usage summary and exit. 
+  
+
+Node: Section 8-3,	Next: Section 8-4,	Prev: Section 8-2,	Up: Chapter 8
+  
+
+8.3   Modules and the file system
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  This short section is intended to clarify the relationship between the names
+of the modules corresponding to compilation units and the names of the files
+that contain their compiled interface and compiled implementation.
+  The compiler always derives the module name by taking the capitalized base
+name of the source file (.ml or .mli file). That is, it strips the leading
+directory name, if any, as well as the .ml or .mli suffix; then, it set the
+first letter to uppercase, in order to comply with the requirement that module
+names must be capitalized. For instance, compiling the file mylib/misc.ml
+provides an implementation for the module named Misc. Other compilation units
+may refer to components defined in mylib/misc.ml under the names Misc.name;
+they can also do open Misc, then use unqualified names name.
+  The .cmi and .cmo files produced by the compiler have the same base name as
+the source file. Hence, the compiled files always have their base name equal
+(modulo capitalization of the first letter) to the name of the module they
+describe (for .cmi files) or implement (for .cmo files).
+  When the compiler encounters a reference to a free module identifier Mod, it
+looks in the search path for a file named Mod.cmi or mod.cmi and loads the
+compiled interface contained in that file. As a consequence, renaming .cmi
+files is not advised: the name of a .cmi file must always correspond to the
+name of the compilation unit it implements. It is admissible to move them to
+another directory, if their base name is preserved, and the correct -I options
+are given to the compiler. The compiler will flag an error if it loads a .cmi
+file that has been renamed.
+  Compiled bytecode files (.cmo files), on the other hand, can be freely
+renamed once created. That's because the linker never attempts to find by
+itself the .cmo file that implements a module with a given name: it relies
+instead on the user providing the list of .cmo files by hand.
+
+Node: Section 8-4,	Next: Chapter 9,	Prev: Section 8-3,	Up: Chapter 8
+  
+
+8.4   Common errors
+*=*=*=*=*=*=*=*=*=*
+
+   
+  This section describes and explains the most frequently encountered error
+messages.
+  
+ 
+ 
+ Cannot find file filename  The named file could not be found in the current
+   directory, nor in the directories of the search path. The filename is either
+   a compiled interface file (.cmi file), or a compiled bytecode file (.cmo
+   file). If filename has the format mod.cmi, this means you are trying to
+   compile a file that references identifiers from module mod, but you have not
+   yet compiled an interface for module mod. Fix: compile mod.mli or mod.ml
+   first, to create the compiled interface mod.cmi. 
+ If filename has the format mod.cmo, this means you are trying to link a
+   bytecode object file that does not exist yet. Fix: compile mod.ml first.
+ If your program spans several directories, this error can also appear because
+   you haven't specified the directories to look into. Fix: add the correct -I
+   options to the command line.
+ 
+ Corrupted compiled interface filename  The compiler produces this error when
+   it tries to read a compiled interface file (.cmi file) that has the wrong
+   structure. This means something went wrong when this .cmi file was written:
+   the disk was full, the compiler was interrupted in the middle of the file
+   creation, and so on. This error can also appear if a .cmi file is modified
+   after its creation by the compiler. Fix: remove the corrupted .cmi file, and
+   rebuild it.
+ 
+ This expression has type t_1, but is used with type t_2  This is by far the
+   most common type error in programs. Type t_1 is the type inferred for the
+   expression (the part of the program that is displayed in the error message),
+   by looking at the expression itself. Type t_2 is the type expected by the
+   context of the expression; it is deduced by looking at how the value of this
+   expression is used in the rest of the program. If the two types t_1 and t_2
+   are not compatible, then the error above is produced.
+ In some cases, it is hard to understand why the two types t_1 and t_2 are
+   incompatible. For instance, the compiler can report that "expression of type
+   foo cannot be used with type foo", and it really seems that the two types
+   foo are compatible. This is not always true. Two type constructors can have
+   the same name, but actually represent different types. This can happen if a
+   type constructor is redefined. Example: 
+   <<        type foo = A | B
+             let f = function A -> 0 | B -> 1
+             type foo = C | D
+             f C
+   >>
+ This result in the error message "expression C of type foo cannot be used with
+   type foo". 
+ 
+ The type of this expression, t, contains type variables that cannot be
+   generalized  Type variables ('a, 'b, ...) in a type t can be in either of
+   two states: generalized (which means that the type t is valid for all
+   possible instantiations of the variables) and not generalized (which means
+   that the type t is valid only for one instantiation of the variables). In a
+   let binding let name = expr, the type-checker normally generalizes as many
+   type variables as possible in the type of expr. However, this leads to
+   unsoundness (a well-typed program can crash) in conjunction with polymorphic
+   mutable data structures. To avoid this, generalization is performed at let
+   bindings only if the bound expression expr belongs to the class of
+   "syntactic values", which includes constants, identifiers, functions, tuples
+   of syntactic values, etc. In all other cases (for instance, expr is a
+   function application), a polymorphic mutable could have been created and
+   generalization is therefore turned off for all variables occuring in
+   contravariant or non-variant branches of the type. For instance, if the type
+   of a non-value is 'a list the variable is generalizable (list is a covariant
+   type constructor), but not in 'a list -> 'a list (the left branch of -> is
+   contravariant) or 'a ref (ref is non-variant).
+ Non-generalized type variables in a type cause no difficulties inside a given
+   structure or compilation unit (the contents of a .ml file, or an interactive
+   session), but they cannot be allowed inside signatures nor in compiled
+   interfaces (.cmi file), because they could be used inconsistently later.
+   Therefore, the compiler flags an error when a structure or compilation unit
+   defines a value name whose type contains non-generalized type variables.
+   There are two ways to fix this error: 
+     
+      - Add a type constraint or a .mli file to give a monomorphic type
+      (without type variables) to name. For instance, instead of writing 
+      <<    let sort_int_list = Sort.list (<)
+            (* inferred type 'a list -> 'a list, with 'a not generalized *)
+      >>
+    write 
+      <<    let sort_int_list = (Sort.list (<) : int list -> int list);;
+      >>
+    
+      - If you really need name to have a polymorphic type, turn its defining
+      expression into a function by adding an extra parameter. For instance,
+      instead of writing 
+      <<    let map_length = List.map Array.length
+            (* inferred type 'a array list -> int list, with 'a not generalized
+      *)
+      >>
+    write 
+      <<    let map_length lv = List.map Array.length lv
+      >>
+ 
+ 
+ Reference to undefined global mod  This error appears when trying to link an
+   incomplete or incorrectly ordered set of files. Either you have forgotten to
+   provide an implementation for the compilation unit named mod on the command
+   line (typically, the file named mod.cmo, or a library containing that file).
+   Fix: add the missing .ml or .cmo file to the command line. Or, you have
+   provided an implementation for the module named mod, but it comes too late
+   on the command line: the implementation of mod must come before all bytecode
+   object files that reference mod. Fix: change the order of .ml and .cmo files
+   on the command line.
+ Of course, you will always encounter this error if you have mutually recursive
+   functions across modules. That is, function Mod1.f calls function Mod2.g,
+   and function Mod2.g calls function Mod1.f. In this case, no matter what
+   permutations you perform on the command line, the program will be rejected
+   at link-time. Fixes: 
+     
+      - Put f and g in the same module. 
+      - Parameterize one function by the other. That is, instead of having 
+      <<mod1.ml:    let f x = ... Mod2.g ...
+        mod2.ml:    let g y = ... Mod1.f ...
+      >>
+    define 
+      <<mod1.ml:    let f g x = ... g ...
+        mod2.ml:    let rec g y = ... Mod1.f g ...
+      >>
+    and link mod1.cmo before mod2.cmo. 
+      - Use a reference to hold one of the two functions, as in : 
+      <<mod1.ml:    let forward_g =
+                        ref((fun x -> failwith "forward_g") : <type>)
+                    let f x = ... !forward_g ...
+        mod2.ml:    let g y = ... Mod1.f ...
+                    let _ = Mod1.forward_g := g
+      >>
+ 
+ 
+ The external function f is not available  This error appears when trying to
+   link code that calls external functions written in C. As explained in
+   chapter 18*Note Chapter 18::, such code must be linked with C libraries
+   that implement the required f C function. If the C libraries in question are
+   not shared libraries (DLLs), the code must be linked in "custom runtime"
+   mode. Fix: add the required C libraries to the command line, and possibly
+   the -custom option.
+  
+   
+
+Node: Chapter 9,	Next: Section 9-1,	Prev: Chapter 8,	Up: Part III
+  
+
+Chapter 9     The toplevel system (ocaml)
+*****************************************
+    
+  This chapter describes the toplevel system for Objective Caml, that permits
+interactive use of the Objective Caml system through a read-eval-print loop. In
+this mode, the system repeatedly reads Caml phrases from the input, then
+typechecks, compile and evaluate them, then prints the inferred type and result
+value, if any. The system prints a # (sharp) prompt before reading each phrase.
+  Input to the toplevel can span several lines. It is terminated by ;; (a
+double-semicolon). The toplevel input consists in one or several toplevel
+phrases, with the following syntax:
+                  toplevel-input ::=  { toplevel-phrase } ;;      
+                                                                  
+                 toplevel-phrase ::=  definition                  
+                                  |   expr                        
+                                  |   # ident  directive-argument 
+                                                                  
+              directive-argument ::=  epsilon                     
+                                  |   string-literal              
+                                  |   integer-literal             
+                                  |   value-path                  
+                                                                  
+  
+  A phrase can consist of a definition, similar to those found in
+implementations of compilation units or in struct ... end module expressions.
+The definition can bind value names, type names, an exception, a module name,
+or a module type name. The toplevel system performs the bindings, then prints
+the types and values (if any) for the names thus defined.
+  A phrase may also consist in a open directive (see
+section 6.11*Note Section 6-11::), or a value expression
+(section 6.7*Note Section 6-7::). Expressions are simply evaluated,
+without performing any bindings, and the value of the expression is printed.
+  Finally, a phrase can also consist in a toplevel directive, starting with #
+(the sharp sign). These directives control the behavior of the toplevel; they
+are listed below in section 9.2*Note Section 9-2::.
+     Unix: 
+    The toplevel system is started by the command ocaml, as follows: 
+   <<
+             ocaml options objects                # interactive mode
+             ocaml options objects scriptfile        # script mode
+   >>
+    options are described below. objects are filenames ending in .cmo or .cma;
+   they are loaded into the interpreter immediately after options are set.
+   scriptfile is any file name not ending in .cmo or .cma.
+   If no scriptfile is given on the command line, the toplevel system enters
+   interactive mode: phrases are read on standard input, results are printed on
+   standard output, errors on standard error. End-of-file on standard input
+   terminates ocaml (see also the #quit directive in
+   section 9.2*Note Section 9-2::).
+   On start-up (before the first phrase is read), if the file .ocamlinit exists
+   in the current directory, its contents are read as a sequence of Objective
+   Caml phrases and executed as per the #use directive described in
+   section 9.2*Note Section 9-2::. The evaluation outcode for
+   each phrase are not displayed. If the current directory does not contain an
+   .ocamlinit file, but the user's home directory (environment variable HOME)
+   does, the latter is read and executed as described below.
+   The toplevel system does not perform line editing, but it can easily be used
+   in conjunction with an external line editor such as ledit, ocaml2 or rlwrap 
+    (see the Caml Hump (1*Note Notes 2::)).  Another option is to use ocaml
+   under Gnu Emacs, which gives the full editing power of Emacs (command
+   run-caml from library inf-caml).
+   At any point, the parsing, compilation or evaluation of the current phrase
+   can be interrupted by pressing ctrl-C (or, more precisely, by sending the
+   INTR signal to the ocaml process). The toplevel then immediately returns to
+   the # prompt.
+   If scriptfile is given on the command-line to ocaml, the toplevel system
+   enters script mode: the contents of the file are read as a sequence of
+   Objective Caml phrases and executed, as per the #use directive
+   (section 9.2*Note Section 9-2::). The outcome of the
+   evaluation is not printed. On reaching the end of file, the ocaml command
+   exits immediately. No commands are read from standard input. Sys.argv is
+   transformed, ignoring all Objective Caml parameters, and starting with the
+   script file name in Sys.argv.(0).
+   In script mode, the first line of the script is ignored if it starts with
+   #!. Thus, it should be possible to make the script itself executable and put
+   as first line #!/usr/local/bin/ocaml, thus calling the toplevel system
+   automatically when the script is run. However, ocaml itself is a #! script
+   on most installations of Objective Caml, and Unix kernels usually do not
+   handle nested #! scripts. A better solution is to put the following as the
+   first line of the script: 
+   <<        #!/usr/local/bin/ocamlrun /usr/local/bin/ocaml
+   >>
+   
+  
+     Windows: 
+    In addition to the text-only command ocaml.exe, which works exactly as
+   under Unix (see above), a graphical user interface for the toplevel is
+   available under the name ocamlwin.exe. It should be launched from the
+   Windows file manager or program manager. This interface provides a text
+   window in which commands can be entered and edited, and the toplevel
+   responses are printed. 
+  
+* Menu:
+
+* Section 9-1::	Options
+* Section 9-2::	Toplevel directives
+* Section 9-3::	The toplevel and the module system
+* Section 9-4::	Common errors
+* Section 9-5::	Building custom toplevel systems: ocamlmktop
+* Section 9-6::	Options
+

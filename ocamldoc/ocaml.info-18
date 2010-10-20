@@ -1,0 +1,2104 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 21-2,	Next: Chapter 22,	Prev: Section 21-1,	Up: Chapter 21
+  
+
+21.2   Module UnixLabels: labelized version of the interface
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+    
+  This module is identical to Unix (21.1*Note Section 21-1::), and only differs by
+the addition of labels. You may see these labels directly by looking at
+unixLabels.mli, or by using the ocamlbrowser tool. 
+     Windows: 
+    The Cygwin port of Objective Caml fully implements all functions from the
+   Unix module. The native Win32 ports implement a subset of them. Below is a
+   list of the functions that are not implemented, or only partially
+   implemented, by the Win32 ports. Functions not mentioned are fully
+   implemented and behave as described previously in this chapter.
+                                          
+              ------------------------------------------------------
+              |         Functions          |        Comment        |
+              ------------------------------------------------------
+              | fork                       |not implemented, use   |
+              |                            |create_process or      |
+              |                            |threads                |
+              |wait                        |not implemented, use   |
+              |                            |waitpid                |
+              |waitpid                     |can only wait for a    |
+              |                            |given PID, not any     |
+              |                            |child process          |
+              |getppid                     |not implemented        |
+              |                            |(meaningless under     |
+              |                            |Windows)               |
+              |nice                        |not implemented        |
+              |out_channel_of_descr        |ditto                  |
+              |truncate, ftruncate         |not implemented        |
+              |link, symlink, readlink     |not implemented (no    |
+              |                            |links under Windows)   |
+              |access                      |execute permission X_OK|
+              |                            |cannot be tested, it   |
+              |                            |just tests for read    |
+              |                            |permission instead     |
+              |fchmod                      |not implemented        |
+              |chown, fchown               |not implemented (make  |
+              |                            |no sense on a DOS file |
+              |                            |system)                |
+              |umask                       |not implemented        |
+              |set_nonblock, clear_nonblock|implemented as dummy   |
+              |                            |functions; use threads |
+              |                            |instead of non-blocking|
+              |                            |I/O                    |
+              |rewinddir                   |not implemented;       |
+              |                            |re-open the directory  |
+              |                            |instead                |
+              |mkfifo                      |not implemented        |
+              |kill, pause                 |not implemented (no    |
+              |                            |inter-process signals  |
+              |                            |in Windows)            |
+              |alarm, times                |not implemented        |
+              |getitimer, setitimer        |not implemented        |
+              |getuid, getgid              |always return 1        |
+              |getgid, getegid, getgroups  |not implemented        |
+              |setuid, setgid              |not implemented        |
+              |getpwnam, getpwuid          |always raise Not_found |
+              |getgrnam, getgrgid          |always raise Not_found |
+              |type socket_domain          |the domains PF_UNIX and|
+              |                            |PF_INET6  are not      |
+              |                            |supported; PF_INET is  |
+              |                            |fully supported        |
+              |establish_server            |not implemented; use   |
+              |                            |threads                |
+              |terminal functions (tc*)    |not implemented        |
+              ------------------------------------------------------
+   
+    
+
+Node: Chapter 22,	Next: Section 22-1,	Prev: Chapter 21,	Up: Part IV
+  
+
+Chapter 22     The num library: arbitrary-precision rational arithmetic
+***********************************************************************
+   
+  The num library implements integer arithmetic and rational arithmetic in
+arbitrary precision.
+  More documentation on the functions provided in this library can be found in
+The CAML Numbers Reference Manual by  Valérie Ménissier-Morain, technical
+report 141, INRIA, july 1992 (available electronically,
+ftp://ftp.inria.fr/INRIA/publication/RT/RT-0141.ps.gz).
+  Programs that use the num library must be linked as follows: 
+<<
+          ocamlc other options nums.cma other files
+          ocamlopt other options nums.cmxa other files
+>>
+   For interactive use of the nums library, do: 
+<<
+          ocamlmktop -o mytop nums.cma
+          ./mytop
+>>
+   or (if dynamic linking of C libraries is supported on your platform), start
+ocaml and type #load "nums.cma";;.
+* Menu:
+
+* Section 22-1::	Module Num : Operation on arbitrary-precision numbers.
+* Section 22-2::	Module Big_int : Operations on arbitrary-precision integers.
+* Section 22-3::	Module Arith_status : Flags that control rational arithmetic.
+
+
+Node: Section 22-1,	Next: Section 22-2,	Prev: Chapter 22,	Up: Chapter 22
+  
+
+22.1   Module Num : Operation on arbitrary-precision numbers.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Numbers (type num) are arbitrary-precision rational numbers, plus the special
+elements 1/0 (infinity) and 0/0 (undefined).
+  
+  
+
+<<
+  type num =
+    | Int of int
+    | Big_int of Big_int.big_int
+    | Ratio of Ratio.ratio
+>>
+    
+    The type of numbers.
+  
+
+Arithmetic operations
+=====================
+  
+
+<<
+  val (+/) : num -> num -> num
+>>
+    
+    Same as Num.add_num[22.1*Note Section 22-1::].
+  
+
+<<
+  val add_num : num -> num -> num
+>>
+    
+    Addition
+  
+
+<<
+  val minus_num : num -> num
+>>
+    
+    Unary negation.
+  
+
+<<
+  val (-/) : num -> num -> num
+>>
+    
+    Same as Num.sub_num[22.1*Note Section 22-1::].
+  
+
+<<
+  val sub_num : num -> num -> num
+>>
+    
+    Subtraction
+  
+
+<<
+  val ( */ ) : num -> num -> num
+>>
+    
+    Same as Num.mult_num[22.1*Note Section 22-1::].
+  
+
+<<
+  val mult_num : num -> num -> num
+>>
+    
+    Multiplication
+  
+
+<<
+  val square_num : num -> num
+>>
+    
+    Squaring
+  
+
+<<
+  val (//) : num -> num -> num
+>>
+    
+    Same as Num.div_num[22.1*Note Section 22-1::].
+  
+
+<<
+  val div_num : num -> num -> num
+>>
+    
+    Division
+  
+
+<<
+  val quo_num : num -> num -> num
+>>
+    
+    Euclidean division: quotient.
+  
+
+<<
+  val mod_num : num -> num -> num
+>>
+    
+    Euclidean division: remainder.
+  
+
+<<
+  val ( **/ ) : num -> num -> num
+>>
+    
+    Same as Num.power_num[22.1*Note Section 22-1::].
+  
+
+<<
+  val power_num : num -> num -> num
+>>
+    
+    Exponentiation
+  
+
+<<
+  val abs_num : num -> num
+>>
+    
+    Absolute value.
+  
+
+<<
+  val succ_num : num -> num
+>>
+    
+    succ n is n+1
+  
+
+<<
+  val pred_num : num -> num
+>>
+    
+    pred n is n-1
+  
+
+<<
+  val incr_num : num Pervasives.ref -> unit
+>>
+    
+    incr r is r:=!r+1, where r is a reference to a number.
+  
+
+<<
+  val decr_num : num Pervasives.ref -> unit
+>>
+    
+    decr r is r:=!r-1, where r is a reference to a number.
+  
+
+<<
+  val is_integer_num : num -> bool
+>>
+    
+    Test if a number is an integer
+  
+  The four following functions approximate a number by an integer :
+
+<<
+  val integer_num : num -> num
+>>
+    
+    integer_num n returns the integer closest to n. In case of ties, rounds
+   towards zero.
+  
+
+<<
+  val floor_num : num -> num
+>>
+    
+    floor_num n returns the largest integer smaller or equal to n.
+  
+
+<<
+  val round_num : num -> num
+>>
+    
+    round_num n returns the integer closest to n. In case of ties, rounds off
+   zero.
+  
+
+<<
+  val ceiling_num : num -> num
+>>
+    
+    ceiling_num n returns the smallest integer bigger or equal to n.
+  
+
+<<
+  val sign_num : num -> int
+>>
+    
+    Return -1, 0 or 1 according to the sign of the argument.
+  
+
+Comparisons between numbers
+---------------------------
+  
+
+<<
+  val (=/) : num -> num -> bool
+>>
+   
+
+<<
+  val (</) : num -> num -> bool
+>>
+   
+
+<<
+  val (>/) : num -> num -> bool
+>>
+   
+
+<<
+  val (<=/) : num -> num -> bool
+>>
+   
+
+<<
+  val (>=/) : num -> num -> bool
+>>
+   
+
+<<
+  val (<>/) : num -> num -> bool
+>>
+   
+
+<<
+  val eq_num : num -> num -> bool
+>>
+   
+
+<<
+  val lt_num : num -> num -> bool
+>>
+   
+
+<<
+  val le_num : num -> num -> bool
+>>
+   
+
+<<
+  val gt_num : num -> num -> bool
+>>
+   
+
+<<
+  val ge_num : num -> num -> bool
+>>
+   
+
+<<
+  val compare_num : num -> num -> int
+>>
+    
+    Return -1, 0 or 1 if the first argument is less than, equal to, or greater
+   than the second argument.
+  
+
+<<
+  val max_num : num -> num -> num
+>>
+    
+    Return the greater of the two arguments.
+  
+
+<<
+  val min_num : num -> num -> num
+>>
+    
+    Return the smaller of the two arguments.
+  
+
+Coercions with strings
+======================
+  
+
+<<
+  val string_of_num : num -> string
+>>
+    
+    Convert a number to a string, using fractional notation.
+  
+
+<<
+  val approx_num_fix : int -> num -> string
+>>
+    
+    See
+   Num.approx_num_exp[22.1*Note Section 22-1::].
+  
+
+<<
+  val approx_num_exp : int -> num -> string
+>>
+    
+    Approximate a number by a decimal. The first argument is the required
+   precision. The second argument is the number to approximate.
+   Num.approx_num_fix[22.1*Note Section 22-1::]
+   uses decimal notation; the first argument is the number of digits after the
+   decimal point. approx_num_exp uses scientific (exponential) notation; the
+   first argument is the number of digits in the mantissa.
+  
+
+<<
+  val num_of_string : string -> num
+>>
+    
+    Convert a string to a number.
+  
+
+Coercions between numerical types
+=================================
+  
+
+<<
+  val int_of_num : num -> int
+>>
+   
+
+<<
+  val num_of_int : int -> num
+>>
+   
+
+<<
+  val nat_of_num : num -> Nat.nat
+>>
+   
+
+<<
+  val num_of_nat : Nat.nat -> num
+>>
+   
+
+<<
+  val num_of_big_int : Big_int.big_int -> num
+>>
+   
+
+<<
+  val big_int_of_num : num -> Big_int.big_int
+>>
+   
+
+<<
+  val ratio_of_num : num -> Ratio.ratio
+>>
+   
+
+<<
+  val num_of_ratio : Ratio.ratio -> num
+>>
+   
+
+<<
+  val float_of_num : num -> float
+>>
+   
+   
+
+Node: Section 22-2,	Next: Section 22-3,	Prev: Section 22-1,	Up: Chapter 22
+  
+
+22.2   Module Big_int : Operations on arbitrary-precision integers.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Big integers (type big_int) are signed integers of arbitrary size.
+  
+  
+
+<<
+  type big_int 
+>>
+    
+    The type of big integers.
+  
+
+<<
+  val zero_big_int : big_int
+>>
+    
+    The big integer 0.
+  
+
+<<
+  val unit_big_int : big_int
+>>
+    
+    The big integer 1.
+  
+
+Arithmetic operations
+=====================
+  
+
+<<
+  val minus_big_int : big_int -> big_int
+>>
+    
+    Unary negation.
+  
+
+<<
+  val abs_big_int : big_int -> big_int
+>>
+    
+    Absolute value.
+  
+
+<<
+  val add_big_int : big_int -> big_int -> big_int
+>>
+    
+    Addition.
+  
+
+<<
+  val succ_big_int : big_int -> big_int
+>>
+    
+    Successor (add 1).
+  
+
+<<
+  val add_int_big_int : int -> big_int -> big_int
+>>
+    
+    Addition of a small integer to a big integer.
+  
+
+<<
+  val sub_big_int : big_int -> big_int -> big_int
+>>
+    
+    Subtraction.
+  
+
+<<
+  val pred_big_int : big_int -> big_int
+>>
+    
+    Predecessor (subtract 1).
+  
+
+<<
+  val mult_big_int : big_int -> big_int -> big_int
+>>
+    
+    Multiplication of two big integers.
+  
+
+<<
+  val mult_int_big_int : int -> big_int -> big_int
+>>
+    
+    Multiplication of a big integer by a small integer
+  
+
+<<
+  val square_big_int : big_int -> big_int
+>>
+    
+    Return the square of the given big integer
+  
+
+<<
+  val sqrt_big_int : big_int -> big_int
+>>
+    
+    sqrt_big_int a returns the integer square root of a, that is, the largest
+   big integer r such that r * r <= a. Raise Invalid_argument if a is negative.
+  
+
+<<
+  val quomod_big_int : big_int -> big_int -> big_int * big_int
+>>
+    
+    Euclidean division of two big integers. The first part of the result is the
+   quotient, the second part is the remainder. Writing (q,r) = quomod_big_int a
+   b, we have a = q * b + r and 0 <= r < |b|. Raise Division_by_zero if the
+   divisor is zero.
+  
+
+<<
+  val div_big_int : big_int -> big_int -> big_int
+>>
+    
+    Euclidean quotient of two big integers. This is the first result q of
+   quomod_big_int (see above).
+  
+
+<<
+  val mod_big_int : big_int -> big_int -> big_int
+>>
+    
+    Euclidean modulus of two big integers. This is the second result r of
+   quomod_big_int (see above).
+  
+
+<<
+  val gcd_big_int : big_int -> big_int -> big_int
+>>
+    
+    Greatest common divisor of two big integers.
+  
+
+<<
+  val power_int_positive_int : int -> int -> big_int
+>>
+   
+
+<<
+  val power_big_int_positive_int : big_int -> int -> big_int
+>>
+   
+
+<<
+  val power_int_positive_big_int : int -> big_int -> big_int
+>>
+   
+
+<<
+  val power_big_int_positive_big_int : big_int -> big_int -> big_int
+>>
+    
+    Exponentiation functions. Return the big integer representing the first
+   argument a raised to the power b (the second argument). Depending on the
+   function, a and b can be either small integers or big integers. Raise
+   Invalid_argument if b is negative.
+  
+
+Comparisons and tests
+=====================
+  
+
+<<
+  val sign_big_int : big_int -> int
+>>
+    
+    Return 0 if the given big integer is zero, 1 if it is positive, and -1 if
+   it is negative.
+  
+
+<<
+  val compare_big_int : big_int -> big_int -> int
+>>
+    
+    compare_big_int a b returns 0 if a and b are equal, 1 if a is greater than
+   b, and -1 if a is smaller than b.
+  
+
+<<
+  val eq_big_int : big_int -> big_int -> bool
+>>
+   
+
+<<
+  val le_big_int : big_int -> big_int -> bool
+>>
+   
+
+<<
+  val ge_big_int : big_int -> big_int -> bool
+>>
+   
+
+<<
+  val lt_big_int : big_int -> big_int -> bool
+>>
+   
+
+<<
+  val gt_big_int : big_int -> big_int -> bool
+>>
+    
+    Usual boolean comparisons between two big integers.
+  
+
+<<
+  val max_big_int : big_int -> big_int -> big_int
+>>
+    
+    Return the greater of its two arguments.
+  
+
+<<
+  val min_big_int : big_int -> big_int -> big_int
+>>
+    
+    Return the smaller of its two arguments.
+  
+
+<<
+  val num_digits_big_int : big_int -> int
+>>
+    
+    Return the number of machine words used to store the given big integer.
+  
+
+Conversions to and from strings
+===============================
+  
+
+<<
+  val string_of_big_int : big_int -> string
+>>
+    
+    Return the string representation of the given big integer, in decimal (base
+   10).
+  
+
+<<
+  val big_int_of_string : string -> big_int
+>>
+    
+    Convert a string to a big integer, in decimal. The string consists of an
+   optional - or + sign, followed by one or several decimal digits.
+  
+
+Conversions to and from other numerical types
+=============================================
+  
+
+<<
+  val big_int_of_int : int -> big_int
+>>
+    
+    Convert a small integer to a big integer.
+  
+
+<<
+  val is_int_big_int : big_int -> bool
+>>
+    
+    Test whether the given big integer is small enough to be representable as a
+   small integer (type int) without loss of precision. On a 32-bit platform,
+   is_int_big_int a returns true if and only if a is between 2^30 and 2^30-1.
+   On a 64-bit platform, is_int_big_int a returns true if and only if a is
+   between -2^62 and 2^62-1.
+  
+
+<<
+  val int_of_big_int : big_int -> int
+>>
+    
+    Convert a big integer to a small integer (type int). Raises Failure
+   "int_of_big_int" if the big integer is not representable as a small integer.
+  
+
+<<
+  val big_int_of_int32 : int32 -> big_int
+>>
+    
+    Convert a 32-bit integer to a big integer.
+  
+
+<<
+  val big_int_of_nativeint : nativeint -> big_int
+>>
+    
+    Convert a native integer to a big integer.
+  
+
+<<
+  val big_int_of_int64 : int64 -> big_int
+>>
+    
+    Convert a 64-bit integer to a big integer.
+  
+
+<<
+  val int32_of_big_int : big_int -> int32
+>>
+    
+    Convert a big integer to a 32-bit integer. Raises Failure if the big
+   integer is outside the range [-2{^31}, 2{^31}-1].
+  
+
+<<
+  val nativeint_of_big_int : big_int -> nativeint
+>>
+    
+    Convert a big integer to a native integer. Raises Failure if the big
+   integer is outside the range [Nativeint.min_int, Nativeint.max_int].
+  
+
+<<
+  val int64_of_big_int : big_int -> int64
+>>
+    
+    Convert a big integer to a 64-bit integer. Raises Failure if the big
+   integer is outside the range [-2{^63}, 2{^63}-1].
+  
+
+<<
+  val float_of_big_int : big_int -> float
+>>
+    
+    Returns a floating-point number approximating the given big integer.
+  
+
+Bit-oriented operations
+=======================
+  
+
+<<
+  val and_big_int : big_int -> big_int -> big_int
+>>
+    
+    Bitwise logical "and". The arguments must be positive or zero.
+  
+
+<<
+  val or_big_int : big_int -> big_int -> big_int
+>>
+    
+    Bitwise logical "or". The arguments must be positive or zero.
+  
+
+<<
+  val xor_big_int : big_int -> big_int -> big_int
+>>
+    
+    Bitwise logical "exclusive or". The arguments must be positive or zero.
+  
+
+<<
+  val shift_left_big_int : big_int -> int -> big_int
+>>
+    
+    shift_left_big_int b n returns b shifted left by n bits. Equivalent to
+   multiplication by 2^n.
+  
+
+<<
+  val shift_right_big_int : big_int -> int -> big_int
+>>
+    
+    shift_right_big_int b n returns b shifted right by n bits. Equivalent to
+   division by 2^n with the result being rounded towards minus infinity.
+  
+
+<<
+  val shift_right_towards_zero_big_int : big_int -> int -> big_int
+>>
+    
+    shift_right_towards_zero_big_int b n returns b shifted right by n bits. The
+   shift is performed on the absolute value of b, and the result has the same
+   sign as b. Equivalent to division by 2^n with the result being rounded
+   towards zero.
+  
+
+<<
+  val extract_big_int : big_int -> int -> int -> big_int
+>>
+    
+    extract_big_int bi ofs n returns a nonnegative number corresponding to bits
+   ofs to ofs + n - 1 of the binary representation of bi. If bi is negative, a
+   two's complement representation is used.
+  
+   
+
+Node: Section 22-3,	Next: Chapter 23,	Prev: Section 22-2,	Up: Chapter 22
+  
+
+22.3   Module Arith_status : Flags that control rational arithmetic.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  
+  
+
+<<
+  val arith_status : unit -> unit
+>>
+    
+    Print the current status of the arithmetic flags.
+  
+
+<<
+  val get_error_when_null_denominator : unit -> bool
+>>
+    
+    See
+   Arith_status.set_error_when_null_denominator[22.3].
+  
+
+<<
+  val set_error_when_null_denominator : bool -> unit
+>>
+    
+    Get or set the flag null_denominator. When on, attempting to create a
+   rational with a null denominator raises an exception. When off, rationals
+   with null denominators are accepted. Initially: on.
+  
+
+<<
+  val get_normalize_ratio : unit -> bool
+>>
+    
+    See
+   Arith_status.set_normalize_ratio[22.3].
+  
+
+<<
+  val set_normalize_ratio : bool -> unit
+>>
+    
+    Get or set the flag normalize_ratio. When on, rational numbers are
+   normalized after each operation. When off, rational numbers are not
+   normalized until printed. Initially: off.
+  
+
+<<
+  val get_normalize_ratio_when_printing : unit -> bool
+>>
+    
+    See
+   Arith_status.set_normalize_ratio_when_printing[22.3].
+  
+
+<<
+  val set_normalize_ratio_when_printing : bool -> unit
+>>
+    
+    Get or set the flag normalize_ratio_when_printing. When on, rational
+   numbers are normalized before being printed. When off, rational numbers are
+   printed as is, without normalization. Initially: on.
+  
+
+<<
+  val get_approx_printing : unit -> bool
+>>
+    
+    See
+   Arith_status.set_approx_printing[22.3].
+  
+
+<<
+  val set_approx_printing : bool -> unit
+>>
+    
+    Get or set the flag approx_printing. When on, rational numbers are printed
+   as a decimal approximation. When off, rational numbers are printed as a
+   fraction. Initially: off.
+  
+
+<<
+  val get_floating_precision : unit -> int
+>>
+    
+    See
+   Arith_status.set_floating_precision[22.3].
+  
+
+<<
+  val set_floating_precision : int -> unit
+>>
+    
+    Get or set the parameter floating_precision. This parameter is the number
+   of digits displayed when approx_printing is on. Initially: 12.
+  
+   
+   
+
+Node: Chapter 23,	Next: Section 23-1,	Prev: Chapter 22,	Up: Part IV
+  
+
+Chapter 23     The str library: regular expressions and string processing
+*************************************************************************
+   
+  The str library provides high-level string processing functions, some based
+on regular expressions. It is intended to support the kind of file processing
+that is usually performed with scripting languages such as awk, perl or sed.
+  Programs that use the str library must be linked as follows: 
+<<
+          ocamlc other options str.cma other files
+          ocamlopt other options str.cmxa other files
+>>
+   For interactive use of the str library, do: 
+<<
+          ocamlmktop -o mytop str.cma
+          ./mytop
+>>
+   or (if dynamic linking of C libraries is supported on your platform), start
+ocaml and type #load "str.cma";;.
+* Menu:
+
+* Section 23-1::	Module Str : Regular expressions and high-level string processing
+
+
+Node: Section 23-1,	Next: Chapter 24,	Prev: Chapter 23,	Up: Chapter 23
+  
+
+23.1   Module Str : Regular expressions and high-level string processing
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  
+  
+
+Regular expressions
+===================
+  
+
+<<
+  type regexp 
+>>
+    
+    The type of compiled regular expressions.
+  
+
+<<
+  val regexp : string -> regexp
+>>
+    
+    Compile a regular expression. The following constructs are recognized:
+     
+      - .  Matches any character except newline. 
+      - *  (postfix) Matches the preceding expression zero, one or several
+      times 
+      - +  (postfix) Matches the preceding expression one or several times 
+      - ?  (postfix) Matches the preceding expression once or not at all 
+      - [..]  Character set. Ranges are denoted with -, as in [a-z]. An initial
+      ^, as in [^0-9], complements the set. To include a ] character in a set,
+      make it the first character of the set. To include a - character in a
+      set, make it the first or the last character of the set. 
+      - ^ Matches at beginning of line (either at the beginning of the matched
+      string, or just after a newline character). 
+      - $  Matches at end of line (either at the end of the matched string, or
+      just before a newline character). 
+      - \|  (infix) Alternative between two expressions. 
+      - \(..\) Grouping and naming of the enclosed expression. 
+      - \1  The text matched by the first \(...\) expression (\2 for the second
+      expression, and so on up to \9). 
+      - \b  Matches word boundaries. 
+      - \  Quotes special characters. The special characters are $^.*+?[]. 
+   
+  
+
+<<
+  val regexp_case_fold : string -> regexp
+>>
+    
+    Same as regexp, but the compiled expression will match text in a
+   case-insensitive way: uppercase and lowercase letters will be considered
+   equivalent.
+  
+
+<<
+  val quote : string -> string
+>>
+    
+    Str.quote s returns a regexp string that matches exactly s and nothing
+   else.
+  
+
+<<
+  val regexp_string : string -> regexp
+>>
+    
+    Str.regexp_string s returns a regular expression that matches exactly s and
+   nothing else.
+  
+
+<<
+  val regexp_string_case_fold : string -> regexp
+>>
+    
+    Str.regexp_string_case_fold is similar to
+   Str.regexp_string[23.1*Note Section 23-1::], but the
+   regexp matches in a case-insensitive way.
+  
+
+String matching and searching
+=============================
+  
+
+<<
+  val string_match : regexp -> string -> int -> bool
+>>
+    
+    string_match r s start tests whether a substring of s that starts at
+   position start matches the regular expression r. The first character of a
+   string has position 0, as usual.
+  
+
+<<
+  val search_forward : regexp -> string -> int -> int
+>>
+    
+    search_forward r s start searches the string s for a substring matching the
+   regular expression r. The search starts at position start and proceeds
+   towards the end of the string. Return the position of the first character of
+   the matched substring, or raise Not_found if no substring matches.
+  
+
+<<
+  val search_backward : regexp -> string -> int -> int
+>>
+    
+    search_backward r s last searches the string s for a substring matching the
+   regular expression r. The search first considers substrings that start at
+   position last and proceeds towards the beginning of string. Return the
+   position of the first character of the matched substring; raise Not_found if
+   no substring matches.
+  
+
+<<
+  val string_partial_match : regexp -> string -> int -> bool
+>>
+    
+    Similar to Str.string_match[23.1*Note Section 23-1::],
+   but also returns true if the argument string is a prefix of a string that
+   matches. This includes the case of a true complete match.
+  
+
+<<
+  val matched_string : string -> string
+>>
+    
+    matched_string s returns the substring of s that was matched by the latest
+   Str.string_match[23.1*Note Section 23-1::],
+   Str.search_forward[23.1*Note Section 23-1::] or
+   Str.search_backward[23.1*Note Section 23-1::]. The
+   user must make sure that the parameter s is the same string that was passed
+   to the matching or searching function.
+  
+
+<<
+  val match_beginning : unit -> int
+>>
+    
+    match_beginning() returns the position of the first character of the
+   substring that was matched by
+   Str.string_match[23.1*Note Section 23-1::],
+   Str.search_forward[23.1*Note Section 23-1::] or
+   Str.search_backward[23.1*Note Section 23-1::].
+  
+
+<<
+  val match_end : unit -> int
+>>
+    
+    match_end() returns the position of the character following the last
+   character of the substring that was matched by string_match, search_forward
+   or search_backward.
+  
+
+<<
+  val matched_group : int -> string -> string
+>>
+    
+    matched_group n s returns the substring of s that was matched by the nth
+   group \(...\) of the regular expression during the latest
+   Str.string_match[23.1*Note Section 23-1::],
+   Str.search_forward[23.1*Note Section 23-1::] or
+   Str.search_backward[23.1*Note Section 23-1::]. The
+   user must make sure that the parameter s is the same string that was passed
+   to the matching or searching function. matched_group n s raises Not_found if
+   the nth group of the regular expression was not matched. This can happen
+   with groups inside alternatives \|, options ? or repetitions *. For
+   instance, the empty string will match \(a\)*, but matched_group 1 "" will
+   raise Not_found because the first group itself was not matched.
+  
+
+<<
+  val group_beginning : int -> int
+>>
+    
+    group_beginning n returns the position of the first character of the
+   substring that was matched by the nth group of the regular expression.
+   Raises 
+     
+      - Not_found if the nth group of the regular expression was not matched. 
+      - Invalid_argument if there are fewer than n groups in the regular
+      expression. 
+   
+  
+
+<<
+  val group_end : int -> int
+>>
+    
+    group_end n returns the position of the character following the last
+   character of substring that was matched by the nth group of the regular
+   expression.
+   Raises 
+     
+      - Not_found if the nth group of the regular expression was not matched. 
+      - Invalid_argument if there are fewer than n groups in the regular
+      expression. 
+   
+  
+
+Replacement
+===========
+  
+
+<<
+  val global_replace : regexp -> string -> string -> string
+>>
+    
+    global_replace regexp templ s returns a string identical to s, except that
+   all substrings of s that match regexp have been replaced by templ. The
+   replacement template templ can contain \1, \2, etc; these sequences will be
+   replaced by the text matched by the corresponding group in the regular
+   expression. \0 stands for the text matched by the whole regular expression.
+  
+
+<<
+  val replace_first : regexp -> string -> string -> string
+>>
+    
+    Same as Str.global_replace[23.1*Note Section 23-1::],
+   except that only the first substring matching the regular expression is
+   replaced.
+  
+
+<<
+  val global_substitute : regexp -> (string -> string) -> string -> string
+>>
+    
+    global_substitute regexp subst s returns a string identical to s, except
+   that all substrings of s that match regexp have been replaced by the result
+   of function subst. The function subst is called once for each matching
+   substring, and receives s (the whole text) as argument.
+  
+
+<<
+  val substitute_first : regexp -> (string -> string) -> string -> string
+>>
+    
+    Same as
+   Str.global_substitute[23.1*Note Section 23-1::],
+   except that only the first substring matching the regular expression is
+   replaced.
+  
+
+<<
+  val replace_matched : string -> string -> string
+>>
+    
+    replace_matched repl s returns the replacement text repl in which \1, \2,
+   etc. have been replaced by the text matched by the corresponding groups in
+   the most recent matching operation. s must be the same string that was
+   matched during this matching operation.
+  
+
+Splitting
+=========
+  
+
+<<
+  val split : regexp -> string -> string list
+>>
+    
+    split r s splits s into substrings, taking as delimiters the substrings
+   that match r, and returns the list of substrings. For instance, split
+   (regexp "[ \t]+") s splits s into blank-separated words. An occurrence of
+   the delimiter at the beginning and at the end of the string is ignored.
+  
+
+<<
+  val bounded_split : regexp -> string -> int -> string list
+>>
+    
+    Same as Str.split[23.1*Note Section 23-1::], but splits into at most n
+   substrings, where n is the extra integer parameter.
+  
+
+<<
+  val split_delim : regexp -> string -> string list
+>>
+    
+    Same as Str.split[23.1*Note Section 23-1::] but occurrences of the
+   delimiter at the beginning and at the end of the string are recognized and
+   returned as empty strings in the result. For instance, split_delim (regexp "
+   ") " abc " returns [""; "abc"; ""], while split with the same arguments
+   returns ["abc"].
+  
+
+<<
+  val bounded_split_delim : regexp -> string -> int -> string list
+>>
+    
+    Same as Str.bounded_split[23.1*Note Section 23-1::],
+   but occurrences of the delimiter at the beginning and at the end of the
+   string are recognized and returned as empty strings in the result.
+  
+
+<<
+  type split_result =
+    | Text of string
+    | Delim of string
+>>
+   
+
+<<
+  val full_split : regexp -> string -> split_result list
+>>
+    
+    Same as Str.split_delim[23.1*Note Section 23-1::], but
+   returns the delimiters as well as the substrings contained between
+   delimiters. The former are tagged Delim in the result list; the latter are
+   tagged Text. For instance, full_split (regexp "[{}]") "{ab}" returns [Delim
+   "{"; Text "ab"; Delim "}"].
+  
+
+<<
+  val bounded_full_split : regexp -> string -> int -> split_result list
+>>
+    
+    Same as
+   Str.bounded_split_delim[23.1], but returns the delimiters as well as the substrings contained
+   between delimiters. The former are tagged Delim in the result list; the
+   latter are tagged Text.
+  
+
+Extracting substrings
+=====================
+  
+
+<<
+  val string_before : string -> int -> string
+>>
+    
+    string_before s n returns the substring of all characters of s that precede
+   position n (excluding the character at position n).
+  
+
+<<
+  val string_after : string -> int -> string
+>>
+    
+    string_after s n returns the substring of all characters of s that follow
+   position n (including the character at position n).
+  
+
+<<
+  val first_chars : string -> int -> string
+>>
+    
+    first_chars s n returns the first n characters of s. This is the same
+   function as Str.string_before[23.1*Note Section 23-1::].
+  
+
+<<
+  val last_chars : string -> int -> string
+>>
+    
+    last_chars s n returns the last n characters of s.
+  
+   
+   
+
+Node: Chapter 24,	Next: Section 24-1,	Prev: Chapter 23,	Up: Part IV
+  
+
+Chapter 24     The threads library
+**********************************
+    
+  The threads library allows concurrent programming in Objective Caml. It
+provides multiple threads of control (also called lightweight processes) that
+execute concurrently in the same memory space. Threads communicate by in-place
+modification of shared data structures, or by sending and receiving data on
+communication channels.
+  The threads library is implemented by time-sharing on a single processor. It
+will not take advantage of multi-processor machines. Using this library will
+therefore never make programs run faster. However, many programs are easier to
+write when structured as several communicating processes.
+  Two implementations of the threads library are available, depending on the
+capabilities of the operating system: 
+  
+   - System threads. This implementation builds on the OS-provided threads
+   facilities: POSIX 1003.1c threads for Unix, and Win32 threads for Windows.
+   When available, system threads support both bytecode and native-code
+   programs. 
+   - VM-level threads. This implementation performs time-sharing and context
+   switching at the level of the OCaml virtual machine (bytecode interpreter).
+   It is available on Unix systems, and supports only bytecode programs. It
+   cannot be used with native-code programs. 
+   Programs that use system threads must be linked as follows: 
+<<
+          ocamlc -thread other options unix.cma threads.cma other files
+          ocamlopt -thread other options unix.cmxa threads.cmxa other files
+>>
+   Compilation units that use the threads library must also be compiled with
+the -thread option (see chapter 8*Note Chapter 8::).
+  Programs that use VM-level threads must be compiled with the -vmthread option
+to ocamlc (see chapter 8*Note Chapter 8::), and be linked as follows: 
+<<
+          ocamlc -vmthread other options threads.cma other files
+>>
+   Compilation units that use threads library must also be compiled with the
+-vmthread option (see chapter 8*Note Chapter 8::).
+* Menu:
+
+* Section 24-1::	Module Thread : Lightweight threads for Posix 1003.1c and Win32.
+* Section 24-2::	Module Mutex : Locks for mutual exclusion.
+* Section 24-3::	Module Condition : Condition variables to synchronize between threads.
+* Section 24-4::	Module Event : First-class synchronous communication.
+* Section 24-5::	Module ThreadUnix : Thread-compatible system calls.
+
+
+Node: Section 24-1,	Next: Section 24-2,	Prev: Chapter 24,	Up: Chapter 24
+  
+
+24.1   Module Thread : Lightweight threads for Posix 1003.1c and Win32.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  type t 
+>>
+    
+    The type of thread handles.
+  
+
+Thread creation and termination
+===============================
+  
+
+<<
+  val create : ('a -> 'b) -> 'a -> t
+>>
+    
+    Thread.create funct arg creates a new thread of control, in which the
+   function application funct arg is executed concurrently with the other
+   threads of the program. The application of Thread.create returns the handle
+   of the newly created thread. The new thread terminates when the application
+   funct arg returns, either normally or by raising an uncaught exception. In
+   the latter case, the exception is printed on standard error, but not
+   propagated back to the parent thread. Similarly, the result of the
+   application funct arg is discarded and not directly accessible to the parent
+   thread.
+  
+
+<<
+  val self : unit -> t
+>>
+    
+    Return the thread currently executing.
+  
+
+<<
+  val id : t -> int
+>>
+    
+    Return the identifier of the given thread. A thread identifier is an
+   integer that identifies uniquely the thread. It can be used to build data
+   structures indexed by threads.
+  
+
+<<
+  val exit : unit -> unit
+>>
+    
+    Terminate prematurely the currently executing thread.
+  
+
+<<
+  val kill : t -> unit
+>>
+    
+    Terminate prematurely the thread whose handle is given.
+  
+
+Suspending threads
+==================
+  
+
+<<
+  val delay : float -> unit
+>>
+    
+    delay d suspends the execution of the calling thread for d seconds. The
+   other program threads continue to run during this time.
+  
+
+<<
+  val join : t -> unit
+>>
+    
+    join th suspends the execution of the calling thread until the thread th
+   has terminated.
+  
+
+<<
+  val wait_read : Unix.file_descr -> unit
+>>
+    
+    See Thread.wait_write[24.1*Note Section 24-1::].
+  
+
+<<
+  val wait_write : Unix.file_descr -> unit
+>>
+    
+    This function does nothing in this implementation.
+  
+
+<<
+  val wait_timed_read : Unix.file_descr -> float -> bool
+>>
+    
+    See
+   Thread.wait_timed_read[24.1].
+  
+
+<<
+  val wait_timed_write : Unix.file_descr -> float -> bool
+>>
+    
+    Suspend the execution of the calling thread until at least one character is
+   available for reading (wait_read) or one character can be written without
+   blocking (wait_write) on the given Unix file descriptor. Wait for at most
+   the amount of time given as second argument (in seconds). Return true if the
+   file descriptor is ready for input/output and false if the timeout expired.
+   These functions return immediately true in the Win32 implementation.
+  
+
+<<
+  val select :
+    Unix.file_descr list ->
+    Unix.file_descr list ->
+    Unix.file_descr list ->
+    float -> Unix.file_descr list * Unix.file_descr list * Unix.file_descr list
+>>
+    
+    Suspend the execution of the calling thead until input/output becomes
+   possible on the given Unix file descriptors. The arguments and results have
+   the same meaning as for Unix.select. This function is not implemented yet
+   under Win32.
+  
+
+<<
+  val wait_pid : int -> int * Unix.process_status
+>>
+    
+    wait_pid p suspends the execution of the calling thread until the process
+   specified by the process identifier p terminates. Returns the pid of the
+   child caught and its termination status, as per Unix.wait. This function is
+   not implemented under MacOS.
+  
+
+<<
+  val yield : unit -> unit
+>>
+    
+    Re-schedule the calling thread without suspending it. This function can be
+   used to give scheduling hints, telling the scheduler that now is a good time
+   to switch to other threads.
+  
+
+Management of signals
+=====================
+  
+  Signal handling follows the POSIX thread model: signals generated by a thread
+are delivered to that thread; signals generated externally are delivered to one
+of the threads that does not block it. Each thread possesses a set of blocked
+signals, which can be modified using
+Thread.sigmask[24.1*Note Section 24-1::]. This set is inherited at
+thread creation time. Per-thread signal masks are supported only by the system
+thread library under Unix, but not under Win32, nor by the VM thread library.
+
+<<
+  val sigmask : Unix.sigprocmask_command -> int list -> int list
+>>
+    
+    sigmask cmd sigs changes the set of blocked signals for the calling thread.
+   If cmd is SIG_SETMASK, blocked signals are set to those in the list sigs. If
+   cmd is SIG_BLOCK, the signals in sigs are added to the set of blocked
+   signals. If cmd is SIG_UNBLOCK, the signals in sigs are removed from the set
+   of blocked signals. sigmask returns the set of previously blocked signals
+   for the thread.
+  
+
+<<
+  val wait_signal : int list -> int
+>>
+    
+    wait_signal sigs suspends the execution of the calling thread until the
+   process receives one of the signals specified in the list sigs. It then
+   returns the number of the signal received. Signal handlers attached to the
+   signals in sigs will not be invoked. The signals sigs are expected to be
+   blocked before calling wait_signal.
+  
+   
+
+Node: Section 24-2,	Next: Section 24-3,	Prev: Section 24-1,	Up: Chapter 24
+  
+
+24.2   Module Mutex : Locks for mutual exclusion.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Mutexes (mutual-exclusion locks) are used to implement critical sections and
+protect shared mutable data structures against concurrent accesses. The typical
+use is (if m is the mutex associated with the data structure D): 
+<<
+  
+       Mutex.lock m;
+       (* Critical section that operates over D *);
+       Mutex.unlock m
+     
+>>
+  
+  
+  
+
+<<
+  type t 
+>>
+    
+    The type of mutexes.
+  
+
+<<
+  val create : unit -> t
+>>
+    
+    Return a new mutex.
+  
+
+<<
+  val lock : t -> unit
+>>
+    
+    Lock the given mutex. Only one thread can have the mutex locked at any
+   time. A thread that attempts to lock a mutex already locked by another
+   thread will suspend until the other thread unlocks the mutex.
+  
+
+<<
+  val try_lock : t -> bool
+>>
+    
+    Same as Mutex.lock[24.2*Note Section 24-2::], but does not suspend the
+   calling thread if the mutex is already locked: just return false immediately
+   in that case. If the mutex is unlocked, lock it and return true.
+  
+
+<<
+  val unlock : t -> unit
+>>
+    
+    Unlock the given mutex. Other threads suspended trying to lock the mutex
+   will restart.
+  
+   
+
+Node: Section 24-3,	Next: Section 24-4,	Prev: Section 24-2,	Up: Chapter 24
+  
+
+24.3   Module Condition : Condition variables to synchronize between threads.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Condition variables are used when one thread wants to wait until another
+thread has finished doing something: the former thread "waits" on the condition
+variable, the latter thread "signals" the condition when it is done. Condition
+variables should always be protected by a mutex. The typical use is (if D is a
+shared data structure, m its mutex, and c is a condition variable): 
+<<
+  
+       Mutex.lock m;
+       while (* some predicate P over D is not satisfied *) do
+         Condition.wait c m
+       done;
+       (* Modify D *)
+       if (* the predicate P over D is now satified *) then Condition.signal c;
+       Mutex.unlock m
+     
+>>
+  
+  
+  
+
+<<
+  type t 
+>>
+    
+    The type of condition variables.
+  
+
+<<
+  val create : unit -> t
+>>
+    
+    Return a new condition variable.
+  
+
+<<
+  val wait : t -> Mutex.t -> unit
+>>
+    
+    wait c m atomically unlocks the mutex m and suspends the calling process on
+   the condition variable c. The process will restart after the condition
+   variable c has been signalled. The mutex m is locked again before wait
+   returns.
+  
+
+<<
+  val signal : t -> unit
+>>
+    
+    signal c restarts one of the processes waiting on the condition variable c.
+  
+
+<<
+  val broadcast : t -> unit
+>>
+    
+    broadcast c restarts all processes waiting on the condition variable c.
+  
+   
+
+Node: Section 24-4,	Next: Section 24-5,	Prev: Section 24-3,	Up: Chapter 24
+  
+
+24.4   Module Event : First-class synchronous communication.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  This module implements synchronous inter-thread communications over channels.
+As in John Reppy's Concurrent ML system, the communication events are
+first-class values: they can be built and combined independently before being
+offered for communication.
+  
+  
+
+<<
+  type 'a channel 
+>>
+    
+    The type of communication channels carrying values of type 'a.
+  
+
+<<
+  val new_channel : unit -> 'a channel
+>>
+    
+    Return a new channel.
+  
+
+<<
+  type +'a event 
+>>
+    
+    The type of communication events returning a result of type 'a.
+  
+
+<<
+  val send : 'a channel -> 'a -> unit event
+>>
+    
+    send ch v returns the event consisting in sending the value v over the
+   channel ch. The result value of this event is ().
+  
+
+<<
+  val receive : 'a channel -> 'a event
+>>
+    
+    receive ch returns the event consisting in receiving a value from the
+   channel ch. The result value of this event is the value received.
+  
+
+<<
+  val always : 'a -> 'a event
+>>
+    
+    always v returns an event that is always ready for synchronization. The
+   result value of this event is v.
+  
+
+<<
+  val choose : 'a event list -> 'a event
+>>
+    
+    choose evl returns the event that is the alternative of all the events in
+   the list evl.
+  
+
+<<
+  val wrap : 'a event -> ('a -> 'b) -> 'b event
+>>
+    
+    wrap ev fn returns the event that performs the same communications as ev,
+   then applies the post-processing function fn on the return value.
+  
+
+<<
+  val wrap_abort : 'a event -> (unit -> unit) -> 'a event
+>>
+    
+    wrap_abort ev fn returns the event that performs the same communications as
+   ev, but if it is not selected the function fn is called after the
+   synchronization.
+  
+
+<<
+  val guard : (unit -> 'a event) -> 'a event
+>>
+    
+    guard fn returns the event that, when synchronized, computes fn() and
+   behaves as the resulting event. This allows to compute events with
+   side-effects at the time of the synchronization operation.
+  
+
+<<
+  val sync : 'a event -> 'a
+>>
+    
+    "Synchronize" on an event: offer all the communication possibilities
+   specified in the event to the outside world, and block until one of the
+   communications succeed. The result value of that communication is returned.
+  
+
+<<
+  val select : 'a event list -> 'a
+>>
+    
+    "Synchronize" on an alternative of events. select evl is shorthand for
+   sync(choose evl).
+  
+
+<<
+  val poll : 'a event -> 'a option
+>>
+    
+    Non-blocking version of Event.sync[24.4*Note Section 24-4::]: offer all
+   the communication possibilities specified in the event to the outside world,
+   and if one can take place immediately, perform it and return Some r where r
+   is the result value of that communication. Otherwise, return None without
+   blocking.
+  
+   
+
+Node: Section 24-5,	Next: Chapter 25,	Prev: Section 24-4,	Up: Chapter 24
+  
+
+24.5   Module ThreadUnix : Thread-compatible system calls.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+    The functionality of this module has
+been merged back into the Unix[21.1*Note Section 21-1::] module. Threaded programs
+can now call the functions from module Unix[21.1*Note Section 21-1::] directly,
+and still get the correct behavior (block the calling thread, if required, but
+do not block all threads in the process).Thread-compatible system calls.
+  
+  
+
+Process handling
+================
+  
+
+<<
+  val execv : string -> string array -> unit
+>>
+   
+
+<<
+  val execve : string -> string array -> string array -> unit
+>>
+   
+
+<<
+  val execvp : string -> string array -> unit
+>>
+   
+
+<<
+  val wait : unit -> int * Unix.process_status
+>>
+   
+
+<<
+  val waitpid : Unix.wait_flag list -> int -> int * Unix.process_status
+>>
+   
+
+<<
+  val system : string -> Unix.process_status
+>>
+   
+
+Basic input/output
+==================
+  
+
+<<
+  val read : Unix.file_descr -> string -> int -> int -> int
+>>
+   
+
+<<
+  val write : Unix.file_descr -> string -> int -> int -> int
+>>
+   
+
+Input/output with timeout
+=========================
+  
+
+<<
+  val timed_read : Unix.file_descr -> string -> int -> int -> float -> int
+>>
+    
+    See
+   ThreadUnix.timed_write[24.5*Note Section 24-5::].
+  
+
+<<
+  val timed_write : Unix.file_descr -> string -> int -> int -> float -> int
+>>
+    
+    Behave as ThreadUnix.read[24.5*Note Section 24-5::] and
+   ThreadUnix.write[24.5*Note Section 24-5::], except that
+   Unix_error(ETIMEDOUT,_,_) is raised if no data is available for reading or
+   ready for writing after d seconds. The delay d is given in the fifth
+   argument, in seconds.
+  
+
+Polling
+=======
+  
+
+<<
+  val select :
+    Unix.file_descr list ->
+    Unix.file_descr list ->
+    Unix.file_descr list ->
+    float -> Unix.file_descr list * Unix.file_descr list * Unix.file_descr list
+>>
+   
+
+Pipes and redirections
+======================
+  
+
+<<
+  val pipe : unit -> Unix.file_descr * Unix.file_descr
+>>
+   
+
+<<
+  val open_process_in : string -> Pervasives.in_channel
+>>
+   
+
+<<
+  val open_process_out : string -> Pervasives.out_channel
+>>
+   
+
+<<
+  val open_process : string -> Pervasives.in_channel * Pervasives.out_channel
+>>
+   
+
+Time
+====
+  
+
+<<
+  val sleep : int -> unit
+>>
+   
+
+Sockets
+=======
+  
+
+<<
+  val socket : Unix.socket_domain -> Unix.socket_type -> int -> Unix.file_descr
+>>
+   
+
+<<
+  val accept : Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+>>
+   
+
+<<
+  val connect : Unix.file_descr -> Unix.sockaddr -> unit
+>>
+   
+
+<<
+  val recv :
+    Unix.file_descr -> string -> int -> int -> Unix.msg_flag list -> int
+>>
+   
+
+<<
+  val recvfrom :
+    Unix.file_descr ->
+    string -> int -> int -> Unix.msg_flag list -> int * Unix.sockaddr
+>>
+   
+
+<<
+  val send :
+    Unix.file_descr -> string -> int -> int -> Unix.msg_flag list -> int
+>>
+   
+
+<<
+  val sendto :
+    Unix.file_descr ->
+    string -> int -> int -> Unix.msg_flag list -> Unix.sockaddr -> int
+>>
+   
+
+<<
+  val open_connection :
+    Unix.sockaddr -> Pervasives.in_channel * Pervasives.out_channel
+>>
+   
+    
+
+Node: Chapter 25,	Next: Section 25-1,	Prev: Chapter 24,	Up: Part IV
+  
+
+Chapter 25     The graphics library
+***********************************
+   
+  The graphics library provides a set of portable drawing primitives. Drawing
+takes place in a separate window that is created when Graphics.open_graph is
+called.
+     Unix: 
+    This library is implemented under the X11 windows system.  Programs that
+   use the graphics library must be linked as follows: 
+   <<
+             ocamlc other options graphics.cma other files
+   >>
+    For interactive use of the graphics library, do: 
+   <<
+             ocamlmktop -o mytop graphics.cma
+             ./mytop
+   >>
+    or (if dynamic linking of C libraries is supported on your platform), start
+   ocaml and type #load "graphics.cma";;.
+   Here are the graphics mode specifications supported by Graphics.open_graph
+   on the X11 implementation of this library: the argument to
+   Graphics.open_graph has the format "display-name geometry", where
+   display-name is the name of the X-windows display to connect to, and
+   geometry is a standard X-windows geometry specification. The two components
+   are separated by a space. Either can be omitted, or both. Examples: 
+     
+    Graphics.open_graph "foo:0"  connects to the display foo:0 and creates a
+      window with the default geometry 
+    Graphics.open_graph "foo:0 300x100+50-0"  connects to the display foo:0 and
+      creates a window 300 pixels wide by 100 pixels tall, at location (50,0) 
+    Graphics.open_graph " 300x100+50-0"  connects to the default display and
+      creates a window 300 pixels wide by 100 pixels tall, at location (50,0) 
+    Graphics.open_graph ""  connects to the default display and creates a
+      window with the default geometry. 
+    
+  
+     Windows: 
+    This library is available both for standalone compiled programs and under
+   the toplevel application ocamlwin.exe. For the latter, this library must be
+   loaded in-core by typing 
+   <<        #load "graphics.cma";;
+   >>
+  
+  The screen coordinates are interpreted as shown in the figure below. Notice
+that the coordinate system used is the same as in mathematics: y increases from
+the bottom of the screen to the top of the screen, and angles are measured
+counterclockwise (in degrees). Drawing is clipped to the screen. 
+   
+                                 *libgraph.gif* 
+    
+* Menu:
+
+* Section 25-1::	Module Graphics : Machine-independent graphics primitives.
+
