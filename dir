@@ -14,6 +14,21 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Menu: The list of major topics begins on the next line.
 
+Texinfo documentation system
+* install-info: (texinfo)Invoking install-info.
+                                Update info/dir entries.
+* makeinfo: (texinfo)Invoking makeinfo.
+                                Translate Texinfo source.
+* pdftexi2dvi: (texinfo)PDF Output.
+                                PDF output for Texinfo.
+* texi2dvi: (texinfo)Format with texi2dvi.
+                                Print Texinfo documents.
+* texi2pdf: (texinfo)PDF Output.
+                                PDF output for Texinfo.
+* texindex: (texinfo)Format with tex/texindex.
+                                Sort Texinfo index files.
+* Texinfo: (texinfo).           The GNU documentation format.
+
 Various Developer Docs
 * SICP: (sicp.info.gz).  The SICP Book.
 * Linux Kernal Internals 2.4: (lki.info.gz). Linux Kernel Internals.
