@@ -1,0 +1,1422 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 3-17,	Next: Chapter 4,	Prev: Section 3-16,	Up: Chapter 3
+  
+
+3.17   Friends
+*=*=*=*=*=*=*=
+
+    
+  The above class money reveals a problem that often occurs with binary
+methods. In order to interact with other objects of the same class, the
+representation of money objects must be revealed, using a method such as value.
+If we remove all binary methods (here plus and leq), the representation can
+easily be hidden inside objects by removing the method value as well. However,
+this is not possible as long as some binary requires access to the
+representation on object of the same class but different from self. 
+<<#class safe_money x =
+  #  object (self : 'a)
+  #    val repr = x
+  #    method print = print_float repr
+  #    method times k = {< repr = k *. x >}
+  #  end;;
+  class safe_money :
+    float ->
+    object ('a)
+      val repr : float
+      method print : unit
+      method times : float -> 'a
+    end
+>>
+   Here, the representation of the object is known only to a particular object.
+To make it available to other objects of the same class, we are forced to make
+it available to the whole world. However we can easily restrict the visibility
+of the representation using the module system. 
+<<#module type MONEY = 
+  #  sig 
+  #    type t
+  #    class c : float -> 
+  #      object ('a)
+  #        val repr : t
+  #        method value : t
+  #        method print : unit
+  #        method times : float -> 'a
+  #        method leq : 'a -> bool
+  #        method plus : 'a -> 'a 
+  #      end
+  #  end;;
+   
+  #module Euro : MONEY = 
+  #  struct
+  #    type t = float
+  #    class c x =
+  #      object (self : 'a)
+  #        val repr = x
+  #        method value = repr
+  #        method print = print_float repr
+  #        method times k = {< repr = k *. x >}
+  #        method leq (p : 'a) = repr <= p#value
+  #        method plus (p : 'a) = {< repr = x +. p#value >}
+  #      end
+  #  end;;
+>>
+   Another example of friend functions may be found in section
+5.2.3*Note Subsection 5-2-3::. These examples occur when a group of objects
+(here objects of the same class) and functions should see each others internal
+representation, while their representation should be hidden from the outside.
+The solution is always to define all friends in the same module, give access to
+the representation and use a signature constraint to make the representation
+abstract outside of the module.
+   
+
+Node: Chapter 4,	Next: Section 4-1,	Prev: Chapter 3,	Up: Part I
+  
+
+Chapter 4     Labels and variants
+*********************************
+    
+  (Chapter written by Jacques Garrigue)
+  
+  
+  
+  This chapter gives an overview of the new features in Objective Caml 3:
+labels, and polymorphic variants.
+* Menu:
+
+* Section 4-1::	Labels
+* Section 4-2::	Polymorphic variants
+
+
+Node: Section 4-1,	Next: Subsection 4-1-1,	Prev: Chapter 4,	Up: Chapter 4
+  
+
+4.1   Labels
+*=*=*=*=*=*=
+
+   
+  If you have a look at modules ending in Labels in the standard library, you
+will see that function types have annotations you did not have in the functions
+you defined yourself.
+<<#ListLabels.map;;
+  - : f:('a -> 'b) -> 'a list -> 'b list = <fun>
+   
+  #StringLabels.sub;;
+  - : string -> pos:int -> len:int -> string = <fun>
+>>
+  
+  Such annotations of the form name: are called labels. They are meant to
+document the code, allow more checking, and give more flexibility to function
+application. You can give such names to arguments in your programs, by
+prefixing them with a tilde ~.
+<<#let f ~x ~y = x - y;;
+  val f : x:int -> y:int -> int = <fun>
+   
+  #let x = 3 and y = 2 in f ~x ~y;;
+  - : int = 1
+>>
+  
+  When you want to use distinct names for the variable and the label appearing
+in the type, you can use a naming label of the form ~name:. This also applies
+when the argument is not a variable.
+<<#let f ~x:x1 ~y:y1 = x1 - y1;;
+  val f : x:int -> y:int -> int = <fun>
+   
+  #f ~x:3 ~y:2;;
+  - : int = 1
+>>
+  
+  Labels obey the same rules as other identifiers in Caml, that is you cannot
+use a reserved keyword (like in or to) as label.
+  Formal parameters and arguments are matched according to their respective
+labels (1*Note Notes 1::), the absence of label being interpreted as the
+empty label. This allows commuting arguments in applications. One can also
+partially apply a function on any argument, creating a new function of the
+remaining parameters.
+<<#let f ~x ~y = x - y;;
+  val f : x:int -> y:int -> int = <fun>
+   
+  #f ~y:2 ~x:3;;
+  - : int = 1
+   
+  #ListLabels.fold_left;;
+  - : f:('a -> 'b -> 'a) -> init:'a -> 'b list -> 'a = <fun>
+   
+  #ListLabels.fold_left [1;2;3] ~init:0 ~f:(+);;
+  - : int = 6
+   
+  #ListLabels.fold_left ~init:0;;
+  - : f:(int -> 'a -> int) -> 'a list -> int = <fun>
+>>
+  
+  If in a function several arguments bear the same label (or no label), they
+will not commute among themselves, and order matters. But they can still
+commute with other arguments.
+<<#let hline ~x:x1 ~x:x2 ~y = (x1, x2, y);;
+  val hline : x:'a -> x:'b -> y:'c -> 'a * 'b * 'c = <fun>
+   
+  #hline ~x:3 ~y:2 ~x:5;;
+  - : int * int * int = (3, 5, 2)
+>>
+  
+  As an exception to the above parameter matching rules, if an application is
+total, labels may be omitted. In practice, most applications are total, so that
+labels can be omitted in applications. 
+<<#f 3 2;;
+  - : int = 1
+   
+  #ListLabels.map succ [1;2;3];;
+  - : int list = [2; 3; 4]
+>>
+   But beware that functions like ListLabels.fold_left whose result type is a
+type variable will never be considered as totally applied. 
+<<#ListLabels.fold_left (+) 0 [1;2;3];;
+  Error: This expression has type int -> int -> int
+         but an expression was expected of type 'a list
+>>
+  
+  When a function is passed as an argument to an higher-order function, labels
+must match in both types. Neither adding nor removing labels are allowed. 
+<<#let h g = g ~x:3 ~y:2;;
+  val h : (x:int -> y:int -> 'a) -> 'a = <fun>
+   
+  #h f;;
+  - : int = 1
+   
+  #h (+);;
+  Error: This expression has type int -> int -> int
+         but an expression was expected of type x:int -> y:int -> 'a
+>>
+   Note that when you don't need an argument, you can still use a wildcard
+pattern, but you must prefix it with the label. 
+<<#h (fun ~x:_ ~y -> y+1);;
+  - : int = 3
+>>
+  
+* Menu:
+
+* Subsection 4-1-1::	Optional arguments
+* Subsection 4-1-2::	Labels and type inference
+* Subsection 4-1-3::	Suggestions for labeling
+
+
+Node: Subsection 4-1-1,	Next: Subsection 4-1-2,	Prev: Section 4-1,	Up: Section 4-1
+  
+
+4.1.1   Optional arguments
+==========================
+  
+  An interesting feature of labeled arguments is that they can be made
+optional. For optional parameters, the question mark ? replaces the tilde ~ of
+non-optional ones, and the label is also prefixed by ? in the function type.
+Default values may be given for such optional parameters.
+<<#let bump ?(step = 1) x = x + step;;
+  val bump : ?step:int -> int -> int = <fun>
+   
+  #bump 2;;
+  - : int = 3
+   
+  #bump ~step:3 2;;
+  - : int = 5
+>>
+  
+  A function taking some optional arguments must also take at least one
+non-labeled argument. This is because the criterion for deciding whether an
+optional has been omitted is the application on a non-labeled argument
+appearing after this optional argument in the function type.
+<<#let test ?(x = 0) ?(y = 0) () ?(z = 0) () = (x, y, z);;
+  val test : ?x:int -> ?y:int -> unit -> ?z:int -> unit -> int * int * int =
+    <fun>
+   
+  #test ();;
+  - : ?z:int -> unit -> int * int * int = <fun>
+   
+  #test ~x:2 () ~z:3 ();;
+  - : int * int * int = (2, 0, 3)
+>>
+  
+  Optional parameters may also commute with non-optional or unlabelled ones, as
+long as they are applied simultaneously. By nature, optional arguments do not
+commute with unlabeled arguments applied independently. 
+<<#test ~y:2 ~x:3 () ();;
+  - : int * int * int = (3, 2, 0)
+   
+  #test () () ~z:1 ~y:2 ~x:3;;
+  - : int * int * int = (3, 2, 1)
+   
+  #(test () ()) ~z:1;;
+  Error: This expression is not a function; it cannot be applied
+>>
+   Here (test () ()) is already (0,0,0) and cannot be further applied.
+  Optional arguments are actually implemented as option types. If you do not
+give a default value, you have access to their internal representation, type 'a
+option = None | Some of 'a. You can then provide different behaviors when an
+argument is present or not.
+<<#let bump ?step x =
+  #  match step with
+  #  | None -> x * 2
+  #  | Some y -> x + y
+  #;;
+  val bump : ?step:int -> int -> int = <fun>
+>>
+  
+  It may also be useful to relay an optional argument from a function call to
+another. This can be done by prefixing the applied argument with ?. This
+question mark disables the wrapping of optional argument in an option type.
+<<#let test2 ?x ?y () = test ?x ?y () ();;
+  val test2 : ?x:int -> ?y:int -> unit -> int * int * int = <fun>
+   
+  #test2 ?x:None;;
+  - : ?y:int -> unit -> int * int * int = <fun>
+>>
+  
+
+Node: Subsection 4-1-2,	Next: Subsection 4-1-3,	Prev: Subsection 4-1-1,	Up: Section 4-1
+  
+
+4.1.2   Labels and type inference
+=================================
+   
+  While they provide an increased comfort for writing function applications,
+labels and optional arguments have the pitfall that they cannot be inferred as
+completely as the rest of the language.
+  You can see it in the following two examples. 
+<<#let h' g = g ~y:2 ~x:3;;
+  val h' : (y:int -> x:int -> 'a) -> 'a = <fun>
+   
+  #h' f;;
+  Error: This expression has type x:int -> y:int -> int
+         but an expression was expected of type y:int -> x:int -> 'a
+   
+  #let bump_it bump x =
+  #  bump ~step:2 x;;
+  val bump_it : (step:int -> 'a -> 'b) -> 'a -> 'b = <fun>
+   
+  #bump_it bump 1;;
+  Error: This expression has type ?step:int -> int -> int
+         but an expression was expected of type step:int -> 'a -> 'b
+>>
+   The first case is simple: g is passed ~y and then ~x, but f expects ~x and
+then ~y. This is correctly handled if we know the type of g to be x:int ->
+y:int -> int in advance, but otherwise this causes the above type clash. The
+simplest workaround is to apply formal parameters in a standard order.
+  The second example is more subtle: while we intended the argument bump to be
+of type ?step:int -> int -> int, it is inferred as step:int -> int -> 'a. These
+two types being incompatible (internally normal and optional arguments are
+different), a type error occurs when applying bump_it to the real bump.
+  We will not try here to explain in detail how type inference works. One must
+just understand that there is not enough information in the above program to
+deduce the correct type of g or bump. That is, there is no way to know whether
+an argument is optional or not, or which is the correct order, by looking only
+at how a function is applied. The strategy used by the compiler is to assume
+that there are no optional arguments, and that applications are done in the
+right order.
+  The right way to solve this problem for optional parameters is to add a type
+annotation to the argument bump. 
+<<#let bump_it (bump : ?step:int -> int -> int) x =
+  #  bump ~step:2 x;;
+  val bump_it : (?step:int -> int -> int) -> int -> int = <fun>
+   
+  #bump_it bump 1;;
+  - : int = 3
+>>
+   In practive, such problems appear mostly when using objects whose methods
+have optional arguments, so that writing the type of object arguments is often
+a good idea.
+  Normally the compiler generates a type error if you attempt to pass to a
+function a parameter whose type is different from the expected one. However, in
+the specific case where the expected type is a non-labeled function type, and
+the argument is a function expecting optional parameters, the compiler will
+attempt to transform the argument to have it match the expected type, by
+passing None for all optional parameters.
+<<#let twice f (x : int) = f(f x);;
+  val twice : (int -> int) -> int -> int = <fun>
+   
+  #twice bump 2;;
+  - : int = 8
+>>
+  
+  This transformation is coherent with the intended semantics, including
+side-effects. That is, if the application of optional parameters shall produce
+side-effects, these are delayed until the received function is really applied
+to an argument.
+
+Node: Subsection 4-1-3,	Next: Section 4-2,	Prev: Subsection 4-1-2,	Up: Section 4-1
+  
+
+4.1.3   Suggestions for labeling
+================================
+  
+  Like for names, choosing labels for functions is not an easy task. A good
+labeling is a labeling which
+  
+  
+   - makes programs more readable, 
+   - is easy to remember, 
+   - when possible, allows useful partial applications. 
+  
+  We explain here the rules we applied when labeling Objective Caml libraries.
+  To speak in an "object-oriented" way, one can consider that each function has
+a main argument, its object, and other arguments related with its action, the
+parameters. To permit the combination of functions through functionals in
+commuting label mode, the object will not be labeled. Its role is clear by the
+function itself. The parameters are labeled with names reminding either of
+their nature or role. Best labels combine in their meaning nature and role.
+When this is not possible the role is to prefer, since the nature will often be
+given by the type itself. Obscure abbreviations should be avoided. 
+<<ListLabels.map : f:('a -> 'b) -> 'a list -> 'b list
+  UnixLabels.write : file_descr -> buf:string -> pos:int -> len:int -> unit
+>>
+  
+  When there are several objects of same nature and role, they are all left
+unlabeled. 
+<<ListLabels.iter2 : f:('a -> 'b -> 'c) -> 'a list -> 'b list -> unit
+>>
+  
+  When there is no preferable object, all arguments are labeled. 
+<<StringLabels.blit :
+    src:string -> src_pos:int -> dst:string -> dst_pos:int -> len:int -> unit
+>>
+  
+  However, when there is only one argument, it is often left unlabeled. 
+<<StringLabels.create : int -> string
+>>
+   This principle also applies to functions of several arguments whose return
+type is a type variable, as long as the role of each argument is not ambiguous.
+Labeling such functions may lead to awkward error messages when one attempts to
+omit labels in an application, as we have seen with ListLabels.fold_left.
+  Here are some of the label names you will find throughout the libraries.
+                                         
+            ------------------------------------------------------
+            |Label|                   Meaning                    |
+            ------------------------------------------------------
+            | f:  |a function to be applied                      |
+            |pos: |a position in a string or array               |
+            |len: |a length                                      |
+            |buf: |a string used as buffer                       |
+            |src: |the source of an operation                    |
+            |dst: |the destination of an operation               |
+            |init:|the initial value for an iterator             |
+            |cmp: |a comparison function, e.g. Pervasives.compare|
+            |mode:|an operation mode or a flag list              |
+            ------------------------------------------------------
+  
+  All these are only suggestions, but one shall keep in mind that the choice of
+labels is essential for readability. Bizarre choices will make the program
+harder to maintain.
+  In the ideal, the right function name with right labels shall be enough to
+understand the function's meaning. Since one can get this information with
+OCamlBrowser or the ocaml toplevel, the documentation is only used when a more
+detailed specification is needed.
+
+Node: Section 4-2,	Next: Subsection 4-2-1,	Prev: Section 4-1,	Up: Chapter 4
+  
+
+4.2   Polymorphic variants
+*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  Variants as presented in section 1.4*Note Section 1-4:: are a
+powerful tool to build data structures and algorithms. However they sometimes
+lack flexibility when used in modular programming. This is due to the fact
+every constructor reserves a name to be used with a unique type. One cannot use
+the same name in another type, or consider a value of some type to belong to
+some other type with more constructors.
+  With polymorphic variants, this original assumption is removed. That is, a
+variant tag does not belong to any type in particular, the type system will
+just check that it is an admissible value according to its use. You need not
+define a type before using a variant tag. A variant type will be inferred
+independently for each of its uses.
+
+Basic use
+=========
+  
+  In programs, polymorphic variants work like usual ones. You just have to
+prefix their names with a backquote character `. 
+<<#[`On; `Off];;
+  - : [> `Off | `On ] list = [`On; `Off]
+   
+  #`Number 1;;
+  - : [> `Number of int ] = `Number 1
+   
+  #let f = function `On -> 1 | `Off -> 0 | `Number n -> n;;
+  val f : [< `Number of int | `Off | `On ] -> int = <fun>
+   
+  #List.map f [`On; `Off];;
+  - : int list = [1; 0]
+>>
+   [>`Off|`On] list means that to match this list, you should at least be able
+to match `Off and `On, without argument. [<`On|`Off|`Number of int] means that
+f may be applied to `Off, `On (both without argument), or `Number n where  n is
+an integer. The > and < inside the variant type shows that they may still be
+refined, either by defining more tags or allowing less. As such they contain an
+implicit type variable. Both variant types appearing only once in the type, the
+implicit type variables they constrain are not shown.
+  The above variant types were polymorphic, allowing further refinement. When
+writing type annotations, one will most often describe fixed variant types,
+that is types that can be no longer refined. This is also the case for type
+abbreviations. Such types do not contain < or >, but just an enumeration of the
+tags and their associated types, just like in a normal datatype definition.  
+<<#type 'a vlist = [`Nil | `Cons of 'a * 'a vlist];;
+  type 'a vlist = [ `Cons of 'a * 'a vlist | `Nil ]
+   
+  #let rec map f : 'a vlist -> 'b vlist = function
+  #  | `Nil -> `Nil
+  #  | `Cons(a, l) -> `Cons(f a, map f l)
+  #;;
+  val map : ('a -> 'b) -> 'a vlist -> 'b vlist = <fun>
+>>
+  
+
+Advanced use
+============
+  
+  Type-checking polymorphic variants is a subtle thing, and some expressions
+may result in more complex type information.
+<<#let f = function `A -> `C | `B -> `D | x -> x;;
+  val f : ([> `A | `B | `C | `D ] as 'a) -> 'a = <fun>
+   
+  #f `E;;
+  - : [> `A | `B | `C | `D | `E ] = `E
+>>
+   Here we are seeing two phenomena. First, since this matching is open (the
+last case catches any tag), we obtain the type [> `A | `B] rather than [< `A |
+`B] in a closed matching. Then, since x is returned as is, input and return
+types are identical. The notation as 'a denotes such type sharing. If we apply
+f to yet another tag `E, it gets added to the list.
+<<#let f1 = function `A x -> x = 1 | `B -> true | `C -> false
+  #let f2 = function `A x -> x = "a" | `B -> true ;;
+  val f1 : [< `A of int | `B | `C ] -> bool = <fun>
+  val f2 : [< `A of string | `B ] -> bool = <fun>
+   
+  #let f x = f1 x && f2 x;;
+  val f : [< `A of string & int | `B ] -> bool = <fun>
+>>
+   Here f1 and f2 both accept the variant tags `A and `B, but the argument of
+`A is int for f1 and string for f2. In f's type `C, only accepted by f1,
+disappears, but both argument types appear for `A as int & string. This means
+that if we pass the variant tag `A to f, its argument should be both int and
+string. Since there is no such value, f cannot be applied to `A, and `B is the
+only accepted input.
+  Even if a value has a fixed variant type, one can still give it a larger type
+through coercions. Coercions are normally written with both the source type and
+the destination type, but in simple cases the source type may be omitted. 
+<<#type 'a wlist = [`Nil | `Cons of 'a * 'a wlist | `Snoc of 'a wlist * 'a];;
+  type 'a wlist = [ `Cons of 'a * 'a wlist | `Nil | `Snoc of 'a wlist * 'a ]
+   
+  #let wlist_of_vlist  l = (l : 'a vlist :> 'a wlist);;
+  val wlist_of_vlist : 'a vlist -> 'a wlist = <fun>
+   
+  #let open_vlist l = (l : 'a vlist :> [> 'a vlist]);;
+  val open_vlist : 'a vlist -> [> 'a vlist ] = <fun>
+   
+  #fun x -> (x :> [`A|`B|`C]);;
+  - : [< `A | `B | `C ] -> [ `A | `B | `C ] = <fun>
+>>
+  
+  You may also selectively coerce values through pattern matching. 
+<<#let split_cases = function
+  #  | `Nil | `Cons _ as x -> `A x
+  #  | `Snoc _ as x -> `B x
+  #;;
+  val split_cases :
+    [< `Cons of 'a | `Nil | `Snoc of 'b ] ->
+    [> `A of [> `Cons of 'a | `Nil ] | `B of [> `Snoc of 'b ] ] = <fun>
+>>
+   When an or-pattern composed of variant tags is wrapped inside an
+alias-pattern, the alias is given a type containing only the tags enumerated in
+the or-pattern. This allows for many useful idioms, like incremental definition
+of functions.
+<<#let num x = `Num x
+  #let eval1 eval (`Num x) = x
+  #let rec eval x = eval1 eval x ;;
+  val num : 'a -> [> `Num of 'a ] = <fun>
+  val eval1 : 'a -> [< `Num of 'b ] -> 'b = <fun>
+  val eval : [< `Num of 'a ] -> 'a = <fun>
+   
+  #let plus x y = `Plus(x,y)
+  #let eval2 eval = function
+  #  | `Plus(x,y) -> eval x + eval y
+  #  | `Num _ as x -> eval1 eval x
+  #let rec eval x = eval2 eval x ;;
+  val plus : 'a -> 'b -> [> `Plus of 'a * 'b ] = <fun>
+  val eval2 : ('a -> int) -> [< `Num of int | `Plus of 'a * 'a ] -> int = <fun>
+  val eval : ([< `Num of int | `Plus of 'a * 'a ] as 'a) -> int = <fun>
+>>
+  
+  To make this even more comfortable, you may use type definitions as
+abbreviations for or-patterns. That is, if you have defined type myvariant =
+[`Tag1 int | `Tag2 bool], then the pattern #myvariant is equivalent to writing
+(`Tag1(_ : int) | `Tag2(_ : bool)).
+  Such abbreviations may be used alone, 
+<<#let f = function
+  #  | #myvariant -> "myvariant"
+  #  | `Tag3 -> "Tag3";;
+  val f : [< `Tag1 of int | `Tag2 of bool | `Tag3 ] -> string = <fun>
+>>
+   or combined with with aliases. 
+<<#let g1 = function `Tag1 _ -> "Tag1" | `Tag2 _ -> "Tag2";;
+  val g1 : [< `Tag1 of 'a | `Tag2 of 'b ] -> string = <fun>
+   
+  #let g = function
+  #  | #myvariant as x -> g1 x
+  #  | `Tag3 -> "Tag3";;
+  val g : [< `Tag1 of int | `Tag2 of bool | `Tag3 ] -> string = <fun>
+>>
+  
+* Menu:
+
+* Subsection 4-2-1::	Weaknesses of polymorphic variants
+
+
+Node: Subsection 4-2-1,	Next: Chapter 5,	Prev: Section 4-2,	Up: Section 4-2
+  
+
+4.2.1   Weaknesses of polymorphic variants
+==========================================
+  
+  After seeing the power of polymorphic variants, one may wonder why they were
+added to core language variants, rather than replacing them.
+  The answer is twofold. One first aspect is that while being pretty efficient,
+the lack of static type information allows for less optimizations, and makes
+polymorphic variants slightly heavier than core language ones. However
+noticeable differences would only appear on huge data structures.
+  More important is the fact that polymorphic variants, while being type-safe,
+result in a weaker type discipline. That is, core language variants do actually
+much more than ensuring type-safety, they also check that you use only declared
+constructors, that all constructors present in a data-structure are compatible,
+and they enforce typing constraints to their parameters.
+  For this reason, you must be more careful about making types explicit when
+you use polymorphic variants. When you write a library, this is easy since you
+can describe exact types in interfaces, but for simple programs you are
+probably better off with core language variants.
+  Beware also that some idioms make trivial errors very hard to find. For
+instance, the following code is probably wrong but the compiler has no way to
+see it. 
+<<#type abc = [`A | `B | `C] ;;
+  type abc = [ `A | `B | `C ]
+   
+  #let f = function
+  #  | `As -> "A"
+  #  | #abc -> "other" ;;
+  val f : [< `A | `As | `B | `C ] -> string = <fun>
+   
+  #let f : abc -> string = f ;;
+  val f : abc -> string = <fun>
+>>
+   You can avoid such risks by annotating the definition itself. 
+<<#let f : abc -> string = function
+  #  | `As -> "A"
+  #  | #abc -> "other" ;;
+  Warning U: this match case is unused.
+  val f : abc -> string = <fun>
+>>
+    
+
+Node: Notes 1
+ ---------------------------------------
+ 
+(1) This correspond to the commuting label mode of Objective Caml
+3.00 through 3.02, with some additional flexibility on total applications. The
+so-called classic mode (-nolabels options) is now deprecated for normal use.
+
+Node: Chapter 5,	Next: Section 5-1,	Prev: Section 4-2,	Up: Part I
+  
+
+Chapter 5     Advanced examples with classes and modules
+********************************************************
+   
+  (Chapter written by Didier Rémy)
+  
+  
+  
+  In this chapter, we show some larger examples using objects, classes and
+modules. We review many of the object features simultaneously on the example of
+a bank account. We show how modules taken from the standard library can be
+expressed as classes. Lastly, we describe a programming pattern know of as
+virtual types through the example of window managers.
+* Menu:
+
+* Section 5-1::	Extended example: bank accounts
+* Section 5-2::	Simple modules as classes
+* Section 5-3::	The subject/observer pattern
+
+
+Node: Section 5-1,	Next: Section 5-2,	Prev: Chapter 5,	Up: Chapter 5
+  
+
+5.1   Extended example: bank accounts
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+    
+  In this section, we illustrate most aspects of Object and inheritance by
+refining, debugging, and specializing the following  initial naive definition
+of a simple bank account. (We reuse the module Euro defined at the end of
+chapter 3*Note Chapter 3::.) 
+<<#let euro = new Euro.c;;
+  val euro : float -> Euro.c = <fun>
+   
+  #let zero = euro 0.;;
+  val zero : Euro.c = <obj>
+   
+  #let neg x = x#times (-1.);;
+  val neg : < times : float -> 'a; .. > -> 'a = <fun>
+   
+  #class account =
+  #  object 
+  #    val mutable balance = zero
+  #    method balance = balance
+  #    method deposit x = balance <- balance # plus x
+  #    method withdraw x =
+  #      if x#leq balance then (balance <- balance # plus (neg x); x) else zero
+  #  end;;
+  class account :
+    object
+      val mutable balance : Euro.c
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method withdraw : Euro.c -> Euro.c
+    end
+   
+  #let c = new account in c # deposit (euro 100.); c # withdraw (euro 50.);;
+  - : Euro.c = <obj>
+>>
+   We now refine this definition with a method to compute interest. 
+<<#class account_with_interests =
+  #  object (self)
+  #    inherit account
+  #    method private interest = self # deposit (self # balance # times 0.03)
+  #  end;;
+  class account_with_interests :
+    object
+      val mutable balance : Euro.c
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method private interest : unit
+      method withdraw : Euro.c -> Euro.c
+    end
+>>
+   We make the method interest private, since clearly it should not be called
+freely from the outside. Here, it is only made accessible to subclasses that
+will manage monthly or yearly updates of the account. 
+  We should soon fix a bug in the current definition: the deposit method can be
+used for withdrawing money by depositing negative amounts. We can fix this
+directly: 
+<<#class safe_account =
+  #  object
+  #    inherit account
+  #    method deposit x = if zero#leq x then balance <- balance#plus x
+  #  end;;
+  class safe_account :
+    object
+      val mutable balance : Euro.c
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method withdraw : Euro.c -> Euro.c
+    end
+>>
+   However, the bug might be fixed more safely by the following definition: 
+<<#class safe_account =
+  #  object
+  #    inherit account as unsafe
+  #    method deposit x =
+  #      if zero#leq x then unsafe # deposit x
+  #      else raise (Invalid_argument "deposit")
+  #  end;;
+  class safe_account :
+    object
+      val mutable balance : Euro.c
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method withdraw : Euro.c -> Euro.c
+    end
+>>
+   In particular, this does not require the knowledge of the implementation of 
+the method deposit.
+  To keep trace of operations, we extend the class with a mutable field history
+and a private method trace to add an operation in the log. Then each method to
+be traced is redefined. 
+<<#type 'a operation = Deposit of 'a | Retrieval of 'a;;
+  type 'a operation = Deposit of 'a | Retrieval of 'a
+   
+  #class account_with_history =
+  #  object (self) 
+  #    inherit safe_account as super  
+  #    val mutable history = []
+  #    method private trace x = history <- x :: history
+  #    method deposit x = self#trace (Deposit x);  super#deposit x
+  #    method withdraw x = self#trace (Retrieval x); super#withdraw x
+  #    method history = List.rev history
+  #  end;;
+  class account_with_history :
+    object
+      val mutable balance : Euro.c
+      val mutable history : Euro.c operation list
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method history : Euro.c operation list
+      method private trace : Euro.c operation -> unit
+      method withdraw : Euro.c -> Euro.c
+    end
+>>
+   One may wish to open an account and simultaneously deposit some initial
+amount. Although the initial implementation did not address this requirement,
+it can be achieved by using an initializer. 
+<<#class account_with_deposit x =
+  #  object 
+  #    inherit account_with_history 
+  #    initializer balance <- x 
+  #  end;;
+  class account_with_deposit :
+    Euro.c ->
+    object
+      val mutable balance : Euro.c
+      val mutable history : Euro.c operation list
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method history : Euro.c operation list
+      method private trace : Euro.c operation -> unit
+      method withdraw : Euro.c -> Euro.c
+    end
+>>
+   A better alternative is: 
+<<#class account_with_deposit x =
+  #  object (self)
+  #    inherit account_with_history 
+  #    initializer self#deposit x
+  #  end;;
+  class account_with_deposit :
+    Euro.c ->
+    object
+      val mutable balance : Euro.c
+      val mutable history : Euro.c operation list
+      method balance : Euro.c
+      method deposit : Euro.c -> unit
+      method history : Euro.c operation list
+      method private trace : Euro.c operation -> unit
+      method withdraw : Euro.c -> Euro.c
+    end
+>>
+   Indeed, the latter is safer since the call to deposit will automatically
+benefit from safety checks and from the trace. Let's test it: 
+<<#let ccp = new account_with_deposit (euro 100.) in 
+  #let balance = ccp#withdraw (euro 50.) in
+  #ccp#history;;
+  Warning Y: unused variable balance.
+  - : Euro.c operation list = [Deposit <obj>; Retrieval <obj>]
+>>
+   Closing an account can be done with the following polymorphic function: 
+<<#let close c = c#withdraw (c#balance);;
+  val close : < balance : 'a; withdraw : 'a -> 'b; .. > -> 'b = <fun>
+>>
+   Of course, this applies to all sorts of accounts. 
+  Finally, we gather several versions of the account into a module Account
+abstracted over some currency. 
+<<#let today () = (01,01,2000) (* an approximation *)
+  #module Account (M:MONEY) =
+  #  struct
+  #    type m = M.c
+  #    let m = new M.c
+  #    let zero = m 0. 
+  #        
+  #    class bank =
+  #      object (self) 
+  #        val mutable balance = zero
+  #        method balance = balance
+  #        val mutable history = []
+  #        method private trace x = history <- x::history
+  #        method deposit x =
+  #          self#trace (Deposit x);
+  #          if zero#leq x then balance <- balance # plus x
+  #          else raise (Invalid_argument "deposit")
+  #        method withdraw x =
+  #          if x#leq balance then
+  #            (balance <- balance # plus (neg x); self#trace (Retrieval x); x)
+  #          else zero
+  #        method history = List.rev history
+  #      end
+  #        
+  #    class type client_view = 
+  #      object
+  #        method deposit : m -> unit
+  #        method history : m operation list
+  #        method withdraw : m -> m
+  #        method balance : m
+  #      end
+  #          
+  #    class virtual check_client x = 
+  #      let y = if (m 100.)#leq x then x
+  #      else raise (Failure "Insufficient initial deposit") in
+  #      object (self) initializer self#deposit y end
+  #        
+  #    module Client (B : sig class bank : client_view end) =
+  #      struct
+  #        class account x : client_view =
+  #          object
+  #            inherit B.bank
+  #            inherit check_client x
+  #          end
+  #            
+  #        let discount x =
+  #          let c = new account x in
+  #          if today() < (1998,10,30) then c # deposit (m 100.); c
+  #      end
+  #  end;;
+>>
+   This shows the use of modules to group several class definitions that can in
+fact be thought of as a single unit. This unit would be provided by a bank for
+both internal and external uses.  This is implemented as a functor that
+abstracts over the currency so that the same code can be used to provide
+accounts in different currencies.
+  The class bank is the real implementation of the bank account (it could have
+been inlined). This is the one that will be used for further extensions,
+refinements, etc. Conversely, the client will only be given the client view. 
+<<#module Euro_account = Account(Euro);;
+   
+  #module Client = Euro_account.Client (Euro_account);;
+   
+  #new Client.account (new Euro.c 100.);;
+>>
+   Hence, the clients do not have direct access to the balance, nor the history
+of their own accounts. Their only way to change their balance is to deposit or
+withdraw money. It is important to give the clients a class and not just the
+ability to create accounts (such as the promotional discount account), so that
+they can personalize their account. For instance, a client may refine the
+deposit and withdraw methods so as to do his own financial bookkeeping,
+automatically. On the other hand, the function discount is given as such, with
+no possibility for further personalization.
+  It is important that to provide the client's view as a functor Client so that
+client accounts can still be build after a possible specialization of the bank.
+ The functor Client may remain unchanged and be passed the new definition to
+initialize a client's view of the extended account. 
+<<#module Investment_account (M : MONEY) = 
+  #  struct
+  #    type m = M.c
+  #    module A = Account(M)
+  #        
+  #    class bank =
+  #      object
+  #        inherit A.bank as super
+  #        method deposit x =
+  #          if (new M.c 1000.)#leq x then
+  #            print_string "Would you like to invest?";
+  #          super#deposit x
+  #      end
+  #        
+  #    module Client = A.Client
+  #  end;;
+>>
+   The functor Client may also be redefined when some new features of the
+account can be given to the client.  
+<<#module Internet_account (M : MONEY) = 
+  #  struct
+  #    type m = M.c
+  #    module A = Account(M)
+  
+  #    class bank =
+  #      object
+  #        inherit A.bank 
+  #        method mail s = print_string s
+  #      end
+  #        
+  #    class type client_view = 
+  #      object
+  #        method deposit : m -> unit
+  #        method history : m operation list
+  #        method withdraw : m -> m
+  #        method balance : m
+  #        method mail : string -> unit
+  #      end
+  #          
+  #    module Client (B : sig class bank : client_view end) =
+  #      struct
+  #        class account x : client_view =
+  #          object
+  #            inherit B.bank
+  #            inherit A.check_client x
+  #          end
+  #      end
+  #  end;;
+>>
+  
+
+Node: Section 5-2,	Next: Subsection 5-2-1,	Prev: Section 5-1,	Up: Chapter 5
+  
+
+5.2   Simple modules as classes
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+    
+  One may wonder whether it is possible to treat primitive types such as
+integers and strings as objects. Although this is usually uninteresting for
+integers or strings, there may be some situations where this is desirable. The
+class money above is such an example.  We show here how to do it for strings. 
+* Menu:
+
+* Subsection 5-2-1::	Strings
+* Subsection 5-2-2::	Hashtbl
+* Subsection 5-2-3::	Sets
+
+
+Node: Subsection 5-2-1,	Next: Subsection 5-2-2,	Prev: Section 5-2,	Up: Section 5-2
+  
+
+5.2.1   Strings
+===============
+   
+  A naive definition of strings as objects could be: 
+<<#class ostring s =
+  #  object
+  #     method get n = String.get s n
+  #     method set n c = String.set s n c
+  #     method print = print_string s
+  #     method copy = new ostring (String.copy s)
+  #  end;;
+  class ostring :
+    string ->
+    object
+      method copy : ostring
+      method get : int -> char
+      method print : unit
+      method set : int -> char -> unit
+    end
+>>
+   However, the method copy returns an object of the class ostring, and not an
+objet of the current class. Hence, if the class is further extended, the method
+copy will only return an object of the parent class. 
+<<#class sub_string s =
+  #  object
+  #     inherit ostring s
+  #     method sub start len = new sub_string (String.sub s  start len)
+  #  end;;
+  class sub_string :
+    string ->
+    object
+      method copy : ostring
+      method get : int -> char
+      method print : unit
+      method set : int -> char -> unit
+      method sub : int -> int -> sub_string
+    end
+>>
+   As seen in section 3.16*Note Section 3-16::, the solution is to
+use functional update instead. We need to create an instance variable
+containing the representation s of the string. 
+<<#class better_string s =
+  #  object
+  #     val repr = s
+  #     method get n = String.get repr n
+  #     method set n c = String.set repr n c
+  #     method print = print_string repr
+  #     method copy = {< repr = String.copy repr >}
+  #     method sub start len = {< repr = String.sub s  start len >}
+  #  end;;
+  class better_string :
+    string ->
+    object ('a)
+      val repr : string
+      method copy : 'a
+      method get : int -> char
+      method print : unit
+      method set : int -> char -> unit
+      method sub : int -> int -> 'a
+    end
+>>
+   As shown in the inferred type, the methods copy and sub now return objects
+of the same type as the one of the class.
+  Another difficulty is the implementation of the method concat.  In order to
+concatenate a string with another string of the same class,  one must be able
+to access the instance variable externally. Thus, a method repr returning s
+must be defined. Here is the correct definition of strings:  
+<<#class ostring s =
+  #  object (self : 'mytype)
+  #     val repr = s
+  #     method repr = repr
+  #     method get n = String.get repr n
+  #     method set n c = String.set repr n c
+  #     method print = print_string repr
+  #     method copy = {< repr = String.copy repr >}
+  #     method sub start len = {< repr = String.sub s start len >}
+  #     method concat (t : 'mytype) = {< repr = repr ^ t#repr >}
+  #  end;;
+  class ostring :
+    string ->
+    object ('a)
+      val repr : string
+      method concat : 'a -> 'a
+      method copy : 'a
+      method get : int -> char
+      method print : unit
+      method repr : string
+      method set : int -> char -> unit
+      method sub : int -> int -> 'a
+    end
+>>
+   Another constructor of the class string can be defined to return an
+uninitialized string of a given length: 
+<<#class cstring n = ostring (String.create n);;
+  class cstring : int -> ostring
+>>
+   Here, exposing the representation of strings is probably harmless. We do
+could also hide the representation of strings as we hid the currency in the
+class money of section 3.17*Note Section 3-17::.
+  
+
+ Stacks
+-------
+   
+  There is sometimes an alternative between using modules or classes for
+parametric data types.  Indeed, there are situations when the two approaches
+are quite similar.  For instance, a stack can be straightforwardly implemented
+as a class: 
+<<#exception Empty;;
+  exception Empty
+   
+  #class ['a] stack =
+  #  object 
+  #    val mutable l = ([] : 'a list)
+  #    method push x = l <- x::l
+  #    method pop = match l with [] -> raise Empty | a::l' -> l <- l'; a
+  #    method clear = l <- []
+  #    method length = List.length l
+  #  end;;
+  class ['a] stack :
+    object
+      val mutable l : 'a list
+      method clear : unit
+      method length : int
+      method pop : 'a
+      method push : 'a -> unit
+    end
+>>
+   However, writing a method for iterating over a stack is more problematic. A
+method fold would have type ('b -> 'a -> 'b) -> 'b -> 'b. Here 'a is the
+parameter of the stack. The parameter 'b is not related to the class 'a stack
+but to the argument that will be passed to the method fold. A naive approach is
+to make 'b an extra parameter of class stack: 
+<<#class ['a, 'b] stack2 =
+  #  object
+  #    inherit ['a] stack
+  #    method fold f (x : 'b) = List.fold_left f x l
+  #  end;;
+  class ['a, 'b] stack2 :
+    object
+      val mutable l : 'a list
+      method clear : unit
+      method fold : ('b -> 'a -> 'b) -> 'b -> 'b
+      method length : int
+      method pop : 'a
+      method push : 'a -> unit
+    end
+>>
+   However, the method fold of a given object can only be applied to functions
+that all have the same type: 
+<<#let s = new stack2;;
+  val s : ('_a, '_b) stack2 = <obj>
+   
+  #s#fold (+) 0;;
+  - : int = 0
+   
+  #s;;
+  - : (int, int) stack2 = <obj>
+>>
+   A better solution is to use polymorphic methods, which were introduced in
+Objective Caml version 3.05. Polymorphic methods makes it possible to treat the
+type variable 'b in the type of fold as universally quantified, giving fold the
+polymorphic type Forall 'b. ('b -> 'a -> 'b) -> 'b -> 'b. An explicit type
+declaration on the method fold is required, since the type checker cannot infer
+the polymorphic type by itself. 
+<<#class ['a] stack3 =
+  #  object
+  #    inherit ['a] stack
+  #    method fold : 'b. ('b -> 'a -> 'b) -> 'b -> 'b
+  #                = fun f x -> List.fold_left f x l
+  #  end;;
+  class ['a] stack3 :
+    object
+      val mutable l : 'a list
+      method clear : unit
+      method fold : ('b -> 'a -> 'b) -> 'b -> 'b
+      method length : int
+      method pop : 'a
+      method push : 'a -> unit
+    end
+>>
+  
+
+Node: Subsection 5-2-2,	Next: Subsection 5-2-3,	Prev: Subsection 5-2-1,	Up: Section 5-2
+  
+
+5.2.2   Hashtbl
+===============
+   
+  A simplified version of object-oriented hash tables should have the following
+class type. 
+<<#class type ['a, 'b] hash_table =
+  #  object 
+  #    method find : 'a -> 'b
+  #    method add : 'a -> 'b -> unit
+  #  end;;
+  class type ['a, 'b] hash_table =
+    object method add : 'a -> 'b -> unit method find : 'a -> 'b end
+>>
+   A simple implementation, which is quite reasonable for small hastables is to
+use an association list: 
+<<#class ['a, 'b] small_hashtbl : ['a, 'b] hash_table =
+  #  object
+  #    val mutable table = []
+  #    method find key = List.assoc key table
+  #    method add key valeur = table <- (key, valeur) :: table
+  #  end;;
+  class ['a, 'b] small_hashtbl : ['a, 'b] hash_table
+>>
+   A better implementation, and one that scales up better, is to use a true
+hash tables... whose elements are small hash tables! 
+<<#class ['a, 'b] hashtbl size : ['a, 'b] hash_table =
+  #  object (self)
+  #    val table = Array.init size (fun i -> new small_hashtbl) 
+  #    method private hash key =
+  #      (Hashtbl.hash key) mod (Array.length table)
+  #    method find key = table.(self#hash key) # find key
+  #    method add key = table.(self#hash key) # add key
+  #  end;;
+  class ['a, 'b] hashtbl : int -> ['a, 'b] hash_table
+>>
+  
+
+Node: Subsection 5-2-3,	Next: Section 5-3,	Prev: Subsection 5-2-2,	Up: Section 5-2
+  
+
+5.2.3   Sets
+============
+   
+  Implementing sets leads to another difficulty. Indeed, the method union needs
+to be able to access the internal representation of another object of the same
+class. 
+  This is another instance of friend functions as seen in section
+3.17*Note Section 3-17::. Indeed, this is the same mechanism used in the
+module Set in the absence of objects.
+  In the object-oriented version of sets, we only need to add an additional 
+method tag to return the representation of a set. Since sets are parametric in
+the type of elements, the method tag has a parametric type 'a tag, concrete
+within  the module definition but abstract in its signature. From outside, it
+will then be guaranteed that two objects with a method tag  of the same type
+will share the same representation. 
+<<#module type SET =
+  #  sig
+  #    type 'a tag
+  #    class ['a] c :
+  #      object ('b)
+  #        method is_empty : bool
+  #        method mem : 'a -> bool
+  #        method add : 'a -> 'b
+  #        method union : 'b -> 'b
+  #        method iter : ('a -> unit) -> unit
+  #        method tag : 'a tag
+  #      end
+  #  end;;
+   
+  #module Set : SET =
+  #  struct
+  #    let rec merge l1 l2 =
+  #      match l1 with
+  #        [] -> l2
+  #      | h1 :: t1 ->
+  #          match l2 with
+  #            [] -> l1
+  #          | h2 :: t2 ->
+  #              if h1 < h2 then h1 :: merge t1 l2
+  #              else if h1 > h2 then h2 :: merge l1 t2
+  #              else merge t1 l2
+  #    type 'a tag = 'a list
+  #    class ['a] c =
+  #      object (_ : 'b)
+  #        val repr = ([] : 'a list)
+  #        method is_empty = (repr = [])
+  #        method mem x = List.exists ((=) x) repr
+  #        method add x = {< repr = merge [x] repr >}
+  #        method union (s : 'b) = {< repr = merge repr s#tag >}
+  #        method iter (f : 'a -> unit) = List.iter f repr
+  #        method tag = repr
+  #      end
+  #  end;;
+>>
+  
+
+Node: Section 5-3,	Next: Part II,	Prev: Section 5-2,	Up: Chapter 5
+  
+
+5.3   The subject/observer pattern
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+    
+  The following example, known as the subject/observer pattern, is often
+presented in the literature as a difficult inheritance problem with
+inter-connected classes. The general pattern amounts to the definition a pair
+of two classes that recursively interact with one another. 
+  The class observer has a distinguished method notify that requires  two
+arguments, a subject and an event to execute an action.  
+<<#class virtual ['subject, 'event] observer =
+  #  object
+  #    method virtual notify : 'subject ->  'event -> unit
+  #  end;;
+  class virtual ['a, 'b] observer :
+    object method virtual notify : 'a -> 'b -> unit end
+>>
+   The class subject remembers a list of observers in an instance variable, and
+has a distinguished method notify_observers to broadcast the message notify to
+all observers with a particular event e.  
+<<#class ['observer, 'event] subject =
+  #  object (self)
+  #    val mutable observers = ([]:'observer list)
+  #    method add_observer obs = observers <- (obs :: observers)
+  #    method notify_observers (e : 'event) = 
+  #        List.iter (fun x -> x#notify self e) observers
+  #  end;;
+  class ['a, 'b] subject :
+    object ('c)
+      constraint 'a = < notify : 'c -> 'b -> unit; .. >
+      val mutable observers : 'a list
+      method add_observer : 'a -> unit
+      method notify_observers : 'b -> unit
+    end
+>>
+   The difficulty usually relies in defining instances of the pattern above by
+inheritance. This can be done in a natural and obvious manner in Ocaml, as
+shown on the following example manipulating windows. 
+<<#type event = Raise | Resize | Move;;
+  type event = Raise | Resize | Move
+   
+  #let string_of_event = function
+  #    Raise -> "Raise" | Resize -> "Resize" | Move -> "Move";;
+  val string_of_event : event -> string = <fun>
+   
+  #let count = ref 0;;
+  val count : int ref = {contents = 0}
+   
+  #class ['observer] window_subject =
+  #  let id = count := succ !count; !count in
+  #  object (self)
+  #    inherit ['observer, event] subject
+  #    val mutable position = 0
+  #    method identity = id
+  #    method move x = position <- position + x; self#notify_observers Move
+  #    method draw = Printf.printf "{Position = %d}\n"  position;
+  #  end;;
+  class ['a] window_subject :
+    object ('b)
+      constraint 'a = < notify : 'b -> event -> unit; .. >
+      val mutable observers : 'a list
+      val mutable position : int
+      method add_observer : 'a -> unit
+      method draw : unit
+      method identity : int
+      method move : int -> unit
+      method notify_observers : event -> unit
+    end
+   
+  #class ['subject] window_observer =
+  #  object
+  #    inherit ['subject, event] observer
+  #    method notify s e = s#draw
+  #  end;;
+  class ['a] window_observer :
+    object
+      constraint 'a = < draw : unit; .. >
+      method notify : 'a -> event -> unit
+    end
+>>
+   Unsurprisingly the type of window is recursive.  
+<<#let window = new window_subject;;
+  val window : < notify : 'a -> event -> unit; _.. > window_subject as 'a =
+    <obj>
+>>
+   However, the two classes of window_subject and window_observer are not
+mutually recursive.  
+<<#let window_observer = new window_observer;;
+  val window_observer : < draw : unit; _.. > window_observer = <obj>
+   
+  #window#add_observer window_observer;;
+  - : unit = ()
+   
+  #window#move 1;;
+  {Position = 1}
+  - : unit = ()
+>>
+  
+  Classes window_observer and window_subject can still be extended by
+inheritance. For instance, one may enrich the subject with new behaviors and
+refined the behavior of the observer.  
+<<#class ['observer] richer_window_subject =
+  #  object (self)
+  #    inherit ['observer] window_subject
+  #    val mutable size = 1
+  #    method resize x = size <- size + x; self#notify_observers Resize
+  #    val mutable top = false
+  #    method raise = top <- true; self#notify_observers Raise
+  #    method draw = Printf.printf "{Position = %d; Size = %d}\n"  position
+size;
+  #  end;;
+  class ['a] richer_window_subject :
+    object ('b)
+      constraint 'a = < notify : 'b -> event -> unit; .. >
+      val mutable observers : 'a list
+      val mutable position : int
+      val mutable size : int
+      val mutable top : bool
+      method add_observer : 'a -> unit
+      method draw : unit
+      method identity : int
+      method move : int -> unit
+      method notify_observers : event -> unit
+      method raise : unit
+      method resize : int -> unit
+    end
+   
+  #class ['subject] richer_window_observer =
+  #  object 
+  #    inherit ['subject] window_observer as super
+  #    method notify s e = if e <> Raise then s#raise; super#notify s e
+  #  end;;
+  class ['a] richer_window_observer :
+    object
+      constraint 'a = < draw : unit; raise : unit; .. >
+      method notify : 'a -> event -> unit
+    end
+>>
+   We can also create a different kind of observer:  
+<<#class ['subject] trace_observer = 
+  #  object 
+  #    inherit ['subject, event] observer
+  #    method notify s e =
+  #      Printf.printf
+  #        "<Window %d <== %s>\n" s#identity (string_of_event e)
+  #  end;;
+  class ['a] trace_observer :
+    object
+      constraint 'a = < identity : int; .. >
+      method notify : 'a -> event -> unit
+    end
+>>
+   and attached several observers to the same object: 
+<<#let window = new richer_window_subject;;
+  val window :
+    < notify : 'a -> event -> unit; _.. > richer_window_subject as 'a = <obj>
+   
+  #window#add_observer (new richer_window_observer);;
+  - : unit = ()
+   
+  #window#add_observer (new trace_observer);;
+  - : unit = ()
+   
+  #window#move 1; window#resize 2;;
+  <Window 1 <== Move>
+  <Window 1 <== Raise>
+  {Position = 1; Size = 1}
+  {Position = 1; Size = 1}
+  <Window 1 <== Resize>
+  <Window 1 <== Raise>
+  {Position = 1; Size = 3}
+  {Position = 1; Size = 3}
+  - : unit = ()
+>>
+  

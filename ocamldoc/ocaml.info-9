@@ -1,0 +1,1315 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Subsection 12-1-1,	Next: Section 12-2,	Prev: Section 12-1,	Up: Section 12-1
+  
+
+12.1.1   Options
+================
+   The following command-line options are recognized by ocamllex.
+  
+ 
+ 
+ -ml  Output code that does not use OCaml's built-in automata interpreter.
+   Instead, the automaton is encoded by Caml functions. This option mainly is
+   useful for debugging ocamllex, using it for production lexers is not
+   recommended.
+ 
+ -o output-file  Specify the name of the output file produced by ocamllex. The
+   default is the input file name with its extension replaced by .ml.
+ 
+ -q  Quiet mode. ocamllex normally outputs informational messages to standard
+   output. They are suppressed if option -q is used.
+ 
+ -v or -version   Print version string and exit.
+ 
+ -vnum   Print short version number and exit.
+ 
+ -help or --help  Display a short usage summary and exit. 
+  
+
+Node: Section 12-2,	Next: Subsection 12-2-1,	Prev: Section 12-1,	Up: Chapter 12
+  
+
+12.2   Syntax of lexer definitions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  The format of lexer definitions is as follows:  
+<<
+  { header }
+  let ident = regexp ...
+  rule entrypoint [arg_1... arg_n] =
+    parse regexp { action }
+        | ...
+        | regexp { action }
+  and entrypoint [arg_1... arg_n] =
+    parse ...
+  and ...
+  { trailer }
+>>
+   Comments are delimited by (* and *), as in Caml. The parse keyword, can be
+replaced by the shortest keyword, with the semantic consequences explained
+below.
+* Menu:
+
+* Subsection 12-2-1::	Header and trailer
+* Subsection 12-2-2::	Naming regular expressions
+* Subsection 12-2-3::	Entry points
+* Subsection 12-2-4::	Regular expressions
+* Subsection 12-2-5::	Actions
+* Subsection 12-2-6::	Variables in regular expressions
+* Subsection 12-2-7::	Reserved identifiers
+
+
+Node: Subsection 12-2-1,	Next: Subsection 12-2-2,	Prev: Section 12-2,	Up: Section 12-2
+  
+
+12.2.1   Header and trailer
+===========================
+   The header and trailer sections are arbitrary Caml text enclosed in curly
+braces. Either or both can be omitted. If present, the header text is copied as
+is at the beginning of the output file and the trailer text at the end.
+Typically, the header section contains the 'open' directives required by the
+actions, and possibly some auxiliary functions used in the actions.
+
+Node: Subsection 12-2-2,	Next: Subsection 12-2-3,	Prev: Subsection 12-2-1,	Up: Section 12-2
+  
+
+12.2.2   Naming regular expressions
+===================================
+  
+  Between the header and the entry points, one can give names to
+frequently-occurring regular expressions. This is written let ident =  regexp.
+In regular expressions that follow this declaration, the identifier ident can
+be used as shorthand for regexp.
+
+Node: Subsection 12-2-3,	Next: Subsection 12-2-4,	Prev: Subsection 12-2-2,	Up: Section 12-2
+  
+
+12.2.3   Entry points
+=====================
+  
+  The names of the entry points must be valid identifiers for Caml values
+(starting with a lowercase letter). Similarily, the arguments arg_1... arg_n
+must be valid identifiers for Caml. Each entry point becomes a Caml function
+that takes n+1 arguments, the extra implicit last argument being of type
+Lexing.lexbuf. Characters are read from the Lexing.lexbuf argument and matched
+against the regular expressions provided in the rule, until a prefix of the
+input matches one of the rule. The corresponding action is then evaluated and
+returned as the result of the function.
+  If several regular expressions match a prefix of the input, the "longest
+match" rule applies: the regular expression that matches the longest prefix of
+the input is selected. In case of tie, the regular expression that occurs
+earlier in the rule is selected.
+  However, if lexer rules are introduced with the shortest keyword in place of
+the parse keyword, then the "shortest match" rule applies: the shortest prefix
+of the input is selected. In case of tie, the regular expression that occurs
+earlier in the rule is still selected. This feature is not intended for use in
+ordinary lexical analyzers, it may facilitate the use of ocamllex as a simple
+text processing tool.
+
+Node: Subsection 12-2-4,	Next: Subsection 12-2-5,	Prev: Subsection 12-2-3,	Up: Section 12-2
+  
+
+12.2.4   Regular expressions
+============================
+  
+  The regular expressions are in the style of lex, with a more Caml-like
+syntax. 
+                                regexp ::=  ... 
+   
+ 
+ 
+ ' regular-char |  escape-sequence '  A character constant, with the same
+   syntax as Objective Caml character constants. Match the denoted character.
+ 
+ _  (Underscore.) Match any character.
+ 
+ eof  Match the end of the lexer input.
+ Note: On some systems, with interactive input, an end-of-file may be followed
+   by more characters. However, ocamllex will not correctly handle regular
+   expressions that contain eof followed by something else.
+ 
+ " { string-character } "  A string constant, with the same syntax as Objective
+   Caml string constants. Match the corresponding sequence of characters.
+ 
+ [ character-set ]  Match any single character belonging to the given character
+   set. Valid character sets are: single character constants ' c '; ranges of
+   characters ' c_1 ' - ' c_2 ' (all characters between c_1 and c_2,
+   inclusive); and the union of two or more character sets, denoted by
+   concatenation.
+ 
+ [ ^ character-set ]  Match any single character not belonging to the given
+   character set.
+ 
+ regexp_1 #  regexp_2  (Difference of character sets). Regular expressions
+   regexp_1 and regexp_2 must be character sets defined with [... ] (or a a
+   single character expression or underscore _). Match the difference of the
+   two specified character sets.
+ 
+ regexp *  (Repetition.) Match the concatenation of zero or more strings that
+   match regexp. 
+ 
+ regexp +  (Strict repetition.) Match the concatenation of one or more strings
+   that match regexp.
+ 
+ regexp ?  (Option.) Match either the empty string, or a string matching
+   regexp.
+ 
+ regexp_1 |  regexp_2  (Alternative.) Match any string that matches either
+   regexp_1 or regexp_2
+ 
+ regexp_1  regexp_2  (Concatenation.) Match the concatenation of two strings,
+   the first matching regexp_1, the second matching regexp_2.
+ 
+ ( regexp )  Match the same strings as regexp.
+ 
+ ident  Reference the regular expression bound to ident by an earlier let ident
+   =  regexp definition.
+ 
+ regexp as  ident  Bind the substring matched by regexp to identifier ident. 
+  
+  Concerning the precedences of operators, # has the highest precedence,
+followed by *, + and ?, then concatenation, then | (alternation), then as.
+
+Node: Subsection 12-2-5,	Next: Subsection 12-2-6,	Prev: Subsection 12-2-4,	Up: Section 12-2
+  
+
+12.2.5   Actions
+================
+  
+  The actions are arbitrary Caml expressions. They are evaluated in a context
+where the identifiers defined by using the as construct are bound to subparts
+of the matched string. Additionally, lexbuf is bound to the current lexer
+buffer. Some typical uses for lexbuf, in conjunction with the operations on
+lexer buffers provided by the Lexing standard library module, are listed below.
+  
+  
+ Lexing.lexeme lexbuf  Return the matched string.
+ 
+ Lexing.lexeme_char lexbuf n  Return the n^th character in the matched string.
+   The first character corresponds to n = 0.
+ 
+ Lexing.lexeme_start lexbuf  Return the absolute position in the input text of
+   the beginning of the matched string. The first character read from the input
+   text has position 0.
+ 
+ Lexing.lexeme_end lexbuf  Return the absolute position in the input text of
+   the end of the matched string. The first character read from the input text
+   has position 0.
+ 
+ entrypoint [exp_1... exp_n] lexbuf  (Where entrypoint is the name of another
+   entry point in the same lexer definition.) Recursively call the lexer on the
+   given entry point. Notice that lexbuf is the last argument. Useful for
+   lexing nested comments, for example.
+  
+
+Node: Subsection 12-2-6,	Next: Subsection 12-2-7,	Prev: Subsection 12-2-5,	Up: Section 12-2
+  
+
+12.2.6   Variables in regular expressions
+=========================================
+   The as construct is similar to "groups" as provided by numerous regular
+expression packages. The type of these variables can be string, char, string
+option or char option.
+  We first consider the case of linear patterns, that is the case when all as
+bound variables are distinct. In regexp as  ident, the type of ident normally
+is string (or string option) except when regexp is a character constant, an
+underscore, a string constant of length one, a character set specification, or
+an alternation of those. Then, the type of ident is char (or char option).
+Option types are introduced when overall rule matching does not imply matching
+of the bound sub-pattern. This is in particular the case of ( regexp as  ident
+) ? and of regexp_1 | (  regexp_2 as  ident ).
+  There is no linearity restriction over as bound variables. When a variable is
+bound more than once, the previous rules are to be extended as follows: 
+  
+   - A variable is a char variable when all its occurrences bind char
+   occurrences in the previous sense. 
+   - A variable is an option variable when the overall expression can be
+   matched without binding this variable. 
+   For instance, in '('a' as x) | ( 'a' (_ as x) )' the variable 'x' is of type
+char, whereas in  '("ab" as x) | ( 'a' (_ as x) ? )' the variable 'x' is of
+type string option.
+  In some cases, a sucessful match may not yield a unique set of bindings. For
+instance the matching of 'aba' by the regular expression '(('a'|"ab") as x)
+(("ba"|'a') as y)' may result in binding either 'x' to '"ab"' and 'y' to '"a"',
+or 'x' to '"a"' and 'y' to '"ba"'. The automata produced ocamllex on such
+ambiguous regular expressions will select one of the possible resulting sets of
+bindings. The selected set of bindings is purposely left unspecified.
+
+Node: Subsection 12-2-7,	Next: Section 12-3,	Prev: Subsection 12-2-6,	Up: Section 12-2
+  
+
+12.2.7   Reserved identifiers
+=============================
+  
+  All identifiers starting with __ocaml_lex are reserved for use by ocamllex;
+do not use any such identifier in your programs.
+
+Node: Section 12-3,	Next: Section 12-4,	Prev: Section 12-2,	Up: Chapter 12
+  
+
+12.3   Overview of ocamlyacc
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  The ocamlyacc command produces a parser from a context-free grammar
+specification with attached semantic actions, in the style of yacc. Assuming
+the input file is grammar.mly, executing 
+<<
+          ocamlyacc options grammar.mly
+>>
+   produces Caml code for a parser in the file grammar.ml, and its interface in
+file grammar.mli.
+  The generated module defines one parsing function per entry point in the
+grammar. These functions have the same names as the entry points. Parsing
+functions take as arguments a lexical analyzer (a function from lexer buffers
+to tokens) and a lexer buffer, and return the semantic attribute of the
+corresponding entry point. Lexical analyzer functions are usually generated
+from a lexer specification by the ocamllex program. Lexer buffers are an
+abstract data type implemented in the standard library module Lexing. Tokens
+are values from the concrete type token, defined in the interface file
+grammar.mli produced by ocamlyacc.
+
+Node: Section 12-4,	Next: Subsection 12-4-1,	Prev: Section 12-3,	Up: Chapter 12
+  
+
+12.4   Syntax of grammar definitions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  Grammar definitions have the following format: 
+<<
+  %{
+    header
+  %}
+    declarations
+  %%
+    rules
+  %%
+    trailer
+>>
+  
+  Comments are enclosed between '/*' and '*/' (as in C) in the "declarations"
+and "rules" sections, and between '(*' and '*)' (as in Caml) in the "header"
+and "trailer" sections.
+* Menu:
+
+* Subsection 12-4-1::	Header and trailer
+* Subsection 12-4-2::	Declarations
+* Subsection 12-4-3::	Rules
+* Subsection 12-4-4::	Error handling
+
+
+Node: Subsection 12-4-1,	Next: Subsection 12-4-2,	Prev: Section 12-4,	Up: Section 12-4
+  
+
+12.4.1   Header and trailer
+===========================
+  
+  The header and the trailer sections are Caml code that is copied as is into
+file grammar.ml. Both sections are optional. The header goes at the beginning
+of the output file; it usually contains open directives and auxiliary functions
+required by the semantic actions of the rules. The trailer goes at the end of
+the output file.
+
+Node: Subsection 12-4-2,	Next: Subsection 12-4-3,	Prev: Subsection 12-4-1,	Up: Section 12-4
+  
+
+12.4.2   Declarations
+=====================
+  
+  Declarations are given one per line. They all start with a '%' sign.
+  
+ 
+ 
+ %token constr ...  constr  Declare the given symbols constr ...  constr as
+   tokens (terminal symbols). These symbols are added as constant constructors
+   for the token concrete type.
+ 
+ %token < typexpr >  constr ...  constr  Declare the given symbols constr ...
+    constr as tokens with an attached attribute of the given type. These
+   symbols are added as constructors with arguments of the given type for the
+   token concrete type. The typexpr part is an arbitrary Caml type expression,
+   except that all type constructor names must be fully qualified (e.g.
+   Modname.typename) for all types except standard built-in types, even if the
+   proper 'open' directives (e.g. 'open Modname') were given in the header
+   section. That's because the header is copied only to the .ml output file,
+   but not to the .mli output file, while the typexpr part of a '%token'
+   declaration is copied to both.
+ 
+ %start symbol ...  symbol  Declare the given symbols as entry points for the
+   grammar. For each entry point, a parsing function with the same name is
+   defined in the output module. Non-terminals that are not declared as entry
+   points have no such parsing function. Start symbols must be given a type
+   with the '%type' directive below.
+ 
+ %type < typexpr >  symbol ...  symbol  Specify the type of the semantic
+   attributes for the given symbols. This is mandatory for start symbols only.
+   Other nonterminal symbols need not be given types by hand: these types will
+   be inferred when running the output files through the Objective Caml
+   compiler (unless the '-s' option is in effect). The typexpr part is an
+   arbitrary Caml type expression, except that all type constructor names must
+   be fully qualified, as explained above for %token.
+ 
+ %left symbol ...  symbol  
+ %right symbol ...  symbol  
+ %nonassoc symbol ...  symbol 
+ Associate precedences and associativities to the given symbols. All symbols on
+   the same line are given the same precedence. They have higher precedence
+   than symbols declared before in a '%left', '%right' or '%nonassoc' line.
+   They have lower precedence than symbols declared after in a '%left',
+   '%right' or '%nonassoc' line. The symbols are declared to associate to the
+   left ('%left'), to the right ('%right'), or to be non-associative
+   ('%nonassoc'). The symbols are usually tokens. They can also be dummy
+   nonterminals, for use with the '%prec' directive inside the rules.
+ The precedence declarations are used in the following way to resolve
+   reduce/reduce and shift/reduce conflicts: 
+     
+      - Tokens and rules have precedences. By default, the precedence of a rule
+      is the precedence of its rightmost terminal. You can override this
+      default by using the %prec directive in the rule. 
+      - A reduce/reduce conflict is resolved in favor of the first rule (in the
+      order given by the source file), and ocamlyacc outputs a warning. 
+      - A shift/reduce conflict is resolved by comparing the precedence of the
+      rule to be reduced with the precedence of the token to be shifted. If the
+      precedence of the rule is higher, then the rule will be reduced; if the
+      precedence of the token is higher, then the token will be shifted. 
+      - A shift/reduce conflict between a rule and a token with the same
+      precedence will be resolved using the associativity: if the token is
+      left-associative, then the parser will reduce; if the token is
+      right-associative, then the parser will shift. If the token is
+      non-associative, then the parser will declare a syntax error. 
+      - When a shift/reduce conflict cannot be resolved using the above method,
+      then ocamlyacc will output a warning and the parser will always shift. 
+ 
+  
+
+Node: Subsection 12-4-3,	Next: Subsection 12-4-4,	Prev: Subsection 12-4-2,	Up: Section 12-4
+  
+
+12.4.3   Rules
+==============
+  
+  The syntax for rules is as usual: 
+<<
+  nonterminal :
+      symbol ... symbol { semantic-action }
+    | ...
+    | symbol ... symbol { semantic-action }
+  ;
+>>
+   Rules can also contain the '%prec 'symbol directive in the right-hand side
+part, to override the default precedence and associativity of the rule with the
+precedence and associativity of the given symbol.
+  Semantic actions are arbitrary Caml expressions, that are evaluated to
+produce the semantic attribute attached to the defined nonterminal. The
+semantic actions can access the semantic attributes of the symbols in the
+right-hand side of the rule with the '$' notation: '$1' is the attribute for
+the first (leftmost) symbol, '$2' is the attribute for the second symbol, etc.
+  The rules may contain the special symbol error to indicate resynchronization
+points, as in yacc.
+  Actions occurring in the middle of rules are not supported.
+  Nonterminal symbols are like regular Caml symbols, except that they cannot
+end with ' (single quote).
+
+Node: Subsection 12-4-4,	Next: Section 12-5,	Prev: Subsection 12-4-3,	Up: Section 12-4
+  
+
+12.4.4   Error handling
+=======================
+  
+  Error recovery is supported as follows: when the parser reaches an error
+state (no grammar rules can apply), it calls a function named parse_error with
+the string "syntax error" as argument. The default parse_error function does
+nothing and returns, thus initiating error recovery (see below). The user can
+define a customized parse_error function in the header section of the grammar
+file.
+  The parser also enters error recovery mode if one of the grammar actions
+raises the Parsing.Parse_error exception.
+  In error recovery mode, the parser discards states from the stack until it
+reaches a place where the error token can be shifted. It then discards tokens
+from the input until it finds three successive tokens that can be accepted, and
+starts processing with the first of these. If no state can be uncovered where
+the error token can be shifted, then the parser aborts by raising the
+Parsing.Parse_error exception.
+  Refer to documentation on yacc for more details and guidance in how to use
+error recovery.
+
+Node: Section 12-5,	Next: Section 12-6,	Prev: Section 12-4,	Up: Chapter 12
+  
+
+12.5   Options
+*=*=*=*=*=*=*=
+
+  
+  The ocamlyacc command recognizes the following options:
+  
+ 
+ 
+ -bprefix  Name the output files prefix.ml, prefix.mli, prefix.output, instead
+   of the default naming convention.
+ 
+ -q  This option has not effect.
+ 
+ -v  Generate a description of the parsing tables and a report on conflicts
+   resulting from ambiguities in the grammar. The description is put in file
+   grammar.output.
+ 
+ -version   Print version and exit.
+ 
+ -  Read the grammar specification from standard input. The default output file
+   names are stdin.ml and stdin.mli.
+ 
+ -- file  Process file as the grammar specification, even if its name starts
+   with a dash (-) character. This option must be the last on the command line.
+  
+  At run-time, the ocamlyacc-generated parser can be debugged by setting the p
+option in the OCAMLRUNPARAM environment variable (see
+section 10.2*Note Section 10-2::). This causes the pushdown automaton
+executing the parser to print a trace of its action (tokens shifted, rules
+reduced, etc). The trace mentions rule numbers and state numbers that can be
+interpreted by looking at the file grammar.output generated by ocamlyacc -v.
+
+Node: Section 12-6,	Next: Section 12-7,	Prev: Section 12-5,	Up: Chapter 12
+  
+
+12.6   A complete example
+*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  The all-time favorite: a desk calculator. This program reads arithmetic
+expressions on standard input, one per line, and prints their values. Here is
+the grammar definition: 
+<<        /* File parser.mly */
+          %token <int> INT
+          %token PLUS MINUS TIMES DIV
+          %token LPAREN RPAREN
+          %token EOL
+          %left PLUS MINUS        /* lowest precedence */
+          %left TIMES DIV         /* medium precedence */
+          %nonassoc UMINUS        /* highest precedence */
+          %start main             /* the entry point */
+          %type <int> main
+          %%
+          main:
+              expr EOL                { $1 }
+          ;
+          expr:
+              INT                     { $1 }
+            | LPAREN expr RPAREN      { $2 }
+            | expr PLUS expr          { $1 + $3 }
+            | expr MINUS expr         { $1 - $3 }
+            | expr TIMES expr         { $1 * $3 }
+            | expr DIV expr           { $1 / $3 }
+            | MINUS expr %prec UMINUS { - $2 }
+          ;
+>>
+  Here is the definition for the corresponding lexer: 
+<<        (* File lexer.mll *)
+          {
+          open Parser        (* The type token is defined in parser.mli *)
+          exception Eof
+          }
+          rule token = parse
+              [' ' '\t']     { token lexbuf }     (* skip blanks *)
+            | ['\n' ]        { EOL }
+            | ['0'-'9']+ as lxm { INT(int_of_string lxm) }
+            | '+'            { PLUS }
+            | '-'            { MINUS }
+            | '*'            { TIMES }
+            | '/'            { DIV }
+            | '('            { LPAREN }
+            | ')'            { RPAREN }
+            | eof            { raise Eof }
+>>
+  Here is the main program, that combines the parser with the lexer: 
+<<        (* File calc.ml *)
+          let _ =
+            try
+              let lexbuf = Lexing.from_channel stdin in
+              while true do
+                let result = Parser.main Lexer.token lexbuf in
+                  print_int result; print_newline(); flush stdout
+              done
+            with Lexer.Eof ->
+              exit 0
+>>
+  To compile everything, execute: 
+<<        ocamllex lexer.mll       # generates lexer.ml
+          ocamlyacc parser.mly     # generates parser.ml and parser.mli
+          ocamlc -c parser.mli
+          ocamlc -c lexer.ml
+          ocamlc -c parser.ml
+          ocamlc -c calc.ml
+          ocamlc -o calc lexer.cmo parser.cmo calc.cmo
+>>
+  
+
+Node: Section 12-7,	Next: Chapter 13,	Prev: Section 12-6,	Up: Chapter 12
+  
+
+12.7   Common errors
+*=*=*=*=*=*=*=*=*=*=
+
+  
+  
+ 
+ 
+ ocamllex: transition table overflow, automaton is too big 
+ The deterministic automata generated by ocamllex are limited to at most 32767
+   transitions. The message above indicates that your lexer definition is too
+   complex and overflows this limit. This is commonly caused by lexer
+   definitions that have separate rules for each of the alphabetic keywords of
+   the language, as in the following example. 
+   <<rule token = parse
+       "keyword1"   { KWD1 }
+     | "keyword2"   { KWD2 }
+     | ...
+     | "keyword100" { KWD100 }
+     | ['A'-'Z' 'a'-'z'] ['A'-'Z' 'a'-'z' '0'-'9' '_'] * as id
+                    { IDENT id}
+   >>
+ To keep the generated automata small, rewrite those definitions with only one
+   general "identifier" rule, followed by a hashtable lookup to separate
+   keywords from identifiers: 
+   <<{ let keyword_table = Hashtbl.create 53
+       let _ =
+         List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok)
+                   [ "keyword1", KWD1;
+                     "keyword2", KWD2; ...
+                     "keyword100", KWD100 ]
+     }
+     rule token = parse
+       ['A'-'Z' 'a'-'z'] ['A'-'Z' 'a'-'z' '0'-'9' '_'] * as id
+                    { try
+                        Hashtbl.find keyword_table id
+                      with Not_found ->
+                        IDENT id }
+   >>
+ 
+ 
+ ocamllex: Position memory overflow, too many bindings  The deterministic
+   automata generated by ocamllex maintains a table of positions inside the
+   scanned lexer buffer. The size of this table is limited to at most 255
+   cells. This error should not show up in normal situations.
+    
+
+Node: Chapter 13,	Next: Section 13-1,	Prev: Chapter 12,	Up: Part III
+  
+
+Chapter 13     Dependency generator (ocamldep)
+**********************************************
+    
+  The ocamldep command scans a set of Objective Caml source files (.ml and .mli
+files) for references to external compilation units, and outputs dependency
+lines in a format suitable for the make utility. This ensures that make will
+compile the source files in the correct order, and recompile those files that
+need to when a source file is modified.
+  The typical usage is: 
+<<
+          ocamldep options *.mli *.ml > .depend
+>>
+   where *.mli *.ml expands to all source files in the current directory and
+.depend is the file that should contain the dependencies. (See below for a
+typical Makefile.)
+  Dependencies are generated both for compiling with the bytecode compiler
+ocamlc and with the native-code compiler ocamlopt.
+* Menu:
+
+* Section 13-1::	Options
+* Section 13-2::	A typical Makefile
+
+
+Node: Section 13-1,	Next: Section 13-2,	Prev: Chapter 13,	Up: Chapter 13
+  
+
+13.1   Options
+*=*=*=*=*=*=*=
+
+  
+  The following command-line options are recognized by ocamldep.
+  
+ 
+ 
+ -I directory  Add the given directory to the list of directories searched for
+   source files. If a source file foo.ml mentions an external compilation unit
+   Bar, a dependency on that unit's interface bar.cmi is generated only if the
+   source for bar is found in the current directory or in one of the
+   directories specified with -I. Otherwise, Bar is assumed to be a module from
+   the standard library, and no dependencies are generated. For programs that
+   span multiple directories, it is recommended to pass ocamldep the same -I
+   options that are passed to the compiler.
+ 
+ -modules  Output raw dependencies of the form 
+   <<      filename: Module1 Module2 ... ModuleN
+   >>
+ where Module1, ..., ModuleN are the names of the compilation units referenced
+   within the file filename, but these names are not resolved to source file
+   names. Such raw dependencies cannot be used by make, but can be
+   post-processed by other tools such as Omake.
+ 
+ -native  Generate dependencies for a pure native-code program (no bytecode
+   version). When an implementation file (.ml file) has no explicit interface
+   file (.mli file), ocamldep generates dependencies on the bytecode compiled
+   file (.cmo file) to reflect interface changes. This can cause unnecessary
+   bytecode recompilations for programs that are compiled to native-code only.
+   The flag -native causes dependencies on native compiled files (.cmx) to be
+   generated instead of on .cmo files. (This flag makes no difference if all
+   source files have explicit .mli interface files.)
+ 
+ -pp command  Cause ocamldep to call the given command as a preprocessor for
+   each source file.
+ 
+ -slash  Under Windows, use a forward slash (/) as the path separator instead
+   of the usual backward slash (\). Under Unix, this option does nothing.
+ 
+ -version  Print version string and exit.
+ 
+ -vnum  Print short version number and exit.
+ 
+ -help or --help  Display a short usage summary and exit. 
+  
+
+Node: Section 13-2,	Next: Chapter 14,	Prev: Section 13-1,	Up: Chapter 13
+  
+
+13.2   A typical Makefile
+*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  Here is a template Makefile for a Objective Caml program.
+<<OCAMLC=ocamlc
+  OCAMLOPT=ocamlopt
+  OCAMLDEP=ocamldep
+  INCLUDES=                 # all relevant -I options here
+  OCAMLFLAGS=$(INCLUDES)    # add other options for ocamlc here
+  OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
+  
+  # prog1 should be compiled to bytecode, and is composed of three
+  # units: mod1, mod2 and mod3.
+  
+  # The list of object files for prog1
+  PROG1_OBJS=mod1.cmo mod2.cmo mod3.cmo
+  
+  prog1: $(PROG1_OBJS)
+          $(OCAMLC) -o prog1 $(OCAMLFLAGS) $(PROG1_OBJS)
+  
+  # prog2 should be compiled to native-code, and is composed of two
+  # units: mod4 and mod5.
+  
+  # The list of object files for prog2
+  PROG2_OBJS=mod4.cmx mod5.cmx
+  
+  prog2: $(PROG2_OBJS)
+          $(OCAMLOPT) -o prog2 $(OCAMLFLAGS) $(PROG2_OBJS)
+  
+  # Common rules
+  .SUFFIXES: .ml .mli .cmo .cmi .cmx
+  
+  .ml.cmo:
+          $(OCAMLC) $(OCAMLFLAGS) -c $<
+  
+  .mli.cmi:
+          $(OCAMLC) $(OCAMLFLAGS) -c $<
+  
+  .ml.cmx:
+          $(OCAMLOPT) $(OCAMLOPTFLAGS) -c $<
+  
+  # Clean up
+  clean:
+          rm -f prog1 prog2
+          rm -f *.cm[iox]
+  
+  # Dependencies
+  depend:
+          $(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
+  
+  include .depend
+>>
+  
+   
+
+Node: Chapter 14,	Next: Section 14-1,	Prev: Chapter 13,	Up: Part III
+  
+
+Chapter 14     The browser/editor (ocamlbrowser)
+************************************************
+    
+  This chapter describes OCamlBrowser, a source and compiled interface browser,
+written using LablTk. This is a useful companion to the programmer.
+  Its functions are: 
+  
+   - navigation through Objective Caml's modules (using compiled interfaces). 
+   - source editing, type-checking, and browsing. 
+   - integrated Objective Caml shell, running as a subprocess. 
+  
+* Menu:
+
+* Section 14-1::	Invocation
+* Section 14-2::	Viewer
+* Section 14-3::	Module browsing
+* Section 14-4::	File editor
+* Section 14-5::	Shell
+
+
+Node: Section 14-1,	Next: Section 14-2,	Prev: Chapter 14,	Up: Chapter 14
+  
+
+14.1   Invocation
+*=*=*=*=*=*=*=*=*
+
+   
+  The browser is started by the command ocamlbrowser, as follows: 
+<<
+          ocamlbrowser options
+>>
+  
+  The following command-line options are recognized by ocamlbrowser.
+  
+ 
+ 
+ -I directory  Add the given directory to the list of directories searched for
+   source and compiled files. By default, only the standard library directory
+   is searched. The standard library can also be changed by setting the
+   OCAMLLIB environment variable.
+ 
+ -nolabels  Ignore non-optional labels in types. Labels cannot be used in
+   applications, and parameter order becomes strict.
+ 
+ -oldui  Old multi-window interface. The default is now more like Smalltalk's
+   class browser.
+ 
+ -rectypes  Allow arbitrary recursive types during type-checking. By default,
+   only recursive types where the recursion goes through an object type are
+   supported.
+ 
+ -version  Print version string and exit.
+ 
+ -vnum  Print short version number and exit.
+ 
+ -w warning-list  Enable or disable warnings according to the argument
+   warning-list.
+  
+  Most options can also be modified inside the application by the Modules -
+Path editor and Compiler - Preferences commands. They are inherited when you
+start a toplevel shell.
+
+Node: Section 14-2,	Next: Section 14-3,	Prev: Section 14-1,	Up: Chapter 14
+  
+
+14.2   Viewer
+*=*=*=*=*=*=*
+
+   This is the first window you get when you start OCamlBrowser. It displays a
+search window, and the list of modules in the load path. At the top a row of
+menus.
+  
+  
+   - File - Open and File - Editor give access to the editor.
+ 
+   - File - Shell creates an Objective Caml subprocess in a shell.
+ 
+   - View - Show all defs displays the signature of the currently selected
+   module.
+ 
+   - View - Search entry shows/hides the search entry just below the menu bar.
+ 
+   - Modules - Path editor changes the load path. Modules - Reset cache rescans
+   the load path and resets the module cache. Do it if you recompile some
+   interface, or get confused about what is  in the cache.
+ 
+   - Modules - Search symbol allows to search a symbol either by its name, like
+   the bottom line of the viewer, or, more interestingly, by its type. Exact
+   type searches for a type with exactly the same information as the pattern
+   (variables match only variables). Included type allows to give only partial
+   information: the actual type may take more arguments and return more
+   results, and variables in the pattern match anything. In both cases,
+   argument and tuple order is irrelevant (1*Note Notes 3::), and unlabeled
+   arguments in the pattern match any label.
+ 
+   - The Search entry just below the menu bar allows one to search for an
+   identifier in all modules (wildcards "?" and "*" allowed). If you choose the
+   type option, the search is done by type inclusion (cf. Search Symbol -
+   Included type).
+ 
+   - The Close all button is there to dismiss the windows created by the Detach
+   button. By double-clicking on it you will quit the browser.
+  
+
+Node: Section 14-3,	Next: Section 14-4,	Prev: Section 14-2,	Up: Chapter 14
+  
+
+14.3   Module browsing
+*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  You select a module in the leftmost box by either cliking on it or pressing
+return when it is selected. Fast access is available in all boxes pressing the
+first few letter of the desired name. Double-clicking / double-return displays
+the whole signature for the module.
+  Defined identifiers inside the module are displayed in a box to the right of
+the previous one. If you click on one, this will either display its contents in
+another box (if this is a sub-module) or display the signature for this
+identifier below.
+  Signatures are clickable. Double clicking with the left mouse button on an
+identifier in a signature brings you to its signature. A single click on the
+right button pops up a menu displaying the type declaration for the selected
+identifier. Its title, when selectable, also brings you to its signature.
+  At the bottom, a series of buttons, depending on the context. 
+  
+   - Detach copies the currently displayed signature in a new window, to keep
+   it. 
+   - Impl and Intf bring you to the implementation or interface of the
+   currently displayed signature, if it is available. 
+  
+  Control-S lets you search a string in the signature.
+
+Node: Section 14-4,	Next: Section 14-5,	Prev: Section 14-3,	Up: Chapter 14
+  
+
+14.4   File editor
+*=*=*=*=*=*=*=*=*=
+
+   You can edit files with it, if you're not yet used to emacs. Otherwise you
+can use it as a browser, making occasional corrections.
+  The Edit menu contains commands for jump (C-g), search (C-s), and sending the
+current phrase (or selection if some text is selected) to a sub-shell (M-x).
+For this last option, you may choose the shell via a dialog.
+  Essential functions are in the Compiler menu.
+  
+  
+   - Preferences opens a dialog to set internals of the editor and
+   type-checker.
+ 
+   - Lex adds colors according to lexical categories.
+ 
+   - Typecheck verifies typing, and memorizes to let one see an expression's
+   type by double-clicking on it. This is also valid for interfaces. If an
+   error occurs, the part of the interface preceding the error is computed.
+ After typechecking, pressing the right button pops up a menu giving the type
+   of the pointed expression, and eventually allowing to follow some links.
+ 
+   - Clear errors dismisses type-checker error messages and warnings.
+ 
+   - Signature shows the signature of the current file (after type checking). 
+  
+
+Node: Section 14-5,	Next: Chapter 15,	Prev: Section 14-4,	Up: Chapter 14
+  
+
+14.5   Shell
+*=*=*=*=*=*=
+
+   When you create a shell, a dialog is presented to you, letting you choose
+which command you want to run, and the title of the shell (to choose it in the
+Editor).
+  The executed subshell is given the current load path.
+  
+  
+   - File use a source file or load a bytecode file. You may also import the
+   browser's path into the subprocess. 
+   - History M-p and M-n browse up and down. 
+   - Signal C-c interrupts, and you can also kill the subprocess. 
+    
+
+Node: Notes 3
+ ---------------------------------------
+ 
+(1) To avoid combinatorial explosion of the search space, optional
+arguments in the actual type are ignored in the actual if (1) there are too
+many of them, and (2) they do not appear explicitly in the pattern.
+
+Node: Chapter 15,	Next: Section 15-1,	Prev: Chapter 14,	Up: Part III
+  
+
+Chapter 15     The documentation generator (ocamldoc)
+*****************************************************
+    
+  This chapter describes OCamldoc, a tool that generates documentation from
+special comments embedded in source files. The comments used by OCamldoc are of
+the form (**...*) and follow the format described in section
+15.2*Note Section 15-2::.
+  OCamldoc can produce documentation in various formats: HTML, LaTeX, TeXinfo,
+Unix man pages, and dot dependency graphs. Moreover, users can add their own
+custom generators, as explained in section
+15.3*Note Section 15-3::.
+  In this chapter, we use the word element to refer to any of the following
+parts of an OCaml source file: a type declaration, a value, a module, an
+exception, a module type, a type constructor, a record field, a class, a class
+type, a class method, a class value or a class inheritance clause.
+* Menu:
+
+* Section 15-1::	Usage
+* Section 15-2::	Syntax of documentation comments
+* Section 15-3::	Custom generators
+* Section 15-4::	Adding command line options
+
+
+Node: Section 15-1,	Next: Subsection 15-1-1,	Prev: Chapter 15,	Up: Chapter 15
+  
+
+15.1   Usage
+*=*=*=*=*=*=
+
+   
+* Menu:
+
+* Subsection 15-1-1::	Invocation
+* Subsection 15-1-2::	Merging of module information
+* Subsection 15-1-3::	Coding rules
+
+
+Node: Subsection 15-1-1,	Next: Subsection 15-1-2,	Prev: Section 15-1,	Up: Section 15-1
+  
+
+15.1.1   Invocation
+===================
+  
+  OCamldoc is invoked via the command ocamldoc, as follows: 
+<<
+          ocamldoc options sourcefiles
+>>
+  
+
+Options for choosing the output format
+--------------------------------------
+  
+  The following options determine the format for the generated documentation.
+  
+  
+ -html  Generate documentation in HTML default format. The generated HTML pages
+   are stored in the current directory, or in the directory specified with the
+   -d option. You can customize the style of the generated pages by editing the
+   generated style.css file, or by providing your own style sheet using option
+   -css-style. The file style.css is not generated if it already exists.
+ 
+ -latex  Generate documentation in LaTeX default format. The generated LaTeX
+   document is saved in file ocamldoc.out, or in the file specified with the -o
+   option. The document uses the style file ocamldoc.sty. This file is
+   generated when using the -latex option, if it does not already exist. You
+   can change this file to customize the style of your LaTeX documentation.
+ 
+ -texi  Generate documentation in TeXinfo default format. The generated LaTeX
+   document is saved in file ocamldoc.out, or in the file specified with the -o
+   option.
+ 
+ -man  Generate documentation as a set of Unix man pages. The generated pages
+   are stored in the current directory, or in the directory specified with the
+   -d option.
+ 
+ -dot  Generate a dependency graph for the toplevel modules, in a format
+   suitable for displaying and processing by dot. The dot tool is available
+   from http://www.research.att.com/sw/tools/graphviz/. The textual
+   representation of the graph is written to the file ocamldoc.out, or to the
+   file specified with the -o option. Use dot ocamldoc.out to display it.
+ 
+ -g file.cm[o,a]  Dynamically load the given file, which defines a custom
+   documentation generator. See section
+   15.4.1*Note Subsection 15-4-1::. This option is
+   supported by the ocamldoc command, but not by its native-code version
+   ocamldoc.opt. If the given file is a simple one and does not exist in the
+   current directory, then ocamldoc looks for it in the custom generators
+   default directory, and in the directories specified with optional -i
+   options.
+ 
+ -customdir  Display the custom generators default directory.
+ 
+ -i directory  Add the given directory to the path where to look for custom
+   generators.
+  
+
+General options
+---------------
+  
+  
+ 
+ 
+ -d dir  Generate files in directory dir, rather than the current directory.
+ 
+ -dump file  Dump collected information into file. This information can be read
+   with the -load option in a subsequent invocation of ocamldoc.
+ 
+ -hide modules  Hide the given complete module names in the generated
+   documentation. modules is a list of complete module names are separated by
+   ',', without blanks. For instance: Pervasives,M2.M3.
+ 
+ -inv-merge-ml-mli  Reverse the precedence of implementations and interfaces
+   when merging. All elements in implementation files are kept, and the -m
+   option indicates which parts of the comments in interface files are merged
+   with the comments in implementation files.
+ 
+ -keep-code  Always keep the source code for values, methods and instance
+   variables, when available. The source code is always kept when a .ml file is
+   given, but is by default discarded when a .mli is given. This option allows
+   to always keep the source code.
+ 
+ -load file  Load information from file, which has been produced by ocamldoc
+   -dump. Several -load options can be given.
+ 
+ -m flags  Specify merge options between interfaces and implementations. (see
+   section 15.1.2*Note Subsection 15-1-2:: for details). flags can be one
+   or several of the following characters: 
+     
+    d  merge description 
+    a  merge @author 
+    v  merge @version 
+    l  merge @see 
+    s  merge @since 
+    o  merge @deprecated 
+    p  merge @param 
+    e  merge @raise 
+    r  merge @return 
+    A  merge everything 
+ 
+ 
+ -no-custom-tags  Do not allow custom @-tags (see section
+   15.2.5*Note Subsection 15-2-5::).
+ 
+ -no-stop  Keep elements placed after/between the (**/**) special comment(s)
+   (see section 15.2*Note Section 15-2::).
+ 
+ -o file  Output the generated documentation to file instead of ocamldoc.out.
+   This option is meaningful only in conjunction with the -latex, -texi, or
+   -dot options.
+ 
+ -pp command  Pipe sources through preprocessor command.
+ 
+ -impl filename  Process the file filename as an implementation file, even if
+   its extension is not .ml.
+ 
+ -intf filename  Process the file filename as an interface file, even if its
+   extension is not .mli.
+ 
+ -text filename  Process the file filename as a text file, even if its
+   extension is not .txt.
+ 
+ -sort  Sort the list of top-level modules before generating the documentation.
+ 
+ -stars  Remove blank characters until the first asterisk ('*') in each line of
+   comments.
+ 
+ -t title  Use title as the title for the generated documentation.
+ 
+ -intro file  Use content of file as ocamldoc text to use as introduction
+   (HTML, LaTeXand TeXinfo only). For HTML, the file is used to create the
+   whole index.html file.
+ 
+ -v  Verbose mode. Display progress information.
+ 
+ -version  Print version string and exit.
+ 
+ -vnum  Print short version number and exit.
+ 
+ -warn-error  Treat Ocamldoc warnings as errors.
+ 
+ -hide-warnings  Do not print OCamldoc warnings.
+ 
+ -help or --help  Display a short usage summary and exit. 
+  
+
+Type-checking options
+---------------------
+  
+  OCamldoc calls the Objective Caml type-checker to obtain type information.
+The following options impact the type-checking phase. They have the same
+meaning as for the ocamlc and ocamlopt commands.
+  
+ 
+ 
+ -I directory  Add directory to the list of directories search for compiled
+   interface files (.cmi files).
+ 
+ -nolabels  Ignore non-optional labels in types.
+ 
+ -rectypes  Allow arbitrary recursive types. (See the -rectypes option to
+   ocamlc.)
+  
+
+Options for generating HTML pages
+---------------------------------
+  
+  The following options apply in conjunction with the -html option:
+  
+  
+ -all-params  Display the complete list of parameters for functions and
+   methods.
+ 
+ -css-style filename  Use filename as the Cascading Style Sheet file.
+ 
+ -colorize-code  Colorize the OCaml code enclosed in [ ] and \{[ ]\}, using
+   colors to emphasize keywords, etc. If the code fragments are not
+   syntactically correct, no color is added.
+ 
+ -index-only  Generate only index files.
+ 
+ -short-functors  Use a short form to display functors: module M : functor
+   (A:Module) -> functor (B:Module2) -> sig .. end is displayed as module M
+   (A:Module) (B:Module2) : sig .. end.
+  
+
+Options for generating LaTeX files
+----------------------------------
+  
+  The following options apply in conjunction with the -latex option:
+  
+  
+ -latex-value-prefix prefix  Give a prefix to use for the labels of the values
+   in the generated LaTeX document. The default prefix is the empty string. You
+   can also use the options -latex-type-prefix, -latex-exception-prefix,
+   -latex-module-prefix, -latex-module-type-prefix, -latex-class-prefix,
+   -latex-class-type-prefix, -latex-attribute-prefix and -latex-method-prefix.
+ These options are useful when you have, for example, a type and a value with
+   the same name. If you do not specify prefixes, LaTeX will complain about
+   multiply defined labels.
+ 
+ -latextitle n,style  Associate style number n to the given LaTeX sectioning
+   command style, e.g. section or subsection. (LaTeX only.) This is useful when
+   including the generated document in another LaTeX document, at a given
+   sectioning level. The default association is 1 for section, 2 for
+   subsection, 3 for subsubsection, 4 for paragraph and 5 for subparagraph.
+ 
+ -noheader  Suppress header in generated documentation.
+ 
+ -notoc  Do not generate a table of contents.
+ 
+ -notrailer  Suppress trailer in generated documentation.
+ 
+ -sepfiles  Generate one .tex file per toplevel module, instead of the global
+   ocamldoc.out file. 
+  
+
+Options for generating TeXinfo files
+------------------------------------
+  
+  The following options apply in conjunction with the -texi option:
+  
+  
+ -esc8  Escape accented characters in Info files.
+ 
+ -info-entry  Specify Info directory entry.
+ 
+ -info-section  Specify section of Info directory.
+ 
+ -noheader  Suppress header in generated documentation.
+ 
+ -noindex  Do not build index for Info files.
+ 
+ -notrailer  Suppress trailer in generated documentation. 
+  
+
+Options for generating dot graphs
+---------------------------------
+  
+  The following options apply in conjunction with the -dot option:
+  
+  
+ -dot-colors colors  Specify the colors to use in the generated dot code. When
+   generating module dependencies, ocamldoc uses different colors for modules,
+   depending on the directories in which they reside. When generating types
+   dependencies, ocamldoc uses different colors for types, depending on the
+   modules in which they are defined. colors is a list of color names separated
+   by ',', as in Red,Blue,Green. The available colors are the ones supported by
+   the dot tool.
+ 
+ -dot-include-all  Include all modules in the dot output, not only modules
+   given on the command line or loaded with the -load option.
+ 
+ -dot-reduce  Perform a transitive reduction of the dependency graph before
+   outputting the dot code. This can be useful if there are a lot of transitive
+   dependencies that clutter the graph.
+ 
+ -dot-types  Output dot code describing the type dependency graph instead of
+   the module dependency graph. 
+  
+
+Options for generating man files
+--------------------------------
+  
+  The following options apply in conjunction with the -man option:
+  
+  
+ -man-mini  Generate man pages only for modules, module types, clases and class
+   types, instead of pages for all elements.
+ 
+ -man-suffix suffix  Set the suffix used for generated man filenames. Default
+   is '3o', as in List.3o.
+ 
+ -man-section section  Set the section number used for generated man filenames.
+   Default is '3'.
+  
+
+Node: Subsection 15-1-2,	Next: Subsection 15-1-3,	Prev: Subsection 15-1-1,	Up: Section 15-1
+  
+
+15.1.2   Merging of module information
+======================================
+   
+  Information on a module can be extracted either from the .mli or .ml file, or
+both, depending on the files given on the command line. When both .mli and .ml
+files are given for the same module, information extracted from these files is
+merged according to the following rules: 
+  
+   - Only elements (values, types, classes, ...) declared in the .mli file are
+   kept. In other terms, definitions from the .ml file that are not exported in
+   the .mli file are not documented. 
+   - Descriptions of elements and descriptions in @-tags are handled as
+   follows. If a description for the same element or in the same @-tag of the
+   same element is present in both files, then the description of the .ml file
+   is concatenated to the one in the .mli file, if the corresponding -m flag is
+   given on the command line. If a description is present in the .ml file and
+   not in the .mli file, the .ml description is kept. In either case, all the
+   information given in the .mli file is kept. 
+  
+
+Node: Subsection 15-1-3,	Next: Section 15-2,	Prev: Subsection 15-1-2,	Up: Section 15-1
+  
+
+15.1.3   Coding rules
+=====================
+    The following rules must be respected in order to
+avoid name clashes resulting in cross-reference errors: 
+  
+   - In a module, there must not be two modules, two module types or a module
+   and a module type with the same name. In the default HTML generator, modules
+   ab and AB will be printed to the same file on case insensitive file systems.
+   
+   - In a module, there must not be two classes, two class types or a class and
+   a class type with the same name. 
+   - In a module, there must not be two values, two types, or two exceptions
+   with the same name. 
+   - Values defined in tuple, as in let (x,y,z) = (1,2,3) are not kept by
+   OCamldoc. 
+   - Avoid the following construction: 
+   <<open Foo (* which has a module Bar with a value x *)
+     module Foo =
+       struct
+         module Bar =
+           struct
+             let x = 1
+           end
+       end
+       let dummy = Bar.x
+   >>
+ In this case, OCamldoc will associate Bar.x to the x of module Foo defined
+   just above, instead of to the Bar.x defined in the opened module Foo. 
+  
+
+Node: Section 15-2,	Next: Subsection 15-2-1,	Prev: Section 15-1,	Up: Chapter 15
+  
+
+15.2   Syntax of documentation comments
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Comments containing documentation material are called special comments and
+are written between (** and *). Special comments must start exactly with (**.
+Comments beginning with ( and more than two * are ignored.
+* Menu:
+
+* Subsection 15-2-1::	Placement of documentation comments
+* Subsection 15-2-2::	The Stop special comment
+* Subsection 15-2-3::	Syntax of documentation comments
+* Subsection 15-2-4::	Text formatting
+* Subsection 15-2-5::	Documentation tags (@-tags)
+

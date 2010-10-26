@@ -1,0 +1,1136 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Chapter 17,	Next: Section 17-1,	Prev: Chapter 16,	Up: Part III
+  
+
+Chapter 17     Profiling (ocamlprof)
+************************************
+    
+  This chapter describes how the execution of Objective Caml programs can be
+profiled, by recording how many times functions are called, branches of
+conditionals are taken, ...
+* Menu:
+
+* Section 17-1::	Compiling for profiling
+* Section 17-2::	Profiling an execution
+* Section 17-3::	Printing profiling information
+* Section 17-4::	Time profiling
+
+
+Node: Section 17-1,	Next: Section 17-2,	Prev: Chapter 17,	Up: Chapter 17
+  
+
+17.1   Compiling for profiling
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+  
+  Before profiling an execution, the program must be compiled in profiling
+mode, using the ocamlcp front-end to the ocamlc compiler (see
+chapter 8*Note Chapter 8::). When compiling modules separately, ocamlcp must
+be used when compiling the modules (production of .cmo files), and can also be
+used (though this is not strictly necessary) when linking them together.
+ Note
+   If a module (.ml file) doesn't have a corresponding interface (.mli file),
+then compiling it with ocamlcp will produce object files (.cmi and .cmo) that
+are not compatible with the ones produced by ocamlc, which may lead to problems
+(if the .cmi or .cmo is still around) when switching between profiling and
+non-profiling compilations. To avoid this problem, you should always have a
+.mli file for each .ml file.
+ Note
+   To make sure your programs can be compiled in profiling mode, avoid using
+any identifier that begins with __ocaml_prof.
+  The amount of profiling information can be controlled through the -p option
+to ocamlcp, followed by one or several letters indicating which parts of the
+program should be profiled:
+  
+  
+ a  all options 
+ f  function calls : a count point is set at the beginning of each function
+   body 
+ i  if ...then ...else ... : count points are set in both then branch and else
+   branch 
+ l  while, for loops: a count point is set at the beginning of the loop body 
+ m  match branches: a count point is set at the beginning of the body of each
+   branch 
+ t  try ...with ... branches: a count point is set at the beginning of the body
+   of each branch 
+  
+  For instance, compiling with ocamlcp -p film profiles function calls,
+if...then...else..., loops and pattern matching.
+  Calling ocamlcp without the -p option defaults to -p fm, meaning that only
+function calls and pattern matching are profiled.
+  Note: Due to the implementation of streams and stream patterns as syntactic
+sugar, it is hard to predict what parts of stream expressions and patterns will
+be profiled by a given flag. To profile a program with streams, we recommend
+using ocamlcp -p a.
+
+Node: Section 17-2,	Next: Section 17-3,	Prev: Section 17-1,	Up: Chapter 17
+  
+
+17.2   Profiling an execution
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  Running a bytecode executable file that has been compiled with ocamlcp
+records the execution counts for the specified parts of the program and saves
+them in a file called ocamlprof.dump in the current directory.
+  If the environment variable OCAMLPROF_DUMP is set when the program exits, its
+value is used as the file name instead of ocamlprof.dump.
+  The dump file is written only if the program terminates normally (by calling
+exit or by falling through). It is not written if the program terminates with
+an uncaught exception.
+  If a compatible dump file already exists in the current directory, then the
+profiling information is accumulated in this dump file. This allows, for
+instance, the profiling of several executions of a program on different inputs.
+
+Node: Section 17-3,	Next: Section 17-4,	Prev: Section 17-2,	Up: Chapter 17
+  
+
+17.3   Printing profiling information
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  The ocamlprof command produces a source listing of the program modules where
+execution counts have been inserted as comments. For instance, 
+<<        ocamlprof foo.ml
+>>
+  prints the source code for the foo module, with comments indicating how many
+times the functions in this module have been called. Naturally, this
+information is accurate only if the source file has not been modified since the
+profiling execution took place.
+  The following options are recognized by ocamlprof:
+  
+ 
+ 
+ -f dumpfile   Specifies an alternate dump file of profiling information to be
+   read.
+ 
+ -F string  Specifies an additional string to be output with profiling
+   information. By default, ocamlprof will annotate programs with comments of
+   the form (* n *) where n is the counter value for a profiling point. With
+   option -F s, the annotation will be (* sn *).
+ 
+ -impl filename  Process the file filename as an implementation file, even if
+   its extension is not .ml.
+ 
+ -intf filename  Process the file filename as an interface file, even if its
+   extension is not .mli.
+ 
+ -version  Print version string and exit.
+ 
+ -vnum  Print short version number and exit.
+ 
+ -help or --help  Display a short usage summary and exit. 
+  
+
+Node: Section 17-4,	Next: Chapter 18,	Prev: Section 17-3,	Up: Chapter 17
+  
+
+17.4   Time profiling
+*=*=*=*=*=*=*=*=*=*=*
+
+  
+  Profiling with ocamlprof only records execution counts, not the actual time
+spent into each function. There is currently no way to perform time profiling
+on bytecode programs generated by ocamlc.
+  Native-code programs generated by ocamlopt can be profiled for time and
+execution counts using the -p option and the standard Unix profiler gprof. Just
+add the -p option when compiling and linking the program: 
+<<
+          ocamlopt -o myprog -p other-options files
+          ./myprog
+          gprof myprog
+>>
+   Caml function names in the output of gprof have the following format: 
+<<
+          Module-name_function-name_unique-number
+>>
+   Other functions shown are either parts of the Caml run-time system or
+external C functions linked with the program.
+  The output of gprof is described in the Unix manual page for gprof(1). It
+generally consists of two parts: a "flat" profile showing the time spent in
+each function and the number of invocation of each function, and a
+"hierarchical" profile based on the call graph. Currently, only the Intel
+x86/Linux and Alpha/Digital Unix ports of ocamlopt support the two profiles. On
+other platforms, gprof will report only the "flat" profile with just time
+information. When reading the output of gprof, keep in mind that the
+accumulated times computed by gprof are based on heuristics and may not be
+exact.  
+
+Node: Chapter 18,	Next: Section 18-1,	Prev: Chapter 17,	Up: Part III
+  
+
+Chapter 18     Interfacing C with Objective Caml
+****************************************************************
+   
+  This chapter describes how user-defined primitives, written in C, can be
+linked with Caml code and called from Caml functions.
+* Menu:
+
+* Section 18-1::	Overview and compilation information
+* Section 18-2::	The value type
+* Section 18-3::	Representation of Caml data types
+* Section 18-4::	Operations on values
+* Section 18-5::	Living in harmony with the garbage collector
+* Section 18-6::	A complete example
+* Section 18-7::	Advanced topic: callbacks from C to Caml
+* Section 18-8::	Advanced example with callbacks
+* Section 18-9::	Advanced topic: custom blocks
+* Section 18-10::	Advanced topic: multithreading
+* Section 18-11::	Building mixed C/Caml libraries: ocamlmklib
+
+
+Node: Section 18-1,	Next: Subsection 18-1-1,	Prev: Chapter 18,	Up: Chapter 18
+  
+
+18.1   Overview and compilation information
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+* Menu:
+
+* Subsection 18-1-1::	Declaring primitives
+* Subsection 18-1-2::	Implementing primitives
+* Subsection 18-1-3::	Statically linking C code with Caml code
+* Subsection 18-1-4::	Dynamically linking C code with Caml code
+* Subsection 18-1-5::	Choosing between static linking and dynamic linking
+* Subsection 18-1-6::	Building standalone custom runtime systems
+
+
+Node: Subsection 18-1-1,	Next: Subsection 18-1-2,	Prev: Section 18-1,	Up: Section 18-1
+  
+
+18.1.1   Declaring primitives
+=============================
+   User primitives are declared in an implementation file or struct...end
+module expression using the external keyword: 
+<<
+          external name : type = C-function-name
+>>
+   This defines the value name name as a function with type type that executes
+by calling the given C function. For instance, here is how the input primitive
+is declared in the standard library module Pervasives: 
+<<        external input : in_channel -> string -> int -> int -> int
+                         = "input"
+>>
+  Primitives with several arguments are always curried. The C function does not
+necessarily have the same name as the ML function.
+  External functions thus defined can be specified in interface files or
+sig...end signatures either as regular values 
+<<
+          val name : type
+>>
+   thus hiding their implementation as a C function, or explicitly as
+"manifest" external functions 
+<<
+          external name : type = C-function-name
+>>
+   The latter is slightly more efficient, as it allows clients of the module to
+call directly the C function instead of going through the corresponding Caml
+function. 
+  The arity (number of arguments) of a primitive is automatically determined
+from its Caml type in the external declaration, by counting the number of
+function arrows in the type. For instance, input above has arity 4, and the
+input C function is called with four arguments. Similarly, 
+<<    external input2 : in_channel * string * int * int -> int = "input2"
+>>
+  has arity 1, and the input2 C function receives one argument (which is a
+quadruple of Caml values).
+  Type abbreviations are not expanded when determining the arity of a
+primitive. For instance, 
+<<        type int_endo = int -> int
+          external f : int_endo -> int_endo = "f"
+          external g : (int -> int) -> (int -> int) = "f"
+>>
+  f has arity 1, but g has arity 2. This allows a primitive to return a
+functional value (as in the f example above): just remember to name the
+functional return type in a type abbreviation.
+
+Node: Subsection 18-1-2,	Next: Subsection 18-1-3,	Prev: Subsection 18-1-1,	Up: Section 18-1
+  
+
+18.1.2   Implementing primitives
+================================
+  
+  User primitives with arity n <= 5 are implemented by C functions that take n
+arguments of type value, and return a result of type value. The type value is
+the type of the representations for Caml values. It encodes objects of several
+base types (integers, floating-point numbers, strings, ...), as well as Caml
+data structures. The type value and the associated conversion functions and
+macros are described in details below. For instance, here is the declaration
+for the C function implementing the input primitive: 
+<<CAMLprim value input(value channel, value buffer, value offset, value length)
+  {
+    ...
+  }
+>>
+  When the primitive function is applied in a Caml program, the C function is
+called with the values of the expressions to which the primitive is applied as
+arguments. The value returned by the function is passed back to the Caml
+program as the result of the function application.
+  User primitives with arity greater than 5 should be implemented by two C
+functions. The first function, to be used in conjunction with the bytecode
+compiler ocamlc, receives two arguments: a pointer to an array of Caml values
+(the values for the arguments), and an integer which is the number of arguments
+provided. The other function, to be used in conjunction with the native-code
+compiler ocamlopt, takes its arguments directly. For instance, here are the two
+C functions for the 7-argument primitive Nat.add_nat: 
+<<CAMLprim value add_nat_native(value nat1, value ofs1, value len1,
+                                value nat2, value ofs2, value len2,
+                                value carry_in)
+  {
+    ...
+  }
+  CAMLprim value add_nat_bytecode(value * argv, int argn)
+  {
+    return add_nat_native(argv[0], argv[1], argv[2], argv[3],
+                          argv[4], argv[5], argv[6]);
+  }
+>>
+  The names of the two C functions must be given in the primitive declaration,
+as follows: 
+<<
+          external name : type =
+                   bytecode-C-function-name native-code-C-function-name
+>>
+   For instance, in the case of add_nat, the declaration is: 
+<<        external add_nat: nat -> int -> int -> nat -> int -> int -> int ->
+int
+                          = "add_nat_bytecode" "add_nat_native"
+>>
+  
+  Implementing a user primitive is actually two separate tasks: on the one
+hand, decoding the arguments to extract C values from the given Caml values,
+and encoding the return value as a Caml  value; on the other hand, actually
+computing the result from the arguments. Except for very simple primitives, it
+is often preferable to have two distinct C functions to implement these two
+tasks. The first function actually implements the primitive, taking native C
+values as arguments and returning a native C value. The second function, often
+called the "stub code", is a simple wrapper around the first function that
+converts its arguments from Caml values to C values, call the first function,
+and convert the returned C value to Caml value. For instance, here is the stub
+code for the input primitive: 
+<<CAMLprim value input(value channel, value buffer, value offset, value length)
+  {
+    return Val_long(getblock((struct channel *) channel,
+                             &Byte(buffer, Long_val(offset)),
+                             Long_val(length)));
+  }
+>>
+  (Here, Val_long, Long_val and so on are conversion macros for the type value,
+that will be described later. The CAMLprim macro expands to the required
+compiler directives to ensure that the function following it is exported and
+accessible from Caml.) The hard work is performed by the function getblock,
+which is declared as: 
+<<long getblock(struct channel * channel, char * p, long n)
+  {
+    ...
+  }
+>>
+  
+  To write C code that operates on Objective Caml values, the following include
+files are provided: 
+                                         
+             -----------------------------------------------------
+             |  Include file  |             Provides             |
+             -----------------------------------------------------
+             | caml/mlvalues.h|definition of the value type, and |
+             |                |conversion macros                 |
+             |caml/alloc.h    |allocation functions (to create   |
+             |                |structured Caml objects)          |
+             |caml/memory.h   |miscellaneous memory-related      |
+             |                |functions and macros (for GC      |
+             |                |interface, in-place modification  |
+             |                |of structures, etc).              |
+             |caml/fail.h     |functions for raising exceptions  |
+             |                |(see                              |
+             |                |section 18.4.5)                          |
+             |caml/callback.h |callback from C to Caml (see      |
+             |                |section 18.7).                               |
+             |caml/custom.h   |operations on custom blocks (see  |
+             |                |section 18.9*Note Section 18-9::)|
+             |                |.                                 |
+             |caml/intext.h   |operations for writing            |
+             |                |user-defined serialization and    |
+             |                |deserialization functions for     |
+             |                |custom blocks (see                |
+             |                |section 18.9*Note Section 18-9::)|
+             |                |.                                 |
+             |caml/threads.h  |operations for interfacing in the |
+             |                |presence of multiple threads (see |
+             |                |section 18.10).                      |
+             -----------------------------------------------------
+   These files reside in the caml/ subdirectory of the Objective Caml standard
+library directory (usually /usr/local/lib/ocaml).
+
+Node: Subsection 18-1-3,	Next: Subsection 18-1-4,	Prev: Subsection 18-1-2,	Up: Section 18-1
+  
+
+18.1.3   Statically linking C code with Caml code
+=================================================
+   
+  The Objective Caml runtime system comprises three main parts: the bytecode
+interpreter, the memory manager, and a set of C functions that implement the
+primitive operations. Some bytecode instructions are provided to call these C
+functions, designated by their offset in a table of functions (the table of
+primitives).
+  In the default mode, the Caml linker produces bytecode for the standard
+runtime system, with a standard set of primitives. References to primitives
+that are not in this standard set result in the "unavailable C primitive"
+error. (Unless dynamic loading of C libraries is supported -- see
+section 18.1.4*Note Subsection 18-1-4:: below.)
+  In the "custom runtime" mode, the Caml linker scans the object files and
+determines the set of required primitives. Then, it builds a suitable runtime
+system, by calling the native code linker with: 
+  
+   - the table of the required primitives; 
+   - a library that provides the bytecode interpreter, the memory manager, and
+   the standard primitives; 
+   - libraries and object code files (.o files) mentioned on the command line
+   for the Caml linker, that provide implementations for the user's primitives.
+   
+   This builds a runtime system with the required primitives. The Caml linker
+generates bytecode for this custom runtime system. The bytecode is appended to
+the end of the custom runtime system, so that it will be automatically executed
+when the output file (custom runtime + bytecode) is launched.
+  To link in "custom runtime" mode, execute the ocamlc command with: 
+  
+   - the -custom option; 
+   - the names of the desired Caml object files (.cmo and .cma files) ; 
+   - the names of the C object files and libraries (.o and .a files) that
+   implement the required primitives. Under Unix and Windows, a library named
+   libname.a (respectively, .lib) residing in one of the standard library
+   directories can also be specified as -cclib -lname. 
+  
+  If you are using the native-code compiler ocamlopt, the -custom flag is not
+needed, as the final linking phase of ocamlopt always builds a standalone
+executable. To build a mixed Caml/C executable, execute the ocamlopt command
+with: 
+  
+   - the names of the desired Caml native object files (.cmx and .cmxa files); 
+   - the names of the C object files and libraries (.o, .a, .so or .dll files)
+   that implement the required primitives. 
+  
+  Starting with OCaml 3.00, it is possible to record the -custom option as well
+as the names of C libraries in a Caml library file .cma or .cmxa. For instance,
+consider a Caml library mylib.cma, built from the Caml object files a.cmo and
+b.cmo, which reference C code in libmylib.a. If the library is built as
+follows: 
+<<
+          ocamlc -a -o mylib.cma -custom a.cmo b.cmo -cclib -lmylib
+>>
+   users of the library can simply link with mylib.cma: 
+<<
+          ocamlc -o myprog mylib.cma ...
+>>
+   and the system will automatically add the -custom and -cclib -lmylib
+options, achieving the same effect as 
+<<
+          ocamlc -o myprog -custom a.cmo b.cmo ... -cclib -lmylib
+>>
+   The alternative, of course, is to build the library without extra options: 
+<<
+          ocamlc -a -o mylib.cma a.cmo b.cmo
+>>
+   and then ask users to provide the -custom and -cclib -lmylib options
+themselves at link-time: 
+<<
+          ocamlc -o myprog -custom mylib.cma ... -cclib -lmylib
+>>
+   The former alternative is more convenient for the final users of the
+library, however.
+
+Node: Subsection 18-1-4,	Next: Subsection 18-1-5,	Prev: Subsection 18-1-3,	Up: Section 18-1
+  
+
+18.1.4   Dynamically linking C code with Caml code
+==================================================
+   
+  Starting with OCaml 3.03, an alternative to static linking of C code using
+the -custom code is provided. In this mode, the Caml linker generates a pure
+bytecode executable (no embedded custom runtime system) that simply records the
+names of dynamically-loaded libraries containing the C code. The standard Caml
+runtime system ocamlrun then loads dynamically these libraries, and resolves
+references to the required primitives, before executing the bytecode.
+  This facility is currently supported and known to work well under Linux,
+MacOS X, and Windows. It is supported, but not fully tested yet, under FreeBSD,
+Tru64, Solaris and Irix. It is not supported yet under other Unixes.
+  To dynamically link C code with Caml code, the C code must first be compiled
+into a shared library (under Unix) or DLL (under Windows). This involves 1-
+compiling the C files with appropriate C compiler flags for producing
+position-independent code (when required by the operating system), and 2-
+building a shared library from the resulting object files. The resulting shared
+library or DLL file must be installed in a place where ocamlrun can find it
+later at program start-up time (see
+section 10.3*Note Section 10-3::). Finally (step 3), execute the
+ocamlc command with 
+  
+   - the names of the desired Caml object files (.cmo and .cma files) ; 
+   - the names of the C shared libraries (.so or .dll files) that implement the
+   required primitives. Under Unix and Windows,  a library named dllname.so
+   (respectively, .dll) residing in one of the standard library directories can
+   also be specified as -dllib -lname. 
+   Do not set the -custom flag, otherwise you're back to static linking as
+described in section 18.1.3*Note Subsection 18-1-3::. The ocamlmklib tool
+(see section 18.11*Note Section 18-11::) automates steps 2 and 3.
+  As in the case of static linking, it is possible (and recommended) to record
+the names of C libraries in a Caml .cma library archive.  Consider again a Caml
+library mylib.cma, built from the Caml object files a.cmo and b.cmo, which
+reference C code in dllmylib.so. If the library is built as follows: 
+<<
+          ocamlc -a -o mylib.cma a.cmo b.cmo -dllib -lmylib
+>>
+   users of the library can simply link with mylib.cma: 
+<<
+          ocamlc -o myprog mylib.cma ...
+>>
+   and the system will automatically add the -dllib -lmylib option, achieving
+the same effect as 
+<<
+          ocamlc -o myprog a.cmo b.cmo ... -dllib -lmylib
+>>
+   Using this mechanism, users of the library mylib.cma do not need to known
+that it references C code, nor whether this C code must be statically linked
+(using -custom) or dynamically linked.
+
+Node: Subsection 18-1-5,	Next: Subsection 18-1-6,	Prev: Subsection 18-1-4,	Up: Section 18-1
+  
+
+18.1.5   Choosing between static linking and dynamic linking
+============================================================
+  
+  After having described two different ways of linking C code with Caml code,
+we now review the pros and cons of each, to help developers of mixed Caml/C
+libraries decide.
+  The main advantage of dynamic linking is that it preserves the
+platform-independence of bytecode executables. That is, the bytecode executable
+contains no machine code, and can therefore be compiled on platform A and
+executed on other platforms B, C, ..., as long as the required shared libraries
+are available on all these platforms. In contrast, executables generated by
+ocamlc -custom run only on the platform on which they were created, because
+they embark a custom-tailored runtime system specific to that platform. In
+addition, dynamic linking results in smaller executables.
+  Another advantage of dynamic linking is that the final users of the library
+do not need to have a C compiler, C linker, and C runtime libraries installed
+on their machines. This is no big deal under  Unix and Cygwin, but many Windows
+users are reluctant to install Microsoft Visual C just to be able to do ocamlc
+-custom.
+  There are two drawbacks to dynamic linking. The first is that the resulting
+executable is not stand-alone: it requires the shared libraries, as well as
+ocamlrun, to be installed on the machine executing the code. If you wish to
+distribute a stand-alone executable, it is better to link it statically, using
+ocamlc -custom -ccopt -static or ocamlopt -ccopt -static. Dynamic linking also
+raises the "DLL hell" problem: some care must be taken to ensure that the right
+versions of the shared libraries are found at start-up time.
+  The second drawback of dynamic linking is that it complicates the
+construction of the library. The C compiler and linker flags to compile to
+position-independent code and build a shared library vary wildly between
+different Unix systems. Also, dynamic linking is not supported on all Unix
+systems, requiring a fall-back case to static linking in the Makefile for the
+library. The ocamlmklib command (see section 18.11*Note Section 18-11::)
+tries to hide some of these system dependencies.
+  In conclusion: dynamic linking is highly recommended under the native Windows
+port, because there are no portability problems and it is much more convenient
+for the end users. Under Unix, dynamic linking should be considered for mature,
+frequently used libraries because it enhances platform-independence of bytecode
+executables. For new or rarely-used libraries, static linking is much simpler
+to set up in a portable way.
+
+Node: Subsection 18-1-6,	Next: Section 18-2,	Prev: Subsection 18-1-5,	Up: Section 18-1
+  
+
+18.1.6   Building standalone custom runtime systems
+===================================================
+   
+  It is sometimes inconvenient to build a custom runtime system each time Caml
+code is linked with C libraries, like ocamlc -custom does. For one thing, the
+building of the runtime system is slow on some systems (that have bad linkers
+or slow remote file systems); for another thing, the platform-independence of
+bytecode files is lost, forcing to perform one ocamlc -custom link per platform
+of interest.
+  An alternative to ocamlc -custom is to build separately a custom runtime
+system integrating the desired C libraries, then generate "pure" bytecode
+executables (not containing their own runtime system) that can run on this
+custom runtime. This is achieved by the -make_runtime and -use_runtime flags to
+ocamlc. For example, to build a custom runtime system integrating the C parts
+of the "Unix" and "Threads" libraries, do: 
+<<        ocamlc -make-runtime -o /home/me/ocamlunixrun unix.cma threads.cma
+>>
+  To generate a bytecode executable that runs on this runtime system, do: 
+<<
+          ocamlc -use-runtime /home/me/ocamlunixrun -o myprog \
+                  unix.cma threads.cma your .cmo and .cma files
+>>
+   The bytecode executable myprog can then be launched as usual: myprog args or
+/home/me/ocamlunixrun myprog args.
+  Notice that the bytecode libraries unix.cma and threads.cma must be given
+twice: when building the runtime system (so that ocamlc knows which C
+primitives are required) and also when building the bytecode executable (so
+that the bytecode from unix.cma and threads.cma is actually linked in).
+
+Node: Section 18-2,	Next: Subsection 18-2-1,	Prev: Section 18-1,	Up: Chapter 18
+  
+
+18.2   The value type
+*=*=*=*=*=*=*=*=*=*=*
+
+   
+  All Caml objects are represented by the C type value, defined in the include
+file caml/mlvalues.h, along with macros to manipulate values of that type. An
+object of type value is either: 
+  
+   - an unboxed integer; 
+   - a pointer to a block inside the heap (such as the blocks allocated through
+   one of the 'caml_alloc_*' functions below); 
+   - a pointer to an object outside the heap (e.g., a pointer to a block
+   allocated by malloc, or to a C variable). 
+  
+* Menu:
+
+* Subsection 18-2-1::	Integer values
+* Subsection 18-2-2::	Blocks
+* Subsection 18-2-3::	Pointers outside the heap
+
+
+Node: Subsection 18-2-1,	Next: Subsection 18-2-2,	Prev: Section 18-2,	Up: Section 18-2
+  
+
+18.2.1   Integer values
+=======================
+  
+  Integer values encode 31-bit signed integers (63-bit on 64-bit
+architectures). They are unboxed (unallocated).
+
+Node: Subsection 18-2-2,	Next: Subsection 18-2-3,	Prev: Subsection 18-2-1,	Up: Section 18-2
+  
+
+18.2.2   Blocks
+===============
+  
+  Blocks in the heap are garbage-collected, and therefore have strict structure
+constraints. Each block includes a header containing the size of the block (in
+words), and the tag of the block. The tag governs how the contents of the
+blocks are structured. A tag lower than No_scan_tag indicates a structured
+block, containing well-formed values, which is recursively traversed by the
+garbage collector. A tag greater than or equal to No_scan_tag indicates a raw
+block, whose contents are not scanned by the garbage collector. For the
+benefits of ad-hoc polymorphic primitives such as equality and structured
+input-output, structured and raw blocks are further classified according to
+their tags as follows: 
+                                         
+              --------------------------------------------------
+              |        Tag        |   Contents of the block    |
+              --------------------------------------------------
+              | 0 to No_scan_tag-1|A structured block (an array|
+              |                   |of Caml objects). Each field|
+              |                   |is a value.                 |
+              |Closure_tag        |A closure representing a    |
+              |                   |functional value. The first |
+              |                   |word is a pointer to a piece|
+              |                   |of code, the remaining words|
+              |                   |are value containing the    |
+              |                   |environment.                |
+              |String_tag         |A character string.         |
+              |Double_tag         |A double-precision          |
+              |                   |floating-point number.      |
+              |Double_array_tag   |An array or record of       |
+              |                   |double-precision            |
+              |                   |floating-point numbers.     |
+              |Abstract_tag       |A block representing an     |
+              |                   |abstract datatype.          |
+              |Custom_tag         |A block representing an     |
+              |                   |abstract datatype with      |
+              |                   |user-defined finalization,  |
+              |                   |comparison, hashing,        |
+              |                   |serialization and           |
+              |                   |deserialization functions   |
+              |                   |atttached.                  |
+              --------------------------------------------------
+  
+
+Node: Subsection 18-2-3,	Next: Section 18-3,	Prev: Subsection 18-2-2,	Up: Section 18-2
+  
+
+18.2.3   Pointers outside the heap
+==================================
+  
+  Any word-aligned pointer to an address outside the heap can be safely cast to
+and from the type value. This includes pointers returned by malloc, and
+pointers to C variables (of size at least one word) obtained with the '&'
+operator.
+  Caution: if a pointer returned by malloc is cast to the type value and
+returned to Caml, explicit deallocation of the pointer using free is
+potentially dangerous, because the pointer may still be accessible from the
+Caml world. Worse, the memory space deallocated by free can later be
+reallocated as part of the Caml heap; the pointer, formerly pointing outside
+the Caml heap, now points inside the Caml heap, and this can confuse the
+garbage collector. To avoid these problems, it is preferable to wrap the
+pointer in a Caml block with tag Abstract_tag or Custom_tag.
+
+Node: Section 18-3,	Next: Subsection 18-3-1,	Prev: Section 18-2,	Up: Chapter 18
+  
+
+18.3   Representation of Caml data types
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  This section describes how Caml data types are encoded in the value type.
+* Menu:
+
+* Subsection 18-3-1::	Atomic types
+* Subsection 18-3-2::	Tuples and records
+* Subsection 18-3-3::	Arrays
+* Subsection 18-3-4::	Concrete data types
+* Subsection 18-3-5::	Objects
+* Subsection 18-3-6::	Polymorphic variants
+
+
+Node: Subsection 18-3-1,	Next: Subsection 18-3-2,	Prev: Section 18-3,	Up: Section 18-3
+  
+
+18.3.1   Atomic types
+=====================
+  
+                                         
+               ------------------------------------------------
+               |Caml type|              Encoding              |
+               ------------------------------------------------
+               | int     |Unboxed integer values.             |
+               |char     |Unboxed integer values (ASCII code).|
+               |float    |Blocks with tag Double_tag.         |
+               |string   |Blocks with tag String_tag.         |
+               |int32    |Blocks with tag Custom_tag.         |
+               |int64    |Blocks with tag Custom_tag.         |
+               |nativeint|Blocks with tag Custom_tag.         |
+               ------------------------------------------------
+  
+
+Node: Subsection 18-3-2,	Next: Subsection 18-3-3,	Prev: Subsection 18-3-1,	Up: Section 18-3
+  
+
+18.3.2   Tuples and records
+===========================
+  
+  Tuples are represented by pointers to blocks, with tag 0.
+  Records are also represented by zero-tagged blocks. The ordering of labels in
+the record type declaration determines the layout of the record fields: the
+value associated to the label declared first is stored in field 0 of the block,
+the value associated to the label declared next goes in field 1, and so on.
+  As an optimization, records whose fields all have static type float are
+represented as arrays of floating-point numbers, with tag Double_array_tag.
+(See the section below on arrays.)
+
+Node: Subsection 18-3-3,	Next: Subsection 18-3-4,	Prev: Subsection 18-3-2,	Up: Section 18-3
+  
+
+18.3.3   Arrays
+===============
+  
+  Arrays of integers and pointers are represented like tuples,  that is, as
+pointers to blocks tagged 0. They are accessed with the Field macro for reading
+and the caml_modify function for writing.
+  Arrays of floating-point numbers (type float array) have a special, unboxed,
+more efficient representation. These arrays are represented by pointers to
+blocks with tag Double_array_tag. They should be accessed with the Double_field
+and Store_double_field macros.
+
+Node: Subsection 18-3-4,	Next: Subsection 18-3-5,	Prev: Subsection 18-3-3,	Up: Section 18-3
+  
+
+18.3.4   Concrete data types
+============================
+  
+  Constructed terms are represented either by unboxed integers (for constant
+constructors) or by blocks whose tag encode the constructor (for non-constant
+constructors). The constant constructors and the non-constant constructors for
+a given concrete type are numbered separately, starting from 0, in the order in
+which they appear in the concrete type declaration. Constant constructors are
+represented by unboxed integers equal to the constructor number. Non-constant
+constructors declared with a n-tuple as argument are represented by a block of
+size n, tagged with the constructor number; the n fields contain the components
+of its tuple argument. Other non-constant constructors are represented by a
+block of size 1, tagged with the constructor number; the field 0 contains the
+value of the constructor argument. Example:
+                                         
+                  ------------------------------------------
+                  |Constructed term|    Representation     |
+                  ------------------------------------------
+                  | ()             |Val_int(0)             |
+                  |false           |Val_int(0)             |
+                  |true            |Val_int(1)             |
+                  |[]              |Val_int(0).            |
+                  |h::t            |Block with size = 2 and|
+                  |                |tag = 0; first field   |
+                  |                |contains h, second     |
+                  |                |field t.               |
+                  ------------------------------------------
+  
+  As a convenience, caml/mlvalues.h defines the macros Val_unit, Val_false and
+Val_true to refer to (), false and true.
+  The following artificial example illustrates the assignment of integers and
+block tags to constructors: 
+<<type t =
+    | A             (* First constant constructor -> integer "Val_int(0)" *)
+    | B of string   (* First non-constant constructor -> block with tag 0 *)
+    | C             (* Second constant constructor -> integer "Val_int(1)" *)
+    | D of bool     (* Second non-constant constructor -> block with tag 1 *)
+    | E of t * t    (* Third non-constant constructor -> block with tag 2 *)
+>>
+  
+
+Node: Subsection 18-3-5,	Next: Subsection 18-3-6,	Prev: Subsection 18-3-4,	Up: Section 18-3
+  
+
+18.3.5   Objects
+================
+  
+  Objects are represented as blocks with tag Object_tag. The first field of the
+block refers to the object class and associated method suite, in a format that
+cannot easily be exploited from C. The second field contains a unique object
+ID, used for comparisons. The remaining fields of the object contain the values
+of the instance variables of the object. It is unsafe to access directly
+instance variables, as the type system provides no guaranteee about the
+instance variables contained by an object. 
+  One may extract a public method from an object using the C function
+caml_get_public_method (declared in <caml/mlvalues.h>.) Since public method
+tags are hashed in the same way as variant tags, and methods are functions
+taking self as first argument, if you want to do the method call foo#bar from
+the C side, you should call: 
+<<  callback(caml_get_public_method(foo, hash_variant("bar")), foo);
+>>
+  
+
+Node: Subsection 18-3-6,	Next: Section 18-4,	Prev: Subsection 18-3-5,	Up: Section 18-3
+  
+
+18.3.6   Polymorphic variants
+=============================
+  
+  Like constructed terms, polymorphic variant values are represented either as
+integers (for polymorphic variants without arguments), or as blocks (for
+polymorphic variants with an argument). Unlike constructed terms, variant
+constructors are not numbered starting from 0, but identified by a hash value
+(a Caml integer), as computed by the C function hash_variant (declared in
+<caml/mlvalues.h>): the hash value for a variant constructor named, say,
+VConstr is hash_variant("VConstr").
+  The variant value `VConstr is represented by hash_variant("VConstr"). The
+variant value `VConstr(v) is represented by a block of size 2 and tag 0, with
+field number 0 containing hash_variant("VConstr") and field number 1 containing
+v.
+  Unlike constructed values, polymorphic variant values taking several
+arguments are not flattened. That is, `VConstr(v, v') is represented by a block
+of size 2, whose field number 1 contains the representation of the pair (v,
+v'), rather than a block of size 3 containing v and v' in fields 1 and 2.
+
+Node: Section 18-4,	Next: Subsection 18-4-1,	Prev: Section 18-3,	Up: Chapter 18
+  
+
+18.4   Operations on values
+*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+* Menu:
+
+* Subsection 18-4-1::	Kind tests
+* Subsection 18-4-2::	Operations on integers
+* Subsection 18-4-3::	Accessing blocks
+* Subsection 18-4-4::	Allocating blocks
+* Subsection 18-4-5::	Raising exceptions
+
+
+Node: Subsection 18-4-1,	Next: Subsection 18-4-2,	Prev: Section 18-4,	Up: Section 18-4
+  
+
+18.4.1   Kind tests
+===================
+  
+  
+  
+   - Is_long(v) is true if value v is an immediate integer, false otherwise 
+   - Is_block(v) is true if value v is a pointer to a block, and false if it is
+   an immediate integer. 
+  
+
+Node: Subsection 18-4-2,	Next: Subsection 18-4-3,	Prev: Subsection 18-4-1,	Up: Section 18-4
+  
+
+18.4.2   Operations on integers
+===============================
+  
+  
+  
+   - Val_long(l) returns the value encoding the long int l. 
+   - Long_val(v) returns the long int encoded in value v. 
+   - Val_int(i) returns the value encoding the int i. 
+   - Int_val(v) returns the int encoded in value v. 
+   - Val_bool(x) returns the Caml boolean representing the truth value of the C
+   integer x. 
+   - Bool_val(v) returns 0 if v is the Caml boolean false, 1 if v is true. 
+   - Val_true, Val_false represent the Caml booleans true and false. 
+  
+
+Node: Subsection 18-4-3,	Next: Subsection 18-4-4,	Prev: Subsection 18-4-2,	Up: Section 18-4
+  
+
+18.4.3   Accessing blocks
+=========================
+  
+  
+  
+   - Wosize_val(v) returns the size of the block v, in words, excluding the
+   header. 
+   - Tag_val(v) returns the tag of the block v. 
+   - Field(v, n) returns the value contained in the n^th field of the
+   structured block v. Fields are numbered from 0 to Wosize_val(v)-1. 
+   - Store_field(b, n, v) stores the value v in the field number n of value b,
+   which must be a structured block. 
+   - Code_val(v) returns the code part of the closure v. 
+   - caml_string_length(v) returns the length (number of characters) of the
+   string v. 
+   - Byte(v, n) returns the n^th character of the string v, with type char.
+   Characters are numbered from 0 to string_length(v)-1. 
+   - Byte_u(v, n) returns the n^th character of the string v, with type
+   unsigned char. Characters are numbered from 0 to string_length(v)-1. 
+   - String_val(v) returns a pointer to the first byte of the string v, with
+   type char *. This pointer is a valid C string: there is a null character
+   after the last character in the string. However, Caml strings can contain
+   embedded null characters, that will confuse the usual C functions over
+   strings.  
+   - Double_val(v) returns the floating-point number contained in value v, with
+   type double. 
+   - Double_field(v, n) returns the n^th element of the array of floating-point
+   numbers v (a block tagged Double_array_tag). 
+   - Store_double_field(v, n, d) stores the double precision floating-point
+   number d in the n^th element of the array of floating-point numbers v. 
+   - Data_custom_val(v) returns a pointer to the data part of the custom block
+   v. This pointer has type void * and must be cast to the type of the data
+   contained in the custom block. 
+   - Int32_val(v) returns the 32-bit integer contained in the int32 v. 
+   - Int64_val(v) returns the 64-bit integer contained in the int64 v. 
+   - Nativeint_val(v) returns the long integer contained in the nativeint v. 
+   The expressions Field(v, n), Byte(v, n) and Byte_u(v, n) are valid l-values.
+Hence, they can be assigned to, resulting in an in-place modification of value
+v. Assigning directly to Field(v, n) must be done with care to avoid confusing
+the garbage collector (see below).
+
+Node: Subsection 18-4-4,	Next: Subsection 18-4-5,	Prev: Subsection 18-4-3,	Up: Section 18-4
+  
+
+18.4.4   Allocating blocks
+==========================
+  
+  
+
+ Simple interface
+-----------------
+  
+  
+  
+   - Atom(t) returns an "atom" (zero-sized block) with tag t. Zero-sized blocks
+   are preallocated outside of the heap. It is incorrect to try and allocate a
+   zero-sized block using the functions below. For instance, Atom(0) represents
+   the empty array. 
+   - caml_alloc(n, t) returns a fresh block of size n with tag t. If t is less
+   than No_scan_tag, then the fields of the block are initialized with a valid
+   value in order to satisfy the GC constraints. 
+   - caml_alloc_tuple(n) returns a fresh block of size n words, with tag 0. 
+   - caml_alloc_string(n) returns a string value of length n characters. The
+   string initially contains garbage. 
+   - caml_copy_string(s) returns a string value containing a copy of the
+   null-terminated C string s (a char *). 
+   - caml_copy_double(d) returns a floating-point value initialized with the
+   double d. 
+   - caml_copy_int32(i), copy_int64(i) and caml_copy_nativeint(i) return a
+   value of Caml type int32, int64 and nativeint, respectively, initialized
+   with the integer i. 
+   - caml_alloc_array(f, a) allocates an array of values, calling function f
+   over each element of the input array a to transform it into a value. The
+   array a is an array of pointers terminated by the null pointer. The function
+   f receives each pointer as argument, and returns a value. The zero-tagged
+   block returned by alloc_array(f, a) is filled with the values returned by
+   the successive calls to f. (This function must not be used to build an array
+   of floating-point numbers.) 
+   - caml_copy_string_array(p) allocates an array of strings, copied from the
+   pointer to a string array p (a 'char **'). p must be NULL-terminated. 
+  
+  
+
+ Low-level interface
+--------------------
+  
+  The following functions are slightly more efficient than caml_alloc, but also
+much more difficult to use.
+  From the standpoint of the allocation functions, blocks are divided according
+to their size as zero-sized blocks, small blocks (with size less than or equal
+to 'Max_young_wosize'), and large blocks (with size greater than
+'Max_young_wosize'). The constant 'Max_young_wosize' is declared in the include
+file mlvalues.h. It is guaranteed to be at least 64 (words), so that any block
+with constant size less than or equal to 64 can be assumed to be small. For
+blocks whose size is computed at run-time, the size must be compared against
+'Max_young_wosize' to determine the correct allocation procedure.
+  
+  
+   - caml_alloc_small(n, t) returns a fresh small block of size n <=
+   Max_young_wosize words, with tag t.  If this block is a structured block
+   (i.e. if t < No_scan_tag), then  the fields of the block (initially
+   containing garbage) must be initialized with legal values (using direct
+   assignment to the fields of the block) before the next allocation. 
+   - caml_alloc_shr(n, t) returns a fresh block of size n, with tag t.  The
+   size of the block can be greater than 'Max_young_wosize'. (It can also be
+   smaller, but in this case it is more efficient to call caml_alloc_small
+   instead of caml_alloc_shr.)  If this block is a structured block (i.e. if t
+   < No_scan_tag), then  the fields of the block (initially containing garbage)
+   must be initialized with legal values (using the caml_initialize function
+   described below) before the next allocation. 
+  
+
+Node: Subsection 18-4-5,	Next: Section 18-5,	Prev: Subsection 18-4-4,	Up: Section 18-4
+  
+
+18.4.5   Raising exceptions
+===========================
+   
+  Two functions are provided to raise two standard exceptions: 
+  
+   - caml_failwith(s), where s is a null-terminated C string (with type 'char
+   *'), raises exception Failure with argument s. 
+   - caml_invalid_argument(s), where s is a null-terminated C string (with type
+   'char *'), raises exception Invalid_argument with argument s. 
+  
+  Raising arbitrary exceptions from C is more delicate: the exception
+identifier is dynamically allocated by the Caml program, and therefore must be
+communicated to the C function using the registration facility described below
+in section 18.7.3*Note Subsection 18-7-3::. Once the exception identifier is
+recovered in C, the following functions actually raise the exception: 
+  
+   - caml_raise_constant(id) raises the exception id with no argument; 
+   - caml_raise_with_arg(id, v) raises the exception id with the Caml value v
+   as argument; 
+   - caml_raise_with_args(id, n, v) raises the exception id with the Caml
+   values v[0], ..., v[n-1] as arguments; 
+   - caml_raise_with_string(id, s), where s is a null-terminated C string,
+   raises the exception id with a copy of the C string s as argument. 
+  
+
+Node: Section 18-5,	Next: Subsection 18-5-1,	Prev: Section 18-4,	Up: Chapter 18
+  
+
+18.5   Living in harmony with the garbage collector
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  Unused blocks in the heap are automatically reclaimed by the garbage
+collector. This requires some cooperation from C code that manipulates
+heap-allocated blocks.
+* Menu:
+
+* Subsection 18-5-1::	Simple interface
+* Subsection 18-5-2::	Low-level interface
+
+
+Node: Subsection 18-5-1,	Next: Subsection 18-5-2,	Prev: Section 18-5,	Up: Section 18-5
+  
+
+18.5.1   Simple interface
+=========================
+  
+  All the macros described in this section are declared in the memory.h header
+file.
+  Rule 1   A function that has parameters or local variables of type value must
+begin with a call to one of the CAMLparam macros and return with CAMLreturn,
+CAMLreturn0, or CAMLreturnT. 
+  
+  There are six CAMLparam macros: CAMLparam0 to CAMLparam5, which take zero to
+five arguments respectively. If your function has fewer than 5 parameters of
+type value, use the corresponding macros with these parameters as arguments. If
+your function has more than 5 parameters of type value, use CAMLparam5 with
+five of these parameters, and use one or more calls to the CAMLxparam macros
+for the remaining parameters (CAMLxparam1 to CAMLxparam5).
+  The macros CAMLreturn, CAMLreturn0, and CAMLreturnT are used to replace the C
+keyword return. Every occurence of return x must be replaced by CAMLreturn (x)
+if x has type value, or CAMLreturnT (t, x) (where t is the type of x); every
+occurence of return without argument must be replaced by CAMLreturn0. If your C
+function is a procedure (i.e. if it returns void), you must insert CAMLreturn0
+at the end (to replace C's implicit return).
+ Note:
+   some C compilers give bogus warnings about unused variables caml__dummy_xxx
+at each use of CAMLparam and CAMLlocal. You should ignore them.
+
+  
+  Example: 
+<<void foo (value v1, value v2, value v3)
+  {
+    CAMLparam3 (v1, v2, v3);
+    ...
+    CAMLreturn0;
+  }
+>>
+  
+ Note:
+   if your function is a primitive with more than 5 arguments for use with the
+byte-code runtime, its arguments are not values and must not be declared (they
+have types value * and int).
+  Rule 2   Local variables of type value must be declared with one of the
+CAMLlocal macros. Arrays of values are declared with CAMLlocalN. These macros
+must be used at the beginning of the function, not in a nested block. 
+  
+  The macros CAMLlocal1 to CAMLlocal5 declare and initialize one to five local
+variables of type value. The variable names are given as arguments to the
+macros. CAMLlocalN(x, n) declares and initializes a local variable of type
+value [n]. You can use several calls to these macros if you have more than 5
+local variables.
+  Example: 
+<<value bar (value v1, value v2, value v3)
+  {
+    CAMLparam3 (v1, v2, v3);
+    CAMLlocal1 (result);
+    result = caml_alloc (3, 0);
+    ...
+    CAMLreturn (result);
+  }
+>>
+  
+  Rule 3   Assignments to the fields of structured blocks must be done with the
+Store_field macro (for normal blocks) or Store_double_field macro (for arrays
+and records of floating-point numbers). Other assignments must not use
+Store_field nor Store_double_field. 
+  
+  Store_field (b, n, v) stores the value v in the field number n of value b,
+which must be a block (i.e. Is_block(b) must be true).
+  Example: 
+<<value bar (value v1, value v2, value v3)
+  {
+    CAMLparam3 (v1, v2, v3);
+    CAMLlocal1 (result);
+    result = caml_alloc (3, 0);
+    Store_field (result, 0, v1);
+    Store_field (result, 1, v2);
+    Store_field (result, 2, v3);
+    CAMLreturn (result);
+  }
+>>
+  
+ Warning:
+   The first argument of Store_field and Store_double_field must be a variable
+declared by CAMLparam* or a parameter declared by CAMLlocal* to ensure that a
+garbage collection triggered by the evaluation of the other arguments will not
+invalidate the first argument after it is computed.
+  Rule 4   Global variables containing values must be registered with the
+garbage collector using the caml_register_global_root function. 
+  
+  Registration of a global variable v is achieved by calling
+caml_register_global_root(&v) just before a valid value is stored in v for the
+first time. 
+  A registered global variable v can be un-registered by calling
+caml_remove_global_root(&v).
+  If the contents of the global variable v are not modified after registration,
+better performance can be achieved by calling
+caml_register_generational_global_root(&v) to register v, and
+caml_remove_generational_global_root(&v) to un-register it. The garbage
+collector takes advantage of the guarantee that v is not modified to scan it
+less often. This improves performance if many global variables need to be
+registered.
+ Note:
+   The CAML macros use identifiers (local variables, type identifiers,
+structure tags) that start with caml__. Do not use any identifier starting with
+caml__ in your programs.

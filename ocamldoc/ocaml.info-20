@@ -1,0 +1,1550 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 29-2,	Next: Subsection 29-2-1,	Prev: Section 29-1,	Up: Chapter 29
+  
+
+29.2   Big arrays in the Caml-C interface
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  C stub code that interface C or Fortran code with Caml code, as described in
+chapter 18*Note Chapter 18::, can exploit big arrays as follows.
+* Menu:
+
+* Subsection 29-2-1::	Include file
+* Subsection 29-2-2::	Accessing a Caml bigarray from C or Fortran
+* Subsection 29-2-3::	Wrapping a C or Fortran array as a Caml big array
+
+
+Node: Subsection 29-2-1,	Next: Subsection 29-2-2,	Prev: Section 29-2,	Up: Section 29-2
+  
+
+29.2.1   Include file
+=====================
+  
+  The include file <caml/bigarray.h> must be included in the C stub file. It
+declares the functions, constants and macros discussed below.
+
+Node: Subsection 29-2-2,	Next: Subsection 29-2-3,	Prev: Subsection 29-2-1,	Up: Section 29-2
+  
+
+29.2.2   Accessing a Caml bigarray from C or Fortran
+====================================================
+  
+  If v is a Caml value representing a big array, the expression
+Data_bigarray_val(v) returns a pointer to the data part of the array. This
+pointer is of type void * and can be cast to the appropriate C type for the
+array (e.g. double [], char [][10], etc).
+  Various characteristics of the Caml big array can be consulted from C as
+follows: 
+                                         
+     --------------------------------------------------------------------
+     |               C expression                |       Returns        |
+     --------------------------------------------------------------------
+     | Bigarray_val(v)->num_dims                 |number of dimensions  |
+     |Bigarray_val(v)->dim[i]                    |i-th dimension        |
+     |Bigarray_val(v)->flags & BIGARRAY_KIND_MASK|kind of array elements|
+     --------------------------------------------------------------------
+   The kind of array elements is one of the following constants: 
+                                         
+        --------------------------------------------------------------
+        |     Constant      |              Element kind              |
+        --------------------------------------------------------------
+        | BIGARRAY_FLOAT32  |32-bit single-precision floats          |
+        |BIGARRAY_FLOAT64   |64-bit double-precision floats          |
+        |BIGARRAY_SINT8     |8-bit signed integers                   |
+        |BIGARRAY_UINT8     |8-bit unsigned integers                 |
+        |BIGARRAY_SINT16    |16-bit signed integers                  |
+        |BIGARRAY_UINT16    |16-bit unsigned integers                |
+        |BIGARRAY_INT32     |32-bit signed integers                  |
+        |BIGARRAY_INT64     |64-bit signed integers                  |
+        |BIGARRAY_CAML_INT  |31- or 63-bit signed integers           |
+        |BIGARRAY_NATIVE_INT|32- or 64-bit (platform-native) integers|
+        --------------------------------------------------------------
+   The following example shows the passing of a two-dimensional big array to a
+C function and a Fortran function. 
+<<    extern void my_c_function(double * data, int dimx, int dimy);
+      extern void my_fortran_function_(double * data, int * dimx, int * dimy);
+  
+      value caml_stub(value bigarray)
+      {
+        int dimx = Bigarray_val(bigarray)->dim[0];
+        int dimy = Bigarray_val(bigarray)->dim[1];
+        /* C passes scalar parameters by value */
+        my_c_function(Data_bigarray_val(bigarray), dimx, dimy);
+        /* Fortran passes all parameters by reference */
+        my_fortran_function_(Data_bigarray_val(bigarray), &dimx, &dimy);
+        return Val_unit;
+      }
+>>
+  
+
+Node: Subsection 29-2-3,	Next: Part V,	Prev: Subsection 29-2-2,	Up: Section 29-2
+  
+
+29.2.3   Wrapping a C or Fortran array as a Caml big array
+==========================================================
+  
+  A pointer p to an already-allocated C or Fortran array can be wrapped and
+returned to Caml as a big array using the alloc_bigarray or alloc_bigarray_dims
+functions. 
+  
+   - alloc_bigarray(kind | layout, numdims, p, dims)
+ Return a Caml big array wrapping the data pointed to by p. kind is the kind of
+   array elements (one of the BIGARRAY_ kind constants above). layout is
+   BIGARRAY_C_LAYOUT for an array with C layout and BIGARRAY_FORTRAN_LAYOUT for
+   an array with Fortran layout. numdims is the number of dimensions in the
+   array. dims is an array of numdims long integers, giving the sizes of the
+   array in each dimension.
+ 
+   - alloc_bigarray_dims(kind | layout, numdims, p, (long) dim_1, (long) dim_2,
+   ..., (long) dim_numdims)
+ Same as alloc_bigarray, but the sizes of the array in each dimension are
+   listed as extra arguments in the function call, rather than being passed as
+   an array. 
+   The following example illustrates how statically-allocated C and Fortran
+arrays can be made available to Caml. 
+<<    extern long my_c_array[100][200];
+      extern float my_fortran_array_[300][400];
+  
+      value caml_get_c_array(value unit)
+      {
+        long dims[2];
+        dims[0] = 100; dims[1] = 200;
+        return alloc_bigarray(BIGARRAY_NATIVE_INT | BIGARRAY_C_LAYOUT,
+                              2, my_c_array, dims);
+      }
+  
+      value caml_get_fortran_array(value unit)
+      {
+        return alloc_bigarray_dims(BIGARRAY_FLOAT32 | BIGARRAY_FORTRAN_LAYOUT,
+                                   2, my_fortran_array_, 300L, 400L);
+      }
+>>
+  
+
+Node: Part V,	Next: Chapter 30,	Prev: Section 29-2,	Up: Top
+  
+
+                                    Part: V
+                                    *******
+                                    Appendix
+                                   *********
+   
+* Menu:
+
+* Chapter 30::	Index to the library
+* Chapter 31::	Index of keywords
+
+
+Node: Chapter 30,	Next: Chapter 31,	Prev: Part V,	Up: Part V
+  
+
+Chapter 30     Index to the library
+***********************************
+  
+  
+   - '( * )', 19.2*Note Section 19-2:: 
+   - '( */ )', 22.1*Note Section 22-1:: 
+   - '( ** )', 19.2*Note Section 19-2:: 
+   - '( **/ )', 22.1*Note Section 22-1:: 
+   - '( *. )', 19.2*Note Section 19-2:: 
+   - '(&)', 19.2*Note Section 19-2:: 
+   - '(&&)', 19.2*Note Section 19-2:: 
+   - '(@)', 19.2*Note Section 19-2:: 
+   - '(!)', 19.2*Note Section 19-2:: 
+   - '(!=)', 19.2*Note Section 19-2:: 
+   - '(:=)', 19.2*Note Section 19-2:: 
+   - '(=)', 19.2*Note Section 19-2:: 
+   - '(==)', 19.2*Note Section 19-2:: 
+   - '(=/)', 22.1*Note Section 22-1:: 
+   - '(^)', 19.2*Note Section 19-2:: 
+   - '(^^)', 19.2*Note Section 19-2:: 
+   - '(>)', 19.2*Note Section 19-2:: 
+   - '(>=)', 19.2*Note Section 19-2:: 
+   - '(>=/)', 22.1*Note Section 22-1:: 
+   - '(>/)', 22.1*Note Section 22-1:: 
+   - '(<)', 19.2*Note Section 19-2:: 
+   - '(<=)', 19.2*Note Section 19-2:: 
+   - '(<=/)', 22.1*Note Section 22-1:: 
+   - '(<>)', 19.2*Note Section 19-2:: 
+   - '(<>/)', 22.1*Note Section 22-1:: 
+   - '(</)', 22.1*Note Section 22-1:: 
+   - '(-)', 19.2*Note Section 19-2:: 
+   - '(-/)', 22.1*Note Section 22-1:: 
+   - '(-.)', 19.2*Note Section 19-2:: 
+   - '(||)', 19.2*Note Section 19-2:: 
+   - '(+)', 19.2*Note Section 19-2:: 
+   - '(+/)', 22.1*Note Section 22-1:: 
+   - '(+.)', 19.2*Note Section 19-2:: 
+   - '(/)', 19.2*Note Section 19-2:: 
+   - '(//)', 22.1*Note Section 22-1:: 
+   - '(/.)', 19.2*Note Section 19-2:: 
+   - '(~-)', 19.2*Note Section 19-2:: 
+   - '(~-.)', 19.2*Note Section 19-2:: 
+   - '(~+)', 19.2*Note Section 19-2:: 
+   - '(~+.)', 19.2*Note Section 19-2:: 
+   - '(asr)', 19.2*Note Section 19-2:: 
+   - '(land)', 19.2*Note Section 19-2:: 
+   - '(lor)', 19.2*Note Section 19-2:: 
+   - '(lsl)', 19.2*Note Section 19-2:: 
+   - '(lsr)', 19.2*Note Section 19-2:: 
+   - '(lxor)', 19.2*Note Section 19-2:: 
+   - '(mod)', 19.2*Note Section 19-2:: 
+   - '(or)', 19.2*Note Section 19-2:: 
+ 
+   - 'Arg', 20.1*Note Section 20-1:: 
+   - 'Arith_status', 22.3*Note Section 22-3:: 
+   - 'Array', 20.2*Note Section 20-2::, 20.31*Note Section 20-31:: 
+   - 'Array1', 29.1*Note Section 29-1:: 
+   - 'Array2', 29.1*Note Section 29-1:: 
+   - 'Array3', 29.1*Note Section 29-1:: 
+   - 'Assert_failure', 7.5*Note Section 7-5::, 19.1*Note Section 19-1:: 
+   - 'abs', 19.2*Note Section 19-2::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'abs_big_int', 22.2*Note Section 22-2:: 
+   - 'abs_float', 19.2*Note Section 19-2:: 
+   - 'abs_num', 22.1*Note Section 22-1:: 
+   - 'accept', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'access', 21.1*Note Section 21-1:: 
+   - 'access_permission', 21.1*Note Section 21-1:: 
+   - 'acos', 19.2*Note Section 19-2:: 
+   - 'adapt_filename', 27.1*Note Section 27-1:: 
+   - 'add', 20.6*Note Section 20-6::, 20.12*Note Section 20-12::,
+   20.12*Note Section 20-12::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.18*Note Section 20-18::,
+   20.20*Note Section 20-20::, 20.25*Note Section 20-25::,
+   20.28*Note Section 20-28::, 20.35*Note Section 20-35::,
+   26.1*Note Section 26-1:: 
+   - 'add_available_units', 27.1*Note Section 27-1:: 
+   - 'add_big_int', 22.2*Note Section 22-2:: 
+   - 'add_buffer', 20.3*Note Section 20-3:: 
+   - 'add_channel', 20.3*Note Section 20-3:: 
+   - 'add_char', 20.3*Note Section 20-3:: 
+   - 'add_int_big_int', 22.2*Note Section 22-2:: 
+   - 'add_interfaces', 27.1*Note Section 27-1:: 
+   - 'add_num', 22.1*Note Section 22-1:: 
+   - 'add_string', 20.3*Note Section 20-3:: 
+   - 'add_substitute', 20.3*Note Section 20-3:: 
+   - 'add_substring', 20.3*Note Section 20-3:: 
+   - 'addr_info', 21.1*Note Section 21-1:: 
+   - 'alarm', 20.10*Note Section 20-10::, 21.1*Note Section 21-1:: 
+   - 'align', 20.1*Note Section 20-1:: 
+   - 'allocated_bytes', 20.10*Note Section 20-10:: 
+   - 'allow_only', 27.1*Note Section 27-1:: 
+   - 'allow_unsafe_modules', 27.1*Note Section 27-1:: 
+   - 'always', 24.4*Note Section 24-4:: 
+   - 'anchor', 28.1*Note Section 28-1:: 
+   - 'and_big_int', 22.2*Note Section 22-2:: 
+   - 'anon_fun', 20.1*Note Section 20-1:: 
+   - 'append', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31:: 
+   - 'appname_get', 28.1*Note Section 28-1:: 
+   - 'appname_set', 28.1*Note Section 28-1:: 
+   - 'approx_num_exp', 22.1*Note Section 22-1:: 
+   - 'approx_num_fix', 22.1*Note Section 22-1:: 
+   - 'arg', 20.6*Note Section 20-6:: 
+   - 'argv', 20.34*Note Section 20-34:: 
+   - 'arith_status', 22.3*Note Section 22-3:: 
+   - 'array', 19.1*Note Section 19-1::, 20.29*Note Section 20-29:: 
+   - 'array1_of_genarray', 29.1*Note Section 29-1:: 
+   - 'array2_of_genarray', 29.1*Note Section 29-1:: 
+   - 'array3_of_genarray', 29.1*Note Section 29-1:: 
+   - 'asin', 19.2*Note Section 19-2:: 
+   - 'assoc', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'assq', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'at_exit', 19.2*Note Section 19-2:: 
+   - 'atan', 19.2*Note Section 19-2:: 
+   - 'atan2', 19.2*Note Section 19-2:: 
+   - 'auto_synchronize', 25.1*Note Section 25-1:: 
+ 
+   - 'Bad', 20.1*Note Section 20-1:: 
+   - 'Big_int', 22.2*Note Section 22-2:: 
+   - 'Bigarray', 29.1*Note Section 29-1:: 
+   - 'Break', 20.34*Note Section 20-34:: 
+   - 'Buffer', 20.3*Note Section 20-3:: 
+   - 'background', 25.1*Note Section 25-1:: 
+   - 'backtrace_status', 20.23*Note Section 20-23:: 
+   - 'basename', 20.8*Note Section 20-8:: 
+   - 'beginning_of_input', 20.27*Note Section 20-27:: 
+   - 'big_int', 22.2*Note Section 22-2:: 
+   - 'big_int_of_int', 22.2*Note Section 22-2:: 
+   - 'big_int_of_int32', 22.2*Note Section 22-2:: 
+   - 'big_int_of_int64', 22.2*Note Section 22-2:: 
+   - 'big_int_of_nativeint', 22.2*Note Section 22-2:: 
+   - 'big_int_of_num', 22.1*Note Section 22-1:: 
+   - 'big_int_of_string', 22.2*Note Section 22-2:: 
+   - 'bind', 21.1*Note Section 21-1::, 28.1*Note Section 28-1:: 
+   - 'bind_class', 28.1*Note Section 28-1:: 
+   - 'bind_tag', 28.1*Note Section 28-1:: 
+   - 'bindings', 20.18*Note Section 20-18:: 
+   - 'bits', 20.26*Note Section 20-26::, 20.26*Note Section 20-26:: 
+   - 'bits_of_float', 20.13*Note Section 20-13::, 20.14*Note Section 20-14:: 
+   - 'black', 25.1*Note Section 25-1:: 
+   - 'blit', 20.2*Note Section 20-2::, 20.3*Note Section 20-3::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'blit_image', 25.1*Note Section 25-1:: 
+   - 'blue', 25.1*Note Section 25-1:: 
+   - 'bool', 19.1*Note Section 19-1::, 20.26*Note Section 20-26::,
+   20.26*Note Section 20-26:: 
+   - 'bool_of_string', 19.2*Note Section 19-2:: 
+   - 'borderMode', 28.1*Note Section 28-1:: 
+   - 'bounded_full_split', 23.1*Note Section 23-1:: 
+   - 'bounded_split', 23.1*Note Section 23-1:: 
+   - 'bounded_split_delim', 23.1*Note Section 23-1:: 
+   - 'bprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'break', 28.1*Note Section 28-1:: 
+   - 'broadcast', 24.3*Note Section 24-3:: 
+   - 'bscanf', 20.27*Note Section 20-27:: 
+   - 'bscanf_format', 20.27*Note Section 20-27:: 
+   - 'button_down', 25.1*Note Section 25-1:: 
+ 
+   - 'Callback', 20.4*Note Section 20-4:: 
+   - 'Char', 20.5*Note Section 20-5:: 
+   - 'Complex', 20.6*Note Section 20-6:: 
+   - 'Condition', 24.3*Note Section 24-3:: 
+   - 'c_layout', 29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'capitalize', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'cardinal', 20.18*Note Section 20-18::, 20.28*Note Section 20-28:: 
+   - 'catch', 20.23*Note Section 20-23:: 
+   - 'catch_break', 20.34*Note Section 20-34:: 
+   - 'ceil', 19.2*Note Section 19-2:: 
+   - 'ceiling_num', 22.1*Note Section 22-1:: 
+   - 'channel', 20.7*Note Section 20-7::, 24.4*Note Section 24-4:: 
+   - 'char', 19.1*Note Section 19-1::, 29.1*Note Section 29-1:: 
+   - 'char_of_int', 19.2*Note Section 19-2:: 
+   - 'chdir', 20.34*Note Section 20-34::, 21.1*Note Section 21-1:: 
+   - 'check', 20.35*Note Section 20-35:: 
+   - 'check_suffix', 20.8*Note Section 20-8:: 
+   - 'chmod', 21.1*Note Section 21-1:: 
+   - 'choose', 20.18*Note Section 20-18::, 20.28*Note Section 20-28::,
+   24.4*Note Section 24-4:: 
+   - 'chop_extension', 20.8*Note Section 20-8:: 
+   - 'chop_suffix', 20.8*Note Section 20-8:: 
+   - 'chown', 21.1*Note Section 21-1:: 
+   - 'chr', 20.5*Note Section 20-5:: 
+   - 'chroot', 21.1*Note Section 21-1:: 
+   - 'classify_float', 19.2*Note Section 19-2:: 
+   - 'clear', 20.3*Note Section 20-3::, 20.12*Note Section 20-12::,
+   20.12*Note Section 20-12::, 20.25*Note Section 20-25::,
+   20.30*Note Section 20-30::, 20.35*Note Section 20-35:: 
+   - 'clear_available_units', 27.1*Note Section 27-1:: 
+   - 'clear_close_on_exec', 21.1*Note Section 21-1:: 
+   - 'clear_graph', 25.1*Note Section 25-1:: 
+   - 'clear_nonblock', 21.1*Note Section 21-1:: 
+   - 'clear_parser', 20.22*Note Section 20-22:: 
+   - 'close', 21.1*Note Section 21-1::, 26.1*Note Section 26-1:: 
+   - 'close_box', 20.9*Note Section 20-9:: 
+   - 'close_graph', 25.1*Note Section 25-1:: 
+   - 'close_in', 19.2*Note Section 19-2::, 20.27*Note Section 20-27:: 
+   - 'close_in_noerr', 19.2*Note Section 19-2:: 
+   - 'close_out', 19.2*Note Section 19-2:: 
+   - 'close_out_noerr', 19.2*Note Section 19-2:: 
+   - 'close_process', 21.1*Note Section 21-1:: 
+   - 'close_process_full', 21.1*Note Section 21-1:: 
+   - 'close_process_in', 21.1*Note Section 21-1:: 
+   - 'close_process_out', 21.1*Note Section 21-1:: 
+   - 'close_tag', 20.9*Note Section 20-9:: 
+   - 'close_tbox', 20.9*Note Section 20-9:: 
+   - 'closedir', 21.1*Note Section 21-1:: 
+   - 'closeTk', 28.1*Note Section 28-1:: 
+   - 'code', 20.5*Note Section 20-5:: 
+   - 'color', 25.1*Note Section 25-1:: 
+   - 'combine', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'command', 20.34*Note Section 20-34:: 
+   - 'compact', 20.10*Note Section 20-10:: 
+   - 'compare', 19.2*Note Section 19-2::, 20.5*Note Section 20-5::,
+   20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.18*Note Section 20-18::, 20.18*Note Section 20-18::,
+   20.20*Note Section 20-20::, 20.28*Note Section 20-28::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33:: 
+   - 'compare_big_int', 22.2*Note Section 22-2:: 
+   - 'compare_num', 22.1*Note Section 22-1:: 
+   - 'complex32', 29.1*Note Section 29-1:: 
+   - 'complex32_elt', 29.1*Note Section 29-1:: 
+   - 'complex64', 29.1*Note Section 29-1:: 
+   - 'complex64_elt', 29.1*Note Section 29-1:: 
+   - 'concat', 20.2*Note Section 20-2::, 20.8*Note Section 20-8::,
+   20.17*Note Section 20-17::, 20.31*Note Section 20-31::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33:: 
+   - 'conj', 20.6*Note Section 20-6:: 
+   - 'connect', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'contains', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'contains_from', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'contents', 20.3*Note Section 20-3:: 
+   - 'control', 20.10*Note Section 20-10:: 
+   - 'copy', 20.2*Note Section 20-2::, 20.12*Note Section 20-12::,
+   20.12*Note Section 20-12::, 20.21*Note Section 20-21::,
+   20.25*Note Section 20-25::, 20.26*Note Section 20-26::,
+   20.30*Note Section 20-30::, 20.31*Note Section 20-31::,
+   20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'cos', 19.2*Note Section 19-2:: 
+   - 'cosh', 19.2*Note Section 19-2:: 
+   - 'count', 20.32*Note Section 20-32::, 20.35*Note Section 20-35:: 
+   - 'counters', 20.10*Note Section 20-10:: 
+   - 'create', 20.2*Note Section 20-2::, 20.3*Note Section 20-3::,
+   20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.25*Note Section 20-25::, 20.30*Note Section 20-30::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35::,
+   20.35*Note Section 20-35::, 24.1*Note Section 24-1::,
+   24.2*Note Section 24-2::, 24.3*Note Section 24-3::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'create_alarm', 20.10*Note Section 20-10:: 
+   - 'create_image', 25.1*Note Section 25-1:: 
+   - 'create_matrix', 20.2*Note Section 20-2::, 20.31*Note Section 20-31:: 
+   - 'create_process', 21.1*Note Section 21-1:: 
+   - 'create_process_env', 21.1*Note Section 21-1:: 
+   - 'current', 20.1*Note Section 20-1:: 
+   - 'current_dir_name', 20.8*Note Section 20-8:: 
+   - 'current_point', 25.1*Note Section 25-1:: 
+   - 'current_x', 25.1*Note Section 25-1:: 
+   - 'current_y', 25.1*Note Section 25-1:: 
+   - 'curveto', 25.1*Note Section 25-1:: 
+   - 'cyan', 25.1*Note Section 25-1:: 
+ 
+   - 'Dbm', 26.1*Note Section 26-1:: 
+   - 'Dbm_error', 26.1*Note Section 26-1:: 
+   - 'Digest', 20.7*Note Section 20-7:: 
+   - 'Division_by_zero', 19.1*Note Section 19-1:: 
+   - 'Dynlink', 27.1*Note Section 27-1:: 
+   - 'data', 20.35*Note Section 20-35:: 
+   - 'data_size', 20.19*Note Section 20-19:: 
+   - 'decr', 19.2*Note Section 19-2:: 
+   - 'decr_num', 22.1*Note Section 22-1:: 
+   - 'default_available_units', 27.1*Note Section 27-1:: 
+   - 'delay', 24.1*Note Section 24-1:: 
+   - 'delete_alarm', 20.10*Note Section 20-10:: 
+   - 'descr_of_in_channel', 21.1*Note Section 21-1:: 
+   - 'descr_of_out_channel', 21.1*Note Section 21-1:: 
+   - 'destroy', 28.1*Note Section 28-1:: 
+   - 'diff', 20.28*Note Section 20-28:: 
+   - 'dim', 29.1*Note Section 29-1:: 
+   - 'dim1', 29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'dim2', 29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'dim3', 29.1*Note Section 29-1:: 
+   - 'dims', 29.1*Note Section 29-1:: 
+   - 'dir_handle', 21.1*Note Section 21-1:: 
+   - 'dir_sep', 20.8*Note Section 20-8:: 
+   - 'dirname', 20.8*Note Section 20-8:: 
+   - 'display_mode', 25.1*Note Section 25-1:: 
+   - 'div', 20.6*Note Section 20-6::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'div_big_int', 22.2*Note Section 22-2:: 
+   - 'div_num', 22.1*Note Section 22-1:: 
+   - 'doc', 20.1*Note Section 20-1:: 
+   - 'domain_of_sockaddr', 21.1*Note Section 21-1:: 
+   - 'draw_arc', 25.1*Note Section 25-1:: 
+   - 'draw_char', 25.1*Note Section 25-1:: 
+   - 'draw_circle', 25.1*Note Section 25-1:: 
+   - 'draw_ellipse', 25.1*Note Section 25-1:: 
+   - 'draw_image', 25.1*Note Section 25-1:: 
+   - 'draw_poly', 25.1*Note Section 25-1:: 
+   - 'draw_poly_line', 25.1*Note Section 25-1:: 
+   - 'draw_rect', 25.1*Note Section 25-1:: 
+   - 'draw_segments', 25.1*Note Section 25-1:: 
+   - 'draw_string', 25.1*Note Section 25-1:: 
+   - 'dummy_pos', 20.16*Note Section 20-16:: 
+   - 'dump_image', 25.1*Note Section 25-1:: 
+   - 'dup', 21.1*Note Section 21-1:: 
+   - 'dup2', 21.1*Note Section 21-1:: 
+ 
+   - 'Empty', 20.25*Note Section 20-25::, 20.30*Note Section 20-30:: 
+   - 'End_of_file', 19.1*Note Section 19-1:: 
+   - 'Error', 20.32*Note Section 20-32::, 27.1*Note Section 27-1:: 
+   - 'Event', 24.4*Note Section 24-4:: 
+   - 'Exit', 19.2*Note Section 19-2:: 
+   - 'elements', 20.28*Note Section 20-28:: 
+   - 'elt', 20.28*Note Section 20-28:: 
+   - 'empty', 20.18*Note Section 20-18::, 20.28*Note Section 20-28::,
+   20.32*Note Section 20-32:: 
+   - 'end_of_input', 20.27*Note Section 20-27:: 
+   - 'environment', 21.1*Note Section 21-1:: 
+   - 'eprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'epsilon_float', 19.2*Note Section 19-2:: 
+   - 'eq_big_int', 22.2*Note Section 22-2:: 
+   - 'eq_num', 22.1*Note Section 22-1:: 
+   - 'equal', 20.12*Note Section 20-12::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28:: 
+   - 'err_formatter', 20.9*Note Section 20-9:: 
+   - 'error', 21.1*Note Section 21-1::, 27.1*Note Section 27-1:: 
+   - 'error_message', 21.1*Note Section 21-1::, 27.1*Note Section 27-1:: 
+   - 'escaped', 20.5*Note Section 20-5::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33:: 
+   - 'establish_server', 21.1*Note Section 21-1:: 
+   - 'event', 24.4*Note Section 24-4::, 25.1*Note Section 25-1::,
+   28.1*Note Section 28-1:: 
+   - 'eventField', 28.1*Note Section 28-1:: 
+   - 'eventInfo', 28.1*Note Section 28-1:: 
+   - 'executable_name', 20.34*Note Section 20-34:: 
+   - 'execv', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'execve', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'execvp', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'execvpe', 21.1*Note Section 21-1:: 
+   - 'exists', 20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31:: 
+   - 'exists2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'exit', 19.2*Note Section 19-2::, 24.1*Note Section 24-1:: 
+   - 'exn', 19.1*Note Section 19-1:: 
+   - 'exp', 19.2*Note Section 19-2::, 20.6*Note Section 20-6:: 
+   - 'expm1', 19.2*Note Section 19-2:: 
+   - 'extern_flags', 20.19*Note Section 20-19:: 
+   - 'extract_big_int', 22.2*Note Section 22-2:: 
+ 
+   - 'Failure', 19.1*Note Section 19-1::, 20.32*Note Section 20-32:: 
+   - 'Filename', 20.8*Note Section 20-8:: 
+   - 'Format', 20.9*Note Section 20-9:: 
+   - 'failwith', 19.2*Note Section 19-2:: 
+   - 'fast_sort', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31:: 
+   - 'fchmod', 21.1*Note Section 21-1:: 
+   - 'fchown', 21.1*Note Section 21-1:: 
+   - 'file', 20.7*Note Section 20-7:: 
+   - 'file_descr', 21.1*Note Section 21-1:: 
+   - 'file_exists', 20.34*Note Section 20-34:: 
+   - 'file_kind', 21.1*Note Section 21-1:: 
+   - 'file_perm', 21.1*Note Section 21-1:: 
+   - 'fill', 20.2*Note Section 20-2::, 20.31*Note Section 20-31::,
+   20.31*Note Section 20-31::, 20.33*Note Section 20-33::,
+   20.35*Note Section 20-35::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'fill_arc', 25.1*Note Section 25-1:: 
+   - 'fill_circle', 25.1*Note Section 25-1:: 
+   - 'fill_ellipse', 25.1*Note Section 25-1:: 
+   - 'fill_poly', 25.1*Note Section 25-1:: 
+   - 'fill_rect', 25.1*Note Section 25-1:: 
+   - 'fillMode', 28.1*Note Section 28-1:: 
+   - 'filter', 20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31:: 
+   - 'finalise', 20.10*Note Section 20-10:: 
+   - 'finalise_release', 20.10*Note Section 20-10:: 
+   - 'find', 20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.31*Note Section 20-31::, 20.35*Note Section 20-35::,
+   26.1*Note Section 26-1:: 
+   - 'find_all', 20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.17*Note Section 20-17::, 20.31*Note Section 20-31::,
+   20.35*Note Section 20-35:: 
+   - 'first_chars', 23.1*Note Section 23-1:: 
+   - 'firstkey', 26.1*Note Section 26-1:: 
+   - 'flatten', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'float', 19.1*Note Section 19-1::, 19.2*Note Section 19-2::,
+   20.26*Note Section 20-26::, 20.26*Note Section 20-26:: 
+   - 'float_of_big_int', 22.2*Note Section 22-2:: 
+   - 'float_of_bits', 20.13*Note Section 20-13::, 20.14*Note Section 20-14:: 
+   - 'float_of_int', 19.2*Note Section 19-2:: 
+   - 'float_of_num', 22.1*Note Section 22-1:: 
+   - 'float_of_string', 19.2*Note Section 19-2:: 
+   - 'float32', 29.1*Note Section 29-1:: 
+   - 'float32_elt', 29.1*Note Section 29-1:: 
+   - 'float64', 29.1*Note Section 29-1:: 
+   - 'float64_elt', 29.1*Note Section 29-1:: 
+   - 'floor', 19.2*Note Section 19-2:: 
+   - 'floor_num', 22.1*Note Section 22-1:: 
+   - 'flow_action', 21.1*Note Section 21-1:: 
+   - 'flush', 19.2*Note Section 19-2:: 
+   - 'flush_all', 19.2*Note Section 19-2:: 
+   - 'flush_input', 20.16*Note Section 20-16:: 
+   - 'flush_queue', 21.1*Note Section 21-1:: 
+   - 'flush_str_formatter', 20.9*Note Section 20-9:: 
+   - 'fold', 20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.18*Note Section 20-18::, 20.25*Note Section 20-25::,
+   20.28*Note Section 20-28::, 20.35*Note Section 20-35:: 
+   - 'fold_left', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31:: 
+   - 'fold_left2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'fold_right', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31:: 
+   - 'fold_right2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'for_all', 20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31:: 
+   - 'for_all2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'force', 7.6*Note Section 7-6::, 20.15*Note Section 20-15:: 
+   - 'force_newline', 20.9*Note Section 20-9:: 
+   - 'force_val', 20.15*Note Section 20-15:: 
+   - 'foreground', 25.1*Note Section 25-1:: 
+   - 'fork', 21.1*Note Section 21-1:: 
+   - 'format', 19.2*Note Section 19-2:: 
+   - 'format_from_string', 20.27*Note Section 20-27:: 
+   - 'format_of_string', 19.2*Note Section 19-2:: 
+   - 'format4', 19.1*Note Section 19-1::, 19.2*Note Section 19-2:: 
+   - 'formatter', 20.9*Note Section 20-9:: 
+   - 'formatter_of_buffer', 20.9*Note Section 20-9:: 
+   - 'formatter_of_out_channel', 20.9*Note Section 20-9:: 
+   - 'formatter_tag_functions', 20.9*Note Section 20-9:: 
+   - 'fortran_layout', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::
+   
+   - 'fpclass', 19.2*Note Section 19-2:: 
+   - 'fprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'frexp', 19.2*Note Section 19-2:: 
+   - 'from', 20.32*Note Section 20-32:: 
+   - 'from_channel', 20.16*Note Section 20-16::, 20.19*Note Section 20-19::,
+   20.27*Note Section 20-27:: 
+   - 'from_file', 20.27*Note Section 20-27:: 
+   - 'from_file_bin', 20.27*Note Section 20-27:: 
+   - 'from_function', 20.16*Note Section 20-16::, 20.27*Note Section 20-27:: 
+   - 'from_string', 20.16*Note Section 20-16::, 20.19*Note Section 20-19::,
+   20.27*Note Section 20-27:: 
+   - 'fscanf', 20.27*Note Section 20-27:: 
+   - 'fst', 19.2*Note Section 19-2:: 
+   - 'fstat', 21.1*Note Section 21-1::, 21.1*Note Section 21-1:: 
+   - 'ftruncate', 21.1*Note Section 21-1::, 21.1*Note Section 21-1:: 
+   - 'full_init', 20.26*Note Section 20-26:: 
+   - 'full_major', 20.10*Note Section 20-10:: 
+   - 'full_split', 23.1*Note Section 23-1:: 
+ 
+   - 'Gc', 20.10*Note Section 20-10:: 
+   - 'Genarray', 29.1*Note Section 29-1:: 
+   - 'Genlex', 20.11*Note Section 20-11:: 
+   - 'Graphic_failure', 25.1*Note Section 25-1:: 
+   - 'Graphics', 25.1*Note Section 25-1:: 
+   - 'gcd_big_int', 22.2*Note Section 22-2:: 
+   - 'ge_big_int', 22.2*Note Section 22-2:: 
+   - 'ge_num', 22.1*Note Section 22-1:: 
+   - 'genarray_of_array1', 29.1*Note Section 29-1:: 
+   - 'genarray_of_array2', 29.1*Note Section 29-1:: 
+   - 'genarray_of_array3', 29.1*Note Section 29-1:: 
+   - 'get', 20.2*Note Section 20-2::, 20.10*Note Section 20-10::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'get_all_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'get_approx_printing', 22.3*Note Section 22-3:: 
+   - 'get_backtrace', 20.23*Note Section 20-23:: 
+   - 'get_copy', 20.35*Note Section 20-35:: 
+   - 'get_ellipsis_text', 20.9*Note Section 20-9:: 
+   - 'get_error_when_null_denominator', 22.3*Note Section 22-3:: 
+   - 'get_floating_precision', 22.3*Note Section 22-3:: 
+   - 'get_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'get_formatter_tag_functions', 20.9*Note Section 20-9:: 
+   - 'get_image', 25.1*Note Section 25-1:: 
+   - 'get_margin', 20.9*Note Section 20-9:: 
+   - 'get_mark_tags', 20.9*Note Section 20-9:: 
+   - 'get_max_boxes', 20.9*Note Section 20-9:: 
+   - 'get_max_indent', 20.9*Note Section 20-9:: 
+   - 'get_normalize_ratio', 22.3*Note Section 22-3:: 
+   - 'get_normalize_ratio_when_printing', 22.3*Note Section 22-3:: 
+   - 'get_print_tags', 20.9*Note Section 20-9:: 
+   - 'get_state', 20.26*Note Section 20-26:: 
+   - 'getaddrinfo', 21.1*Note Section 21-1:: 
+   - 'getaddrinfo_option', 21.1*Note Section 21-1:: 
+   - 'getcwd', 20.34*Note Section 20-34::, 21.1*Note Section 21-1:: 
+   - 'getegid', 21.1*Note Section 21-1:: 
+   - 'getenv', 20.34*Note Section 20-34::, 21.1*Note Section 21-1:: 
+   - 'geteuid', 21.1*Note Section 21-1:: 
+   - 'getgid', 21.1*Note Section 21-1:: 
+   - 'getgrgid', 21.1*Note Section 21-1:: 
+   - 'getgrnam', 21.1*Note Section 21-1:: 
+   - 'getgroups', 21.1*Note Section 21-1:: 
+   - 'gethostbyaddr', 21.1*Note Section 21-1:: 
+   - 'gethostbyname', 21.1*Note Section 21-1:: 
+   - 'gethostname', 21.1*Note Section 21-1:: 
+   - 'getitimer', 21.1*Note Section 21-1:: 
+   - 'getlogin', 21.1*Note Section 21-1:: 
+   - 'getnameinfo', 21.1*Note Section 21-1:: 
+   - 'getnameinfo_option', 21.1*Note Section 21-1:: 
+   - 'getpeername', 21.1*Note Section 21-1:: 
+   - 'getpid', 21.1*Note Section 21-1:: 
+   - 'getppid', 21.1*Note Section 21-1:: 
+   - 'getprotobyname', 21.1*Note Section 21-1:: 
+   - 'getprotobynumber', 21.1*Note Section 21-1:: 
+   - 'getpwnam', 21.1*Note Section 21-1:: 
+   - 'getpwuid', 21.1*Note Section 21-1:: 
+   - 'getservbyname', 21.1*Note Section 21-1:: 
+   - 'getservbyport', 21.1*Note Section 21-1:: 
+   - 'getsockname', 21.1*Note Section 21-1:: 
+   - 'getsockopt', 21.1*Note Section 21-1:: 
+   - 'getsockopt_error', 21.1*Note Section 21-1:: 
+   - 'getsockopt_float', 21.1*Note Section 21-1:: 
+   - 'getsockopt_int', 21.1*Note Section 21-1:: 
+   - 'getsockopt_optint', 21.1*Note Section 21-1:: 
+   - 'gettimeofday', 21.1*Note Section 21-1:: 
+   - 'getuid', 21.1*Note Section 21-1:: 
+   - 'global_replace', 23.1*Note Section 23-1:: 
+   - 'global_substitute', 23.1*Note Section 23-1:: 
+   - 'gmtime', 21.1*Note Section 21-1:: 
+   - 'green', 25.1*Note Section 25-1:: 
+   - 'grid', 28.1*Note Section 28-1:: 
+   - 'group_beginning', 23.1*Note Section 23-1:: 
+   - 'group_end', 23.1*Note Section 23-1:: 
+   - 'group_entry', 21.1*Note Section 21-1:: 
+   - 'gt_big_int', 22.2*Note Section 22-2:: 
+   - 'gt_num', 22.1*Note Section 22-1:: 
+   - 'guard', 24.4*Note Section 24-4:: 
+ 
+   - 'HashedType', 20.12*Note Section 20-12:: 
+   - 'Hashtbl', 20.12*Note Section 20-12:: 
+   - 'Help', 20.1*Note Section 20-1:: 
+   - 'handle_unix_error', 21.1*Note Section 21-1:: 
+   - 'hash', 20.12*Note Section 20-12::, 20.12*Note Section 20-12:: 
+   - 'hash_param', 20.12*Note Section 20-12:: 
+   - 'hd', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'header_size', 20.19*Note Section 20-19:: 
+   - 'host_entry', 21.1*Note Section 21-1:: 
+ 
+   - 'Int32', 20.13*Note Section 20-13:: 
+   - 'Int64', 20.14*Note Section 20-14:: 
+   - 'Invalid_argument', 19.1*Note Section 19-1:: 
+   - 'i', 20.6*Note Section 20-6:: 
+   - 'id', 20.21*Note Section 20-21::, 24.1*Note Section 24-1:: 
+   - 'ifprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'ignore', 19.2*Note Section 19-2:: 
+   - 'ikfprintf', 20.9*Note Section 20-9:: 
+   - 'image', 25.1*Note Section 25-1:: 
+   - 'in_channel', 19.2*Note Section 19-2::, 20.27*Note Section 20-27:: 
+   - 'in_channel_length', 19.2*Note Section 19-2::,
+   19.2*Note Section 19-2:: 
+   - 'in_channel_of_descr', 21.1*Note Section 21-1:: 
+   - 'incr', 19.2*Note Section 19-2:: 
+   - 'incr_num', 22.1*Note Section 22-1:: 
+   - 'index', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'index_from', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'inet_addr', 21.1*Note Section 21-1:: 
+   - 'inet_addr_any', 21.1*Note Section 21-1:: 
+   - 'inet_addr_loopback', 21.1*Note Section 21-1:: 
+   - 'inet_addr_of_string', 21.1*Note Section 21-1:: 
+   - 'inet6_addr_any', 21.1*Note Section 21-1:: 
+   - 'inet6_addr_loopback', 21.1*Note Section 21-1:: 
+   - 'infinity', 19.2*Note Section 19-2:: 
+   - 'init', 20.2*Note Section 20-2::, 20.26*Note Section 20-26::,
+   20.31*Note Section 20-31::, 27.1*Note Section 27-1:: 
+   - 'initgroups', 21.1*Note Section 21-1:: 
+   - 'input', 19.2*Note Section 19-2::, 20.7*Note Section 20-7:: 
+   - 'input_binary_int', 19.2*Note Section 19-2:: 
+   - 'input_byte', 19.2*Note Section 19-2:: 
+   - 'input_char', 19.2*Note Section 19-2:: 
+   - 'input_line', 19.2*Note Section 19-2:: 
+   - 'input_value', 19.2*Note Section 19-2:: 
+   - 'int', 19.1*Note Section 19-1::, 20.26*Note Section 20-26::,
+   20.26*Note Section 20-26::, 29.1*Note Section 29-1:: 
+   - 'int_elt', 29.1*Note Section 29-1:: 
+   - 'int_of_big_int', 22.2*Note Section 22-2:: 
+   - 'int_of_char', 19.2*Note Section 19-2:: 
+   - 'int_of_float', 19.2*Note Section 19-2:: 
+   - 'int_of_num', 22.1*Note Section 22-1:: 
+   - 'int_of_string', 19.2*Note Section 19-2:: 
+   - 'int16_signed', 29.1*Note Section 29-1:: 
+   - 'int16_signed_elt', 29.1*Note Section 29-1:: 
+   - 'int16_unsigned', 29.1*Note Section 29-1:: 
+   - 'int16_unsigned_elt', 29.1*Note Section 29-1:: 
+   - 'int32', 7.1*Note Section 7-1::, 19.1*Note Section 19-1::,
+   20.26*Note Section 20-26::, 20.26*Note Section 20-26::,
+   29.1*Note Section 29-1:: 
+   - 'int32_elt', 29.1*Note Section 29-1:: 
+   - 'int32_of_big_int', 22.2*Note Section 22-2:: 
+   - 'int64', 7.1*Note Section 7-1::, 19.1*Note Section 19-1::,
+   20.26*Note Section 20-26::, 20.26*Note Section 20-26::,
+   29.1*Note Section 29-1:: 
+   - 'int64_elt', 29.1*Note Section 29-1:: 
+   - 'int64_of_big_int', 22.2*Note Section 22-2:: 
+   - 'int8_signed', 29.1*Note Section 29-1:: 
+   - 'int8_signed_elt', 29.1*Note Section 29-1:: 
+   - 'int8_unsigned', 29.1*Note Section 29-1:: 
+   - 'int8_unsigned_elt', 29.1*Note Section 29-1:: 
+   - 'integer_num', 22.1*Note Section 22-1:: 
+   - 'inter', 20.28*Note Section 20-28:: 
+   - 'interactive', 20.34*Note Section 20-34:: 
+   - 'interval_timer', 21.1*Note Section 21-1:: 
+   - 'interval_timer_status', 21.1*Note Section 21-1:: 
+   - 'inv', 20.6*Note Section 20-6:: 
+   - 'invalid_arg', 19.2*Note Section 19-2:: 
+   - 'is_directory', 20.34*Note Section 20-34:: 
+   - 'is_empty', 20.18*Note Section 20-18::, 20.25*Note Section 20-25::,
+   20.28*Note Section 20-28::, 20.30*Note Section 20-30:: 
+   - 'is_implicit', 20.8*Note Section 20-8:: 
+   - 'is_int_big_int', 22.2*Note Section 22-2:: 
+   - 'is_integer_num', 22.1*Note Section 22-1:: 
+   - 'is_native', 27.1*Note Section 27-1:: 
+   - 'is_relative', 20.8*Note Section 20-8:: 
+   - 'isatty', 21.1*Note Section 21-1:: 
+   - 'iter', 20.2*Note Section 20-2::, 20.12*Note Section 20-12::,
+   20.12*Note Section 20-12::, 20.17*Note Section 20-17::,
+   20.18*Note Section 20-18::, 20.25*Note Section 20-25::,
+   20.28*Note Section 20-28::, 20.30*Note Section 20-30::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.31*Note Section 20-31::, 20.32*Note Section 20-32::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35::,
+   26.1*Note Section 26-1:: 
+   - 'iter2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'iteri', 20.2*Note Section 20-2::, 20.31*Note Section 20-31:: 
+ 
+   - 'join', 24.1*Note Section 24-1:: 
+   - 'junk', 20.32*Note Section 20-32:: 
+ 
+   - 'kbprintf', 20.24*Note Section 20-24:: 
+   - 'key', 20.1*Note Section 20-1::, 20.12*Note Section 20-12::,
+   20.18*Note Section 20-18:: 
+   - 'key_pressed', 25.1*Note Section 25-1:: 
+   - 'kfprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'kill', 21.1*Note Section 21-1::, 24.1*Note Section 24-1:: 
+   - 'kind', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'kprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'kscanf', 20.27*Note Section 20-27:: 
+   - 'ksprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+ 
+   - 'LargeFile', 19.2*Note Section 19-2::, 21.1*Note Section 21-1:: 
+   - 'Lazy', 20.15*Note Section 20-15:: 
+   - 'Lazy' (module), 7.6*Note Section 7-6:: 
+   - 'Lexing', 20.16*Note Section 20-16:: 
+   - 'List', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'last_chars', 23.1*Note Section 23-1:: 
+   - 'layout', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'lazy_from_fun', 20.15*Note Section 20-15:: 
+   - 'lazy_from_val', 20.15*Note Section 20-15:: 
+   - 'lazy_is_val', 20.15*Note Section 20-15:: 
+   - 'lazy_t', 19.1*Note Section 19-1:: 
+   - 'ldexp', 19.2*Note Section 19-2:: 
+   - 'le_big_int', 22.2*Note Section 22-2:: 
+   - 'le_num', 22.1*Note Section 22-1:: 
+   - 'length', 20.2*Note Section 20-2::, 20.3*Note Section 20-3::,
+   20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.17*Note Section 20-17::, 20.25*Note Section 20-25::,
+   20.30*Note Section 20-30::, 20.31*Note Section 20-31::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35:: 
+   - 'lexbuf', 20.16*Note Section 20-16:: 
+   - 'lexeme', 20.16*Note Section 20-16:: 
+   - 'lexeme_char', 20.16*Note Section 20-16:: 
+   - 'lexeme_end', 20.16*Note Section 20-16:: 
+   - 'lexeme_end_p', 20.16*Note Section 20-16:: 
+   - 'lexeme_start', 20.16*Note Section 20-16:: 
+   - 'lexeme_start_p', 20.16*Note Section 20-16:: 
+   - 'lineto', 25.1*Note Section 25-1:: 
+   - 'link', 21.1*Note Section 21-1:: 
+   - 'linking_error', 27.1*Note Section 27-1:: 
+   - 'list', 19.1*Note Section 19-1::, 20.29*Note Section 20-29:: 
+   - 'listen', 21.1*Note Section 21-1:: 
+   - 'lnot', 19.2*Note Section 19-2:: 
+   - 'loadfile', 27.1*Note Section 27-1:: 
+   - 'loadfile_private', 27.1*Note Section 27-1:: 
+   - 'localtime', 21.1*Note Section 21-1:: 
+   - 'lock', 24.2*Note Section 24-2:: 
+   - 'lock_command', 21.1*Note Section 21-1:: 
+   - 'lockf', 21.1*Note Section 21-1:: 
+   - 'log', 19.2*Note Section 19-2::, 20.6*Note Section 20-6:: 
+   - 'log10', 19.2*Note Section 19-2:: 
+   - 'log1p', 19.2*Note Section 19-2:: 
+   - 'logand', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'lognot', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'logor', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'logxor', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'lower_window', 28.1*Note Section 28-1:: 
+   - 'lowercase', 20.5*Note Section 20-5::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33:: 
+   - 'lseek', 21.1*Note Section 21-1::, 21.1*Note Section 21-1:: 
+   - 'lstat', 21.1*Note Section 21-1::, 21.1*Note Section 21-1:: 
+   - 'lt_big_int', 22.2*Note Section 22-2:: 
+   - 'lt_num', 22.1*Note Section 22-1:: 
+ 
+   - 'Make', 20.12*Note Section 20-12::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.35*Note Section 20-35:: 
+   - 'Map', 20.18*Note Section 20-18:: 
+   - 'Marshal', 20.19*Note Section 20-19:: 
+   - 'Match_failure', 6.7.1*Note Subsection 6-7-1::, 6.7.1*Note Subsection 6-7-1::,
+   6.7.2*Note Subsection 6-7-2::, 19.1*Note Section 19-1:: 
+   - 'Mutex', 24.2*Note Section 24-2:: 
+   - 'magenta', 25.1*Note Section 25-1:: 
+   - 'mainLoop', 28.1*Note Section 28-1:: 
+   - 'major', 20.10*Note Section 20-10:: 
+   - 'major_slice', 20.10*Note Section 20-10:: 
+   - 'make', 20.2*Note Section 20-2::, 20.26*Note Section 20-26::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33:: 
+   - 'make_formatter', 20.9*Note Section 20-9:: 
+   - 'make_image', 25.1*Note Section 25-1:: 
+   - 'make_lexer', 20.11*Note Section 20-11:: 
+   - 'make_matrix', 20.2*Note Section 20-2::, 20.31*Note Section 20-31:: 
+   - 'make_self_init', 20.26*Note Section 20-26:: 
+   - 'map', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.18*Note Section 20-18::, 20.31*Note Section 20-31::,
+   20.31*Note Section 20-31:: 
+   - 'map_file', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'map2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'mapi', 20.2*Note Section 20-2::, 20.18*Note Section 20-18::,
+   20.31*Note Section 20-31:: 
+   - 'match_beginning', 23.1*Note Section 23-1:: 
+   - 'match_end', 23.1*Note Section 23-1:: 
+   - 'matched_group', 23.1*Note Section 23-1:: 
+   - 'matched_string', 23.1*Note Section 23-1:: 
+   - 'max', 19.2*Note Section 19-2:: 
+   - 'max_array_length', 20.34*Note Section 20-34:: 
+   - 'max_big_int', 22.2*Note Section 22-2:: 
+   - 'max_binding', 20.18*Note Section 20-18:: 
+   - 'max_elt', 20.28*Note Section 20-28:: 
+   - 'max_float', 19.2*Note Section 19-2:: 
+   - 'max_int', 19.2*Note Section 19-2::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'max_num', 22.1*Note Section 22-1:: 
+   - 'max_string_length', 20.34*Note Section 20-34:: 
+   - 'mem', 20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31::,
+   20.35*Note Section 20-35:: 
+   - 'mem_assoc', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'mem_assq', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'memq', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'merge', 20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.29*Note Section 20-29::, 20.31*Note Section 20-31::,
+   20.35*Note Section 20-35:: 
+   - 'min', 19.2*Note Section 19-2:: 
+   - 'min_big_int', 22.2*Note Section 22-2:: 
+   - 'min_binding', 20.18*Note Section 20-18:: 
+   - 'min_elt', 20.28*Note Section 20-28:: 
+   - 'min_float', 19.2*Note Section 19-2:: 
+   - 'min_int', 19.2*Note Section 19-2::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'min_num', 22.1*Note Section 22-1:: 
+   - 'minor', 20.10*Note Section 20-10:: 
+   - 'minus_big_int', 22.2*Note Section 22-2:: 
+   - 'minus_num', 22.1*Note Section 22-1:: 
+   - 'minus_one', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'mkdir', 21.1*Note Section 21-1:: 
+   - 'mkfifo', 21.1*Note Section 21-1:: 
+   - 'mktime', 21.1*Note Section 21-1:: 
+   - 'mod_big_int', 22.2*Note Section 22-2:: 
+   - 'mod_float', 19.2*Note Section 19-2:: 
+   - 'mod_num', 22.1*Note Section 22-1:: 
+   - 'modf', 19.2*Note Section 19-2:: 
+   - 'modifier', 28.1*Note Section 28-1:: 
+   - 'mouse_pos', 25.1*Note Section 25-1:: 
+   - 'moveto', 25.1*Note Section 25-1:: 
+   - 'msg_flag', 21.1*Note Section 21-1:: 
+   - 'mul', 20.6*Note Section 20-6::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'mult_big_int', 22.2*Note Section 22-2:: 
+   - 'mult_int_big_int', 22.2*Note Section 22-2:: 
+   - 'mult_num', 22.1*Note Section 22-1:: 
+ 
+   - 'Nativeint', 20.20*Note Section 20-20:: 
+   - 'Not_found', 19.1*Note Section 19-1:: 
+   - 'Num', 22.1*Note Section 22-1:: 
+   - 'name_info', 21.1*Note Section 21-1:: 
+   - 'name_of_input', 20.27*Note Section 20-27:: 
+   - 'nan', 19.2*Note Section 19-2:: 
+   - 'nat_of_num', 22.1*Note Section 22-1:: 
+   - 'nativeint', 7.1*Note Section 7-1::, 19.1*Note Section 19-1::,
+   20.26*Note Section 20-26::, 20.26*Note Section 20-26::,
+   29.1*Note Section 29-1:: 
+   - 'nativeint_elt', 29.1*Note Section 29-1:: 
+   - 'nativeint_of_big_int', 22.2*Note Section 22-2:: 
+   - 'neg', 20.6*Note Section 20-6::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'neg_infinity', 19.2*Note Section 19-2:: 
+   - 'new_channel', 24.4*Note Section 24-4:: 
+   - 'new_line', 20.16*Note Section 20-16:: 
+   - 'next', 20.32*Note Section 20-32:: 
+   - 'nextkey', 26.1*Note Section 26-1:: 
+   - 'nice', 21.1*Note Section 21-1:: 
+   - 'norm', 20.6*Note Section 20-6:: 
+   - 'norm2', 20.6*Note Section 20-6:: 
+   - 'not', 19.2*Note Section 19-2:: 
+   - 'npeek', 20.32*Note Section 20-32:: 
+   - 'nth', 20.3*Note Section 20-3::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31:: 
+   - 'nth_dim', 29.1*Note Section 29-1:: 
+   - 'num', 22.1*Note Section 22-1:: 
+   - 'num_digits_big_int', 22.2*Note Section 22-2:: 
+   - 'num_dims', 29.1*Note Section 29-1:: 
+   - 'num_of_big_int', 22.1*Note Section 22-1:: 
+   - 'num_of_int', 22.1*Note Section 22-1:: 
+   - 'num_of_nat', 22.1*Note Section 22-1:: 
+   - 'num_of_ratio', 22.1*Note Section 22-1:: 
+   - 'num_of_string', 22.1*Note Section 22-1:: 
+ 
+   - 'Oo', 20.21*Note Section 20-21:: 
+   - 'OrderedType', 20.18*Note Section 20-18::, 20.28*Note Section 20-28:: 
+   - 'Out_of_memory', 19.1*Note Section 19-1:: 
+   - 'ocaml_version', 20.34*Note Section 20-34:: 
+   - 'of_array', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'of_channel', 20.32*Note Section 20-32:: 
+   - 'of_float', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'of_int', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'of_int32', 20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'of_list', 20.2*Note Section 20-2::, 20.31*Note Section 20-31::,
+   20.32*Note Section 20-32:: 
+   - 'of_nativeint', 20.14*Note Section 20-14:: 
+   - 'of_string', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20::, 20.32*Note Section 20-32:: 
+   - 'one', 20.6*Note Section 20-6::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'open_box', 20.9*Note Section 20-9:: 
+   - 'open_connection', 21.1*Note Section 21-1::,
+   24.5*Note Section 24-5:: 
+   - 'open_flag', 19.2*Note Section 19-2::, 21.1*Note Section 21-1::,
+   26.1*Note Section 26-1:: 
+   - 'open_graph', 25.1*Note Section 25-1:: 
+   - 'open_hbox', 20.9*Note Section 20-9:: 
+   - 'open_hovbox', 20.9*Note Section 20-9:: 
+   - 'open_hvbox', 20.9*Note Section 20-9:: 
+   - 'open_in', 19.2*Note Section 19-2::, 20.27*Note Section 20-27:: 
+   - 'open_in_bin', 19.2*Note Section 19-2::, 20.27*Note Section 20-27:: 
+   - 'open_in_gen', 19.2*Note Section 19-2:: 
+   - 'open_out', 19.2*Note Section 19-2:: 
+   - 'open_out_bin', 19.2*Note Section 19-2:: 
+   - 'open_out_gen', 19.2*Note Section 19-2:: 
+   - 'open_process', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'open_process_full', 21.1*Note Section 21-1:: 
+   - 'open_process_in', 21.1*Note Section 21-1::,
+   24.5*Note Section 24-5:: 
+   - 'open_process_out', 21.1*Note Section 21-1::,
+   24.5*Note Section 24-5:: 
+   - 'open_tag', 20.9*Note Section 20-9:: 
+   - 'open_tbox', 20.9*Note Section 20-9:: 
+   - 'open_temp_file', 20.8*Note Section 20-8:: 
+   - 'open_vbox', 20.9*Note Section 20-9:: 
+   - 'opendbm', 26.1*Note Section 26-1:: 
+   - 'opendir', 21.1*Note Section 21-1:: 
+   - 'openfile', 21.1*Note Section 21-1:: 
+   - 'openTk', 28.1*Note Section 28-1:: 
+   - 'option', 19.1*Note Section 19-1:: 
+   - 'or_big_int', 22.2*Note Section 22-2:: 
+   - 'os_type', 20.34*Note Section 20-34:: 
+   - 'out_channel', 19.2*Note Section 19-2:: 
+   - 'out_channel_length', 19.2*Note Section 19-2::,
+   19.2*Note Section 19-2:: 
+   - 'out_channel_of_descr', 21.1*Note Section 21-1:: 
+   - 'output', 19.2*Note Section 19-2::, 20.7*Note Section 20-7:: 
+   - 'output_binary_int', 19.2*Note Section 19-2:: 
+   - 'output_buffer', 20.3*Note Section 20-3:: 
+   - 'output_byte', 19.2*Note Section 19-2:: 
+   - 'output_char', 19.2*Note Section 19-2:: 
+   - 'output_string', 19.2*Note Section 19-2:: 
+   - 'output_value', 19.2*Note Section 19-2:: 
+   - 'over_max_boxes', 20.9*Note Section 20-9:: 
+ 
+   - 'Parse_error', 20.22*Note Section 20-22:: 
+   - 'Parsing', 20.22*Note Section 20-22:: 
+   - 'Pervasives', 19.2*Note Section 19-2:: 
+   - 'Printexc', 20.23*Note Section 20-23:: 
+   - 'Printf', 20.24*Note Section 20-24:: 
+   - 'pack', 28.1*Note Section 28-1:: 
+   - 'parent_dir_name', 20.8*Note Section 20-8:: 
+   - 'parse', 20.1*Note Section 20-1:: 
+   - 'parse_argv', 20.1*Note Section 20-1:: 
+   - 'partition', 20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31:: 
+   - 'passwd_entry', 21.1*Note Section 21-1:: 
+   - 'pause', 21.1*Note Section 21-1:: 
+   - 'peek', 20.25*Note Section 20-25::, 20.32*Note Section 20-32:: 
+   - 'pipe', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'pixels', 28.1*Note Section 28-1:: 
+   - 'place', 28.1*Note Section 28-1:: 
+   - 'plot', 25.1*Note Section 25-1:: 
+   - 'plots', 25.1*Note Section 25-1:: 
+   - 'point_color', 25.1*Note Section 25-1:: 
+   - 'polar', 20.6*Note Section 20-6:: 
+   - 'poll', 24.4*Note Section 24-4:: 
+   - 'pop', 20.25*Note Section 20-25::, 20.30*Note Section 20-30:: 
+   - 'pos_in', 19.2*Note Section 19-2::, 19.2*Note Section 19-2:: 
+   - 'pos_out', 19.2*Note Section 19-2::, 19.2*Note Section 19-2:: 
+   - 'position', 20.16*Note Section 20-16:: 
+   - 'pow', 20.6*Note Section 20-6:: 
+   - 'power_big_int_positive_big_int', 22.2*Note Section 22-2:: 
+   - 'power_big_int_positive_int', 22.2*Note Section 22-2:: 
+   - 'power_int_positive_big_int', 22.2*Note Section 22-2:: 
+   - 'power_int_positive_int', 22.2*Note Section 22-2:: 
+   - 'power_num', 22.1*Note Section 22-1:: 
+   - 'pp_close_box', 20.9*Note Section 20-9:: 
+   - 'pp_close_tag', 20.9*Note Section 20-9:: 
+   - 'pp_close_tbox', 20.9*Note Section 20-9:: 
+   - 'pp_force_newline', 20.9*Note Section 20-9:: 
+   - 'pp_get_all_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'pp_get_ellipsis_text', 20.9*Note Section 20-9:: 
+   - 'pp_get_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'pp_get_formatter_tag_functions', 20.9*Note Section 20-9:: 
+   - 'pp_get_margin', 20.9*Note Section 20-9:: 
+   - 'pp_get_mark_tags', 20.9*Note Section 20-9:: 
+   - 'pp_get_max_boxes', 20.9*Note Section 20-9:: 
+   - 'pp_get_max_indent', 20.9*Note Section 20-9:: 
+   - 'pp_get_print_tags', 20.9*Note Section 20-9:: 
+   - 'pp_open_box', 20.9*Note Section 20-9:: 
+   - 'pp_open_hbox', 20.9*Note Section 20-9:: 
+   - 'pp_open_hovbox', 20.9*Note Section 20-9:: 
+   - 'pp_open_hvbox', 20.9*Note Section 20-9:: 
+   - 'pp_open_tag', 20.9*Note Section 20-9:: 
+   - 'pp_open_tbox', 20.9*Note Section 20-9:: 
+   - 'pp_open_vbox', 20.9*Note Section 20-9:: 
+   - 'pp_over_max_boxes', 20.9*Note Section 20-9:: 
+   - 'pp_print_as', 20.9*Note Section 20-9:: 
+   - 'pp_print_bool', 20.9*Note Section 20-9:: 
+   - 'pp_print_break', 20.9*Note Section 20-9:: 
+   - 'pp_print_char', 20.9*Note Section 20-9:: 
+   - 'pp_print_cut', 20.9*Note Section 20-9:: 
+   - 'pp_print_float', 20.9*Note Section 20-9:: 
+   - 'pp_print_flush', 20.9*Note Section 20-9:: 
+   - 'pp_print_if_newline', 20.9*Note Section 20-9:: 
+   - 'pp_print_int', 20.9*Note Section 20-9:: 
+   - 'pp_print_newline', 20.9*Note Section 20-9:: 
+   - 'pp_print_space', 20.9*Note Section 20-9:: 
+   - 'pp_print_string', 20.9*Note Section 20-9:: 
+   - 'pp_print_tab', 20.9*Note Section 20-9:: 
+   - 'pp_print_tbreak', 20.9*Note Section 20-9:: 
+   - 'pp_set_all_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'pp_set_ellipsis_text', 20.9*Note Section 20-9:: 
+   - 'pp_set_formatter_out_channel', 20.9*Note Section 20-9:: 
+   - 'pp_set_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'pp_set_formatter_tag_functions', 20.9*Note Section 20-9:: 
+   - 'pp_set_margin', 20.9*Note Section 20-9:: 
+   - 'pp_set_mark_tags', 20.9*Note Section 20-9:: 
+   - 'pp_set_max_boxes', 20.9*Note Section 20-9:: 
+   - 'pp_set_max_indent', 20.9*Note Section 20-9:: 
+   - 'pp_set_print_tags', 20.9*Note Section 20-9:: 
+   - 'pp_set_tab', 20.9*Note Section 20-9:: 
+   - 'pp_set_tags', 20.9*Note Section 20-9:: 
+   - 'pred', 19.2*Note Section 19-2::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'pred_big_int', 22.2*Note Section 22-2:: 
+   - 'pred_num', 22.1*Note Section 22-1:: 
+   - 'prerr_char', 19.2*Note Section 19-2:: 
+   - 'prerr_endline', 19.2*Note Section 19-2:: 
+   - 'prerr_float', 19.2*Note Section 19-2:: 
+   - 'prerr_int', 19.2*Note Section 19-2:: 
+   - 'prerr_newline', 19.2*Note Section 19-2:: 
+   - 'prerr_string', 19.2*Note Section 19-2:: 
+   - 'print', 20.23*Note Section 20-23:: 
+   - 'print_as', 20.9*Note Section 20-9:: 
+   - 'print_backtrace', 20.23*Note Section 20-23:: 
+   - 'print_bool', 20.9*Note Section 20-9:: 
+   - 'print_break', 20.9*Note Section 20-9:: 
+   - 'print_char', 19.2*Note Section 19-2::, 20.9*Note Section 20-9:: 
+   - 'print_cut', 20.9*Note Section 20-9:: 
+   - 'print_endline', 19.2*Note Section 19-2:: 
+   - 'print_float', 19.2*Note Section 19-2::, 20.9*Note Section 20-9:: 
+   - 'print_flush', 20.9*Note Section 20-9:: 
+   - 'print_if_newline', 20.9*Note Section 20-9:: 
+   - 'print_int', 19.2*Note Section 19-2::, 20.9*Note Section 20-9:: 
+   - 'print_newline', 19.2*Note Section 19-2::, 20.9*Note Section 20-9:: 
+   - 'print_space', 20.9*Note Section 20-9:: 
+   - 'print_stat', 20.10*Note Section 20-10:: 
+   - 'print_string', 19.2*Note Section 19-2::, 20.9*Note Section 20-9:: 
+   - 'print_tab', 20.9*Note Section 20-9:: 
+   - 'print_tbreak', 20.9*Note Section 20-9:: 
+   - 'printf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'process_status', 21.1*Note Section 21-1:: 
+   - 'process_times', 21.1*Note Section 21-1:: 
+   - 'prohibit', 27.1*Note Section 27-1:: 
+   - 'protocol_entry', 21.1*Note Section 21-1:: 
+   - 'push', 20.25*Note Section 20-25::, 20.30*Note Section 20-30:: 
+   - 'putenv', 21.1*Note Section 21-1:: 
+ 
+   - 'Queue', 20.25*Note Section 20-25:: 
+   - 'quick_stat', 20.10*Note Section 20-10:: 
+   - 'quo_num', 22.1*Note Section 22-1:: 
+   - 'quomod_big_int', 22.2*Note Section 22-2:: 
+   - 'quote', 20.8*Note Section 20-8::, 23.1*Note Section 23-1:: 
+ 
+   - 'Random', 20.26*Note Section 20-26:: 
+   - 'raise', 19.2*Note Section 19-2:: 
+   - 'raise_window', 28.1*Note Section 28-1:: 
+   - 'ratio_of_num', 22.1*Note Section 22-1:: 
+   - 'rcontains_from', 20.31*Note Section 20-31::, 20.33*Note Section 20-33::
+   
+   - 'read', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'read_float', 19.2*Note Section 19-2:: 
+   - 'read_int', 19.2*Note Section 19-2:: 
+   - 'read_key', 25.1*Note Section 25-1:: 
+   - 'read_line', 19.2*Note Section 19-2:: 
+   - 'readdir', 20.34*Note Section 20-34::, 21.1*Note Section 21-1:: 
+   - 'readlink', 21.1*Note Section 21-1:: 
+   - 'really_input', 19.2*Note Section 19-2:: 
+   - 'receive', 24.4*Note Section 24-4:: 
+   - 'record_backtrace', 20.23*Note Section 20-23:: 
+   - 'recv', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'recvfrom', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'red', 25.1*Note Section 25-1:: 
+   - 'ref', 19.2*Note Section 19-2::, 19.2*Note Section 19-2:: 
+   - 'regexp', 23.1*Note Section 23-1::, 23.1*Note Section 23-1:: 
+   - 'regexp_case_fold', 23.1*Note Section 23-1:: 
+   - 'regexp_string', 23.1*Note Section 23-1:: 
+   - 'regexp_string_case_fold', 23.1*Note Section 23-1:: 
+   - 'register', 20.4*Note Section 20-4:: 
+   - 'register_exception', 20.4*Note Section 20-4:: 
+   - 'register_printer', 20.23*Note Section 20-23:: 
+   - 'rem', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'remember_mode', 25.1*Note Section 25-1:: 
+   - 'remove', 20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.18*Note Section 20-18::, 20.28*Note Section 20-28::,
+   20.34*Note Section 20-34::, 20.35*Note Section 20-35::,
+   26.1*Note Section 26-1:: 
+   - 'remove_assoc', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'remove_assq', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'rename', 20.34*Note Section 20-34::, 21.1*Note Section 21-1:: 
+   - 'replace', 20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   26.1*Note Section 26-1:: 
+   - 'replace_first', 23.1*Note Section 23-1:: 
+   - 'replace_matched', 23.1*Note Section 23-1:: 
+   - 'reset', 20.3*Note Section 20-3:: 
+   - 'reshape', 29.1*Note Section 29-1:: 
+   - 'reshape_1', 29.1*Note Section 29-1:: 
+   - 'reshape_2', 29.1*Note Section 29-1:: 
+   - 'reshape_3', 29.1*Note Section 29-1:: 
+   - 'resize_window', 25.1*Note Section 25-1:: 
+   - 'rev', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'rev_append', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'rev_map', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'rev_map2', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'rewinddir', 21.1*Note Section 21-1:: 
+   - 'rgb', 25.1*Note Section 25-1:: 
+   - 'rhs_end', 20.22*Note Section 20-22:: 
+   - 'rhs_end_pos', 20.22*Note Section 20-22:: 
+   - 'rhs_start', 20.22*Note Section 20-22:: 
+   - 'rhs_start_pos', 20.22*Note Section 20-22:: 
+   - 'rindex', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'rindex_from', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'rlineto', 25.1*Note Section 25-1:: 
+   - 'rmdir', 21.1*Note Section 21-1:: 
+   - 'rmoveto', 25.1*Note Section 25-1:: 
+   - 'round_num', 22.1*Note Section 22-1:: 
+ 
+   - 'S', 20.12*Note Section 20-12::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.35*Note Section 20-35:: 
+   - 'Scan_failure', 20.27*Note Section 20-27:: 
+   - 'Scanf', 20.27*Note Section 20-27:: 
+   - 'Scanning', 20.27*Note Section 20-27:: 
+   - 'Set', 20.28*Note Section 20-28:: 
+   - 'Sort', 20.29*Note Section 20-29:: 
+   - 'Stack', 20.30*Note Section 20-30:: 
+   - 'Stack_overflow', 19.1*Note Section 19-1:: 
+   - 'State', 20.26*Note Section 20-26:: 
+   - 'StdLabels', 20.31*Note Section 20-31:: 
+   - 'Str', 23.1*Note Section 23-1:: 
+   - 'Stream', 20.32*Note Section 20-32:: 
+   - 'String', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'Sys', 20.34*Note Section 20-34:: 
+   - 'Sys_blocked_io', 19.1*Note Section 19-1:: 
+   - 'Sys_error', 19.1*Note Section 19-1:: 
+   - 'scanbuf', 20.27*Note Section 20-27:: 
+   - 'scanf', 20.27*Note Section 20-27:: 
+   - 'scanner', 20.27*Note Section 20-27:: 
+   - 'search_backward', 23.1*Note Section 23-1:: 
+   - 'search_forward', 23.1*Note Section 23-1:: 
+   - 'seek_command', 21.1*Note Section 21-1:: 
+   - 'seek_in', 19.2*Note Section 19-2::, 19.2*Note Section 19-2:: 
+   - 'seek_out', 19.2*Note Section 19-2::, 19.2*Note Section 19-2:: 
+   - 'select', 21.1*Note Section 21-1::, 24.1*Note Section 24-1::,
+   24.4*Note Section 24-4::, 24.5*Note Section 24-5:: 
+   - 'self', 24.1*Note Section 24-1:: 
+   - 'self_init', 20.26*Note Section 20-26:: 
+   - 'send', 21.1*Note Section 21-1::, 24.4*Note Section 24-4::,
+   24.5*Note Section 24-5:: 
+   - 'sendto', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'service_entry', 21.1*Note Section 21-1:: 
+   - 'set', 20.2*Note Section 20-2::, 20.10*Note Section 20-10::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'set_all_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'set_approx_printing', 22.3*Note Section 22-3:: 
+   - 'set_binary_mode_in', 19.2*Note Section 19-2:: 
+   - 'set_binary_mode_out', 19.2*Note Section 19-2:: 
+   - 'set_close_on_exec', 21.1*Note Section 21-1:: 
+   - 'set_color', 25.1*Note Section 25-1:: 
+   - 'set_ellipsis_text', 20.9*Note Section 20-9:: 
+   - 'set_error_when_null_denominator', 22.3*Note Section 22-3:: 
+   - 'set_floating_precision', 22.3*Note Section 22-3:: 
+   - 'set_font', 25.1*Note Section 25-1:: 
+   - 'set_formatter_out_channel', 20.9*Note Section 20-9:: 
+   - 'set_formatter_output_functions', 20.9*Note Section 20-9:: 
+   - 'set_formatter_tag_functions', 20.9*Note Section 20-9:: 
+   - 'set_line_width', 25.1*Note Section 25-1:: 
+   - 'set_margin', 20.9*Note Section 20-9:: 
+   - 'set_mark_tags', 20.9*Note Section 20-9:: 
+   - 'set_max_boxes', 20.9*Note Section 20-9:: 
+   - 'set_max_indent', 20.9*Note Section 20-9:: 
+   - 'set_nonblock', 21.1*Note Section 21-1:: 
+   - 'set_normalize_ratio', 22.3*Note Section 22-3:: 
+   - 'set_normalize_ratio_when_printing', 22.3*Note Section 22-3:: 
+   - 'set_print_tags', 20.9*Note Section 20-9:: 
+   - 'set_signal', 20.34*Note Section 20-34:: 
+   - 'set_state', 20.26*Note Section 20-26:: 
+   - 'set_tab', 20.9*Note Section 20-9:: 
+   - 'set_tags', 20.9*Note Section 20-9:: 
+   - 'set_text_size', 25.1*Note Section 25-1:: 
+   - 'set_trace', 20.22*Note Section 20-22:: 
+   - 'set_window_title', 25.1*Note Section 25-1:: 
+   - 'setattr_when', 21.1*Note Section 21-1:: 
+   - 'setgid', 21.1*Note Section 21-1:: 
+   - 'setgroups', 21.1*Note Section 21-1:: 
+   - 'setitimer', 21.1*Note Section 21-1:: 
+   - 'setsid', 21.1*Note Section 21-1:: 
+   - 'setsockopt', 21.1*Note Section 21-1:: 
+   - 'setsockopt_float', 21.1*Note Section 21-1:: 
+   - 'setsockopt_int', 21.1*Note Section 21-1:: 
+   - 'setsockopt_optint', 21.1*Note Section 21-1:: 
+   - 'setuid', 21.1*Note Section 21-1:: 
+   - 'shift_left', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'shift_left_big_int', 22.2*Note Section 22-2:: 
+   - 'shift_right', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'shift_right_big_int', 22.2*Note Section 22-2:: 
+   - 'shift_right_logical', 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'shift_right_towards_zero_big_int', 22.2*Note Section 22-2:: 
+   - 'shutdown', 21.1*Note Section 21-1:: 
+   - 'shutdown_command', 21.1*Note Section 21-1:: 
+   - 'shutdown_connection', 21.1*Note Section 21-1:: 
+   - 'side', 28.1*Note Section 28-1:: 
+   - 'sigabrt', 20.34*Note Section 20-34:: 
+   - 'sigalrm', 20.34*Note Section 20-34:: 
+   - 'sigchld', 20.34*Note Section 20-34:: 
+   - 'sigcont', 20.34*Note Section 20-34:: 
+   - 'sigfpe', 20.34*Note Section 20-34:: 
+   - 'sighup', 20.34*Note Section 20-34:: 
+   - 'sigill', 20.34*Note Section 20-34:: 
+   - 'sigint', 20.34*Note Section 20-34:: 
+   - 'sigkill', 20.34*Note Section 20-34:: 
+   - 'sigmask', 24.1*Note Section 24-1:: 
+   - 'sign_big_int', 22.2*Note Section 22-2:: 
+   - 'sign_num', 22.1*Note Section 22-1:: 
+   - 'signal', 20.34*Note Section 20-34::, 24.3*Note Section 24-3:: 
+   - 'signal_behavior', 20.34*Note Section 20-34:: 
+   - 'sigpending', 21.1*Note Section 21-1:: 
+   - 'sigpipe', 20.34*Note Section 20-34:: 
+   - 'sigprocmask', 21.1*Note Section 21-1:: 
+   - 'sigprocmask_command', 21.1*Note Section 21-1:: 
+   - 'sigprof', 20.34*Note Section 20-34:: 
+   - 'sigquit', 20.34*Note Section 20-34:: 
+   - 'sigsegv', 20.34*Note Section 20-34:: 
+   - 'sigstop', 20.34*Note Section 20-34:: 
+   - 'sigsuspend', 21.1*Note Section 21-1:: 
+   - 'sigterm', 20.34*Note Section 20-34:: 
+   - 'sigtstp', 20.34*Note Section 20-34:: 
+   - 'sigttin', 20.34*Note Section 20-34:: 
+   - 'sigttou', 20.34*Note Section 20-34:: 
+   - 'sigusr1', 20.34*Note Section 20-34:: 
+   - 'sigusr2', 20.34*Note Section 20-34:: 
+   - 'sigvtalrm', 20.34*Note Section 20-34:: 
+   - 'sin', 19.2*Note Section 19-2:: 
+   - 'single_write', 21.1*Note Section 21-1:: 
+   - 'singleton', 20.18*Note Section 20-18::, 20.28*Note Section 20-28:: 
+   - 'sinh', 19.2*Note Section 19-2:: 
+   - 'size', 20.20*Note Section 20-20:: 
+   - 'size_x', 25.1*Note Section 25-1:: 
+   - 'size_y', 25.1*Note Section 25-1:: 
+   - 'sleep', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'slice_left', 29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'slice_left_1', 29.1*Note Section 29-1:: 
+   - 'slice_left_2', 29.1*Note Section 29-1:: 
+   - 'slice_right', 29.1*Note Section 29-1::, 29.1*Note Section 29-1:: 
+   - 'slice_right_1', 29.1*Note Section 29-1:: 
+   - 'slice_right_2', 29.1*Note Section 29-1:: 
+   - 'snd', 19.2*Note Section 19-2:: 
+   - 'sockaddr', 21.1*Note Section 21-1:: 
+   - 'socket', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'socket_bool_option', 21.1*Note Section 21-1:: 
+   - 'socket_domain', 21.1*Note Section 21-1:: 
+   - 'socket_float_option', 21.1*Note Section 21-1:: 
+   - 'socket_int_option', 21.1*Note Section 21-1:: 
+   - 'socket_optint_option', 21.1*Note Section 21-1:: 
+   - 'socket_type', 21.1*Note Section 21-1:: 
+   - 'socketpair', 21.1*Note Section 21-1:: 
+   - 'sort', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31:: 
+   - 'sound', 25.1*Note Section 25-1:: 
+   - 'spec', 20.1*Note Section 20-1:: 
+   - 'split', 20.17*Note Section 20-17::, 20.18*Note Section 20-18::,
+   20.28*Note Section 20-28::, 20.31*Note Section 20-31::,
+   23.1*Note Section 23-1:: 
+   - 'split_delim', 23.1*Note Section 23-1:: 
+   - 'split_result', 23.1*Note Section 23-1:: 
+   - 'sprintf', 20.9*Note Section 20-9::, 20.24*Note Section 20-24:: 
+   - 'sqrt', 19.2*Note Section 19-2::, 20.6*Note Section 20-6:: 
+   - 'sqrt_big_int', 22.2*Note Section 22-2:: 
+   - 'square_big_int', 22.2*Note Section 22-2:: 
+   - 'square_num', 22.1*Note Section 22-1:: 
+   - 'sscanf', 20.27*Note Section 20-27:: 
+   - 'sscanf_format', 20.27*Note Section 20-27:: 
+   - 'stable_sort', 20.2*Note Section 20-2::, 20.17*Note Section 20-17::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31:: 
+   - 'stat', 20.10*Note Section 20-10::, 20.10*Note Section 20-10::,
+   21.1*Note Section 21-1::, 21.1*Note Section 21-1:: 
+   - 'stats', 20.35*Note Section 20-35::, 21.1*Note Section 21-1::,
+   21.1*Note Section 21-1:: 
+   - 'status', 25.1*Note Section 25-1:: 
+   - 'std_formatter', 20.9*Note Section 20-9:: 
+   - 'stdbuf', 20.9*Note Section 20-9:: 
+   - 'stderr', 19.2*Note Section 19-2::, 21.1*Note Section 21-1:: 
+   - 'stdib', 20.27*Note Section 20-27:: 
+   - 'stdin', 19.2*Note Section 19-2::, 20.27*Note Section 20-27::,
+   21.1*Note Section 21-1:: 
+   - 'stdout', 19.2*Note Section 19-2::, 21.1*Note Section 21-1:: 
+   - 'str_formatter', 20.9*Note Section 20-9:: 
+   - 'string', 19.1*Note Section 19-1::, 20.7*Note Section 20-7:: 
+   - 'string_after', 23.1*Note Section 23-1:: 
+   - 'string_before', 23.1*Note Section 23-1:: 
+   - 'string_match', 23.1*Note Section 23-1:: 
+   - 'string_of_big_int', 22.2*Note Section 22-2:: 
+   - 'string_of_bool', 19.2*Note Section 19-2:: 
+   - 'string_of_float', 19.2*Note Section 19-2:: 
+   - 'string_of_format', 19.2*Note Section 19-2:: 
+   - 'string_of_inet_addr', 21.1*Note Section 21-1:: 
+   - 'string_of_int', 19.2*Note Section 19-2:: 
+   - 'string_of_num', 22.1*Note Section 22-1:: 
+   - 'string_partial_match', 23.1*Note Section 23-1:: 
+   - 'sub', 20.2*Note Section 20-2::, 20.3*Note Section 20-3::,
+   20.6*Note Section 20-6::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20::,
+   20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33::, 29.1*Note Section 29-1:: 
+   - 'sub_big_int', 22.2*Note Section 22-2:: 
+   - 'sub_left', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'sub_num', 22.1*Note Section 22-1:: 
+   - 'sub_right', 29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'subset', 20.28*Note Section 20-28:: 
+   - 'substitute_first', 23.1*Note Section 23-1:: 
+   - 'substring', 20.7*Note Section 20-7:: 
+   - 'succ', 19.2*Note Section 19-2::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'succ_big_int', 22.2*Note Section 22-2:: 
+   - 'succ_num', 22.1*Note Section 22-1:: 
+   - 'symbol_end', 20.22*Note Section 20-22:: 
+   - 'symbol_end_pos', 20.22*Note Section 20-22:: 
+   - 'symbol_start', 20.22*Note Section 20-22:: 
+   - 'symbol_start_pos', 20.22*Note Section 20-22:: 
+   - 'symlink', 21.1*Note Section 21-1:: 
+   - 'sync', 24.4*Note Section 24-4:: 
+   - 'synchronize', 25.1*Note Section 25-1:: 
+   - 'system', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+ 
+   - 'Thread', 24.1*Note Section 24-1:: 
+   - 'ThreadUnix', 24.5*Note Section 24-5:: 
+   - 'Tk', 28.1*Note Section 28-1:: 
+   - 't', 20.3*Note Section 20-3::, 20.5*Note Section 20-5::,
+   20.6*Note Section 20-6::, 20.7*Note Section 20-7::,
+   20.12*Note Section 20-12::, 20.12*Note Section 20-12::,
+   20.12*Note Section 20-12::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.15*Note Section 20-15::,
+   20.18*Note Section 20-18::, 20.18*Note Section 20-18::,
+   20.20*Note Section 20-20::, 20.25*Note Section 20-25::,
+   20.26*Note Section 20-26::, 20.28*Note Section 20-28::,
+   20.28*Note Section 20-28::, 20.30*Note Section 20-30::,
+   20.31*Note Section 20-31::, 20.32*Note Section 20-32::,
+   20.33*Note Section 20-33::, 20.35*Note Section 20-35::,
+   20.35*Note Section 20-35::, 24.1*Note Section 24-1::,
+   24.2*Note Section 24-2::, 24.3*Note Section 24-3::,
+   26.1*Note Section 26-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'tag', 20.9*Note Section 20-9:: 
+   - 'take', 20.25*Note Section 20-25:: 
+   - 'tan', 19.2*Note Section 19-2:: 
+   - 'tanh', 19.2*Note Section 19-2:: 
+   - 'tcdrain', 21.1*Note Section 21-1:: 
+   - 'tcflow', 21.1*Note Section 21-1:: 
+   - 'tcflush', 21.1*Note Section 21-1:: 
+   - 'tcgetattr', 21.1*Note Section 21-1:: 
+   - 'tcsendbreak', 21.1*Note Section 21-1:: 
+   - 'tcsetattr', 21.1*Note Section 21-1:: 
+   - 'temp_dir_name', 20.8*Note Section 20-8:: 
+   - 'temp_file', 20.8*Note Section 20-8:: 
+   - 'terminal_io', 21.1*Note Section 21-1:: 
+   - 'text_size', 25.1*Note Section 25-1:: 
+   - 'time', 20.34*Note Section 20-34::, 21.1*Note Section 21-1:: 
+   - 'timed_read', 24.5*Note Section 24-5:: 
+   - 'timed_write', 24.5*Note Section 24-5:: 
+   - 'times', 21.1*Note Section 21-1:: 
+   - 'tl', 20.17*Note Section 20-17::, 20.31*Note Section 20-31:: 
+   - 'tm', 21.1*Note Section 21-1:: 
+   - 'to_buffer', 20.19*Note Section 20-19:: 
+   - 'to_channel', 20.19*Note Section 20-19:: 
+   - 'to_float', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'to_hex', 20.7*Note Section 20-7:: 
+   - 'to_int', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.20*Note Section 20-20:: 
+   - 'to_int32', 20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'to_list', 20.2*Note Section 20-2::, 20.31*Note Section 20-31:: 
+   - 'to_nativeint', 20.14*Note Section 20-14:: 
+   - 'to_string', 20.13*Note Section 20-13::, 20.14*Note Section 20-14::,
+   20.19*Note Section 20-19::, 20.20*Note Section 20-20::,
+   20.23*Note Section 20-23:: 
+   - 'token', 20.11*Note Section 20-11:: 
+   - 'top', 20.25*Note Section 20-25::, 20.30*Note Section 20-30:: 
+   - 'total_size', 20.19*Note Section 20-19:: 
+   - 'transfer', 20.25*Note Section 20-25:: 
+   - 'transp', 25.1*Note Section 25-1:: 
+   - 'truncate', 19.2*Note Section 19-2::, 21.1*Note Section 21-1::,
+   21.1*Note Section 21-1:: 
+   - 'try_lock', 24.2*Note Section 24-2:: 
+ 
+   - 'Undefined', 20.15*Note Section 20-15:: 
+   - 'Undefined_recursive_module', 19.1*Note Section 19-1:: 
+   - 'Unix', 21.1*Note Section 21-1:: 
+   - 'Unix_error', 21.1*Note Section 21-1:: 
+   - 'UnixLabels' (module), 21.2*Note Section 21-2:: 
+   - 'umask', 21.1*Note Section 21-1:: 
+   - 'uncapitalize', 20.31*Note Section 20-31::, 20.33*Note Section 20-33:: 
+   - 'union', 20.28*Note Section 20-28:: 
+   - 'unit', 19.1*Note Section 19-1:: 
+   - 'unit_big_int', 22.2*Note Section 22-2:: 
+   - 'units', 28.1*Note Section 28-1:: 
+   - 'unlink', 21.1*Note Section 21-1:: 
+   - 'unlock', 24.2*Note Section 24-2:: 
+   - 'unsafe_blit', 20.31*Note Section 20-31:: 
+   - 'unsafe_fill', 20.31*Note Section 20-31:: 
+   - 'unsafe_get', 20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'unsafe_set', 20.31*Note Section 20-31::, 20.31*Note Section 20-31::,
+   29.1*Note Section 29-1::, 29.1*Note Section 29-1::,
+   29.1*Note Section 29-1:: 
+   - 'update', 28.1*Note Section 28-1:: 
+   - 'uppercase', 20.5*Note Section 20-5::, 20.31*Note Section 20-31::,
+   20.33*Note Section 20-33:: 
+   - 'usage', 20.1*Note Section 20-1:: 
+   - 'usage_msg', 20.1*Note Section 20-1:: 
+   - 'utimes', 21.1*Note Section 21-1:: 
+ 
+   - 'Weak', 20.35*Note Section 20-35:: 
+   - 'wait', 21.1*Note Section 21-1::, 24.3*Note Section 24-3::,
+   24.5*Note Section 24-5:: 
+   - 'wait_flag', 21.1*Note Section 21-1:: 
+   - 'wait_next_event', 25.1*Note Section 25-1:: 
+   - 'wait_pid', 24.1*Note Section 24-1:: 
+   - 'wait_read', 24.1*Note Section 24-1:: 
+   - 'wait_signal', 24.1*Note Section 24-1:: 
+   - 'wait_timed_read', 24.1*Note Section 24-1:: 
+   - 'wait_timed_write', 24.1*Note Section 24-1:: 
+   - 'wait_write', 24.1*Note Section 24-1:: 
+   - 'waitpid', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+   - 'white', 25.1*Note Section 25-1:: 
+   - 'word_size', 20.34*Note Section 20-34:: 
+   - 'wrap', 24.4*Note Section 24-4:: 
+   - 'wrap_abort', 24.4*Note Section 24-4:: 
+   - 'write', 21.1*Note Section 21-1::, 24.5*Note Section 24-5:: 
+ 
+   - 'xor_big_int', 22.2*Note Section 22-2:: 
+ 
+   - 'yellow', 25.1*Note Section 25-1:: 
+   - 'yield', 24.1*Note Section 24-1:: 
+ 
+   - 'zero', 20.6*Note Section 20-6::, 20.13*Note Section 20-13::,
+   20.14*Note Section 20-14::, 20.20*Note Section 20-20:: 
+   - 'zero_big_int', 22.2*Note Section 22-2:: 
+    

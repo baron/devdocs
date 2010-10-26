@@ -23,10 +23,9 @@ Latex Related
 
 R Statistics Programming
 * ESS: (ess.info.gz). Emacs Speaks Statistics.
-* R Administration: (R-admin).      R Installation and Administration.
-* R Data: (R-data).      R Data Import/Export.
-* R Extensions: (R-exts).      Writing R Extensions.
-* R FAQ: (R-FAQ).               The R statistical system FAQ.
-* R Internals: (R-ints).      R Internals.
-* R Introduction: (R-intro).    An introduction to R.
-* R Language: (R-lang).      The R Language Definition.
+
+Programming Languages
+* Ocaml: (ocamldoc/ocaml.info). OCaml doc.
+
+Tools
+* Pro Git: (progit.info). Pro Git.

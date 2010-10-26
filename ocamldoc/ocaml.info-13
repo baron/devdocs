@@ -1,0 +1,2127 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Chapter 19,	Next: Section 19-1,	Prev: Part IV,	Up: Part IV
+  
+
+Chapter 19     The core library
+*******************************
+    
+  This chapter describes the Objective Caml core library, which is composed of
+declarations for built-in types and exceptions, plus the module Pervasives that
+provides basic operations on these built-in types. The Pervasives module is
+special in two ways: 
+  
+   - It is automatically linked with the user's object code files by the ocamlc
+   command (chapter 8*Note Chapter 8::).
+ 
+   - It is automatically "opened" when a compilation starts, or when the
+   toplevel system is launched. Hence, it is possible to use unqualified
+   identifiers to refer to the functions provided by the Pervasives module,
+   without adding a open Pervasives directive. 
+  
+
+Conventions
+*=*=*=*=*=*
+
+  
+  The declarations of the built-in types and the components of module
+Pervasives are printed one by one in typewriter font, followed by a short
+comment. All library modules and the components they provide are indexed at the
+end of this report.
+  
+* Menu:
+
+* Section 19-1::	Built-in types and predefined exceptions
+* Section 19-2::	Module Pervasives : The initially opened module.
+
+
+Node: Section 19-1,	Next: Section 19-2,	Prev: Chapter 19,	Up: Chapter 19
+  
+
+19.1   Built-in types and predefined exceptions
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+  
+  The following built-in types and predefined exceptions are always defined in
+the compilation environment, but are not part of any module. As a consequence,
+they can only be referred by their short names.
+
+Built-in types
+==============
+   
+<<
+   type int
+>>
+    
+    The type of integer numbers. 
+  
+<<
+   type char
+>>
+    
+    The type of characters. 
+  
+<<
+   type string
+>>
+    
+    The type of character strings. 
+  
+<<
+   type float
+>>
+    
+    The type of floating-point numbers. 
+  
+<<
+   type bool = false | true
+>>
+    
+    The type of booleans (truth values). 
+  
+<<
+   type unit = ()
+>>
+    
+    The type of the unit value. 
+  
+<<
+   type exn
+>>
+    
+    The type of exception values. 
+  
+<<
+   type 'a array
+>>
+    
+    The type of arrays whose elements have type 'a. 
+  
+<<
+   type 'a list = [] | :: of 'a * 'a list
+>>
+    
+    The type of lists whose elements have type 'a. 
+  
+<<
+  type 'a option = None | Some of 'a
+>>
+    
+    The type of optional values of type 'a.  
+  
+<<
+  type int32
+>>
+    
+    The type of signed 32-bit integers.  See the Int32[] module. 
+  
+<<
+  type int64
+>>
+    
+    The type of signed 64-bit integers.  See the Int64[] module. 
+  
+<<
+  type nativeint
+>>
+    
+    The type of signed, platform-native integers (32 bits on 32-bit processors,
+   64 bits on 64-bit processors). See the Nativeint[] module. 
+  
+<<
+  type ('a, 'b, 'c, 'd) format4
+>>
+    
+    The type of format strings. 'a is the type of the parameters of the format,
+   'd is the result type for the printf-style function, 'b is the type of the
+   first argument given to \%a and \%t printing functions (see module
+   Printf[]), and 'c is the result type of these functions. 
+  
+<<
+  type 'a lazy_t
+>>
+    
+    This type is used to implement the Lazy[] module. It should not be used
+   directly. 
+  
+
+Predefined exceptions
+=====================
+   
+<<
+  exception Match_failure of (string * int * int)
+>>
+    
+    Exception raised when none of the cases of a pattern-matching apply. The
+   arguments are the location of the match keyword in the source code (file
+   name, line number, column number). 
+  
+<<
+  exception Assert_failure of (string * int * int)
+>>
+    
+    Exception raised when an assertion fails. The arguments are the location of
+   the assert keyword in the source code (file name, line number, column
+   number). 
+  
+<<
+  exception Invalid_argument of string
+>>
+    
+    Exception raised by library functions to signal that the given arguments do
+   not make sense. 
+  
+<<
+  exception Failure of string
+>>
+    
+    Exception raised by library functions to signal that they are undefined on
+   the given arguments.  
+  
+<<
+  exception Not_found
+>>
+    
+    Exception raised by search functions when the desired object could not be
+   found. 
+  
+<<
+  exception Out_of_memory
+>>
+    
+    Exception raised by the garbage collector when there is insufficient memory
+   to complete the computation. 
+  
+<<
+  exception Stack_overflow
+>>
+    
+    Exception raised by the bytecode interpreter when the evaluation stack
+   reaches its maximal size. This often indicates infinite or excessively deep
+   recursion in the user's program. (Not fully implemented by the native-code
+   compiler; see section 11.5*Note Section 11-5::.) 
+  
+<<
+  exception Sys_error of string
+>>
+    
+    Exception raised by the input/output functions to report an operating
+   system error. 
+  
+<<
+  exception End_of_file
+>>
+    
+    Exception raised by input functions to signal that the end of file has been
+   reached. 
+  
+<<
+  exception Division_by_zero
+>>
+    
+    Exception raised by integer division and remainder operations when their
+   second argument is zero. 
+  
+<<
+  exception Sys_blocked_io
+>>
+    
+    A special case of Sys_error raised when no I/O is possible on a
+   non-blocking I/O channel. 
+  
+<<
+  exception Undefined_recursive_module of (string * int * int)
+>>
+    
+    Exception raised when an ill-founded recursive module definition is
+   evaluated. (See section 7.8*Note Section 7-8::.) The arguments
+   are the location of the definition in the source code (file name, line
+   number, column number). 
+  
+
+Node: Section 19-2,	Next: Chapter 20,	Prev: Section 19-1,	Up: Chapter 19
+  
+
+19.2   Module Pervasives : The initially opened module.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module provides the basic operations over the built-in types (numbers,
+booleans, strings, exceptions, references, lists, arrays, input-output
+channels, ...).
+  This module is automatically opened at the beginning of each compilation. All
+components of this module can therefore be referred by their short name,
+without prefixing them by Pervasives.
+  
+  
+
+Exceptions
+==========
+  
+
+<<
+  val raise : exn -> 'a
+>>
+    
+    Raise the given exception value
+  
+
+<<
+  val invalid_arg : string -> 'a
+>>
+    
+    Raise exception Invalid_argument with the given string.
+  
+
+<<
+  val failwith : string -> 'a
+>>
+    
+    Raise exception Failure with the given string.
+  
+
+<<
+  exception Exit
+>>
+    
+    The Exit exception is not raised by any library function. It is provided
+   for use in your programs.
+  
+
+Comparisons
+===========
+  
+
+<<
+  val (=) : 'a -> 'a -> bool
+>>
+    
+    e1 = e2 tests for structural equality of e1 and e2. Mutable structures
+   (e.g. references and arrays) are equal if and only if their current contents
+   are structurally equal, even if the two mutable objects are not the same
+   physical object. Equality between functional values raises Invalid_argument.
+   Equality between cyclic data structures may not terminate.
+  
+
+<<
+  val (<>) : 'a -> 'a -> bool
+>>
+    
+    Negation of Pervasives.(=)[19.2*Note Section 19-2::].
+  
+
+<<
+  val (<) : 'a -> 'a -> bool
+>>
+    
+    See Pervasives.(>=)[19.2*Note Section 19-2::].
+  
+
+<<
+  val (>) : 'a -> 'a -> bool
+>>
+    
+    See Pervasives.(>=)[19.2*Note Section 19-2::].
+  
+
+<<
+  val (<=) : 'a -> 'a -> bool
+>>
+    
+    See Pervasives.(>=)[19.2*Note Section 19-2::].
+  
+
+<<
+  val (>=) : 'a -> 'a -> bool
+>>
+    
+    Structural ordering functions. These functions coincide with the usual
+   orderings over integers, characters, strings and floating-point numbers, and
+   extend them to a total ordering over all types. The ordering is compatible
+   with (=). As in the case of (=), mutable structures are compared by
+   contents. Comparison between functional values raises Invalid_argument.
+   Comparison between cyclic structures may not terminate.
+  
+
+<<
+  val compare : 'a -> 'a -> int
+>>
+    
+    compare x y returns 0 if x is equal to y, a negative integer if x is less
+   than y, and a positive integer if x is greater than y. The ordering
+   implemented by compare is compatible with the comparison predicates =, < and
+   > defined above, with one difference on the treatment of the float value
+   Pervasives.nan[19.2*Note Section 19-2::]. Namely, the comparison
+   predicates treat nan as different from any other float value, including
+   itself; while compare treats nan as equal to itself and less than any other
+   float value. This treatment of nan ensures that compare defines a total
+   ordering relation.
+   compare applied to functional values may raise Invalid_argument. compare
+   applied to cyclic structures may not terminate.
+   The compare function can be used as the comparison function required by the
+   Set.Make[20.28*Note Section 20-28::] and
+   Map.Make[20.18*Note Section 20-18::] functors, as well as the
+   List.sort[20.17*Note Section 20-17::] and
+   Array.sort[20.2*Note Section 20-2::] functions.
+  
+
+<<
+  val min : 'a -> 'a -> 'a
+>>
+    
+    Return the smaller of the two arguments. The result is unspecified if one
+   of the arguments contains the float value nan.
+  
+
+<<
+  val max : 'a -> 'a -> 'a
+>>
+    
+    Return the greater of the two arguments. The result is unspecified if one
+   of the arguments contains the float value nan.
+  
+
+<<
+  val (==) : 'a -> 'a -> bool
+>>
+    
+    e1 == e2 tests for physical equality of e1 and e2. On mutable types such as
+   references, arrays, strings, records with mutable fields and objects with
+   mutable instance variables, e1 == e2 is true if and only if physical
+   modification of e1 also affects e2. On non-mutable types, the behavior of
+   (==) is implementation-dependent; however, it is guaranteed that e1 == e2
+   implies compare e1 e2 = 0.
+  
+
+<<
+  val (!=) : 'a -> 'a -> bool
+>>
+    
+    Negation of Pervasives.(==)[19.2*Note Section 19-2::].
+  
+
+Boolean operations
+==================
+  
+
+<<
+  val not : bool -> bool
+>>
+    
+    The boolean negation.
+  
+
+<<
+  val (&&) : bool -> bool -> bool
+>>
+    
+    The boolean "and". Evaluation is sequential, left-to-right: in e1 && e2, e1
+   is evaluated first, and if it returns false, e2 is not evaluated at all.
+  
+
+<<
+  val (&) : bool -> bool -> bool
+>>
+    
+    Deprecated.
+   Pervasives.(&&)[19.2*Note Section 19-2::] should
+   be used instead. 
+  
+
+<<
+  val (||) : bool -> bool -> bool
+>>
+    
+    The boolean "or". Evaluation is sequential, left-to-right: in e1 || e2, e1
+   is evaluated first, and if it returns true, e2 is not evaluated at all.
+  
+
+<<
+  val (or) : bool -> bool -> bool
+>>
+    
+    Deprecated. Pervasives.(||)[19.2*Note Section 19-2::]
+   should be used instead. 
+  
+
+Integer arithmetic
+==================
+  
+  Integers are 31 bits wide (or 63 bits on 64-bit processors). All operations
+are taken modulo 2^31 (or 2^63). They do not fail on overflow.
+
+<<
+  val (~-) : int -> int
+>>
+    
+    Unary negation. You can also write - e instead of ~- e.
+  
+
+<<
+  val (~+) : int -> int
+>>
+    
+    Unary addition. You can also write + e instead of ~+ e.
+   Since: 3.12.0
+  
+
+<<
+  val succ : int -> int
+>>
+    
+    succ x is x + 1.
+  
+
+<<
+  val pred : int -> int
+>>
+    
+    pred x is x - 1.
+  
+
+<<
+  val (+) : int -> int -> int
+>>
+    
+    Integer addition.
+  
+
+<<
+  val (-) : int -> int -> int
+>>
+    
+    Integer subtraction.
+  
+
+<<
+  val ( * ) : int -> int -> int
+>>
+    
+    Integer multiplication.
+  
+
+<<
+  val (/) : int -> int -> int
+>>
+    
+    Integer division. Raise Division_by_zero if the second argument is 0.
+   Integer division rounds the real quotient of its arguments towards zero.
+   More precisely, if x >= 0 and y > 0, x / y is the greatest integer less than
+   or equal to the real quotient of x by y. Moreover, (- x) / y = x / (- y) = -
+   (x / y).
+  
+
+<<
+  val (mod) : int -> int -> int
+>>
+    
+    Integer remainder. If y is not zero, the result of x mod y satisfies the
+   following properties: x = (x / y) * y + x mod y and abs(x mod y) <= abs(y) -
+   1. If y = 0, x mod y raises Division_by_zero. Note that x mod y is negative
+   only if x < 0. Raise Division_by_zero if y is zero.
+  
+
+<<
+  val abs : int -> int
+>>
+    
+    Return the absolute value of the argument. Note that this may be negative
+   if the argument is min_int.
+  
+
+<<
+  val max_int : int
+>>
+    
+    The greatest representable integer.
+  
+
+<<
+  val min_int : int
+>>
+    
+    The smallest representable integer.
+  
+
+Bitwise operations
+------------------
+  
+
+<<
+  val (land) : int -> int -> int
+>>
+    
+    Bitwise logical and.
+  
+
+<<
+  val (lor) : int -> int -> int
+>>
+    
+    Bitwise logical or.
+  
+
+<<
+  val (lxor) : int -> int -> int
+>>
+    
+    Bitwise logical exclusive or.
+  
+
+<<
+  val lnot : int -> int
+>>
+    
+    Bitwise logical negation.
+  
+
+<<
+  val (lsl) : int -> int -> int
+>>
+    
+    n lsl m shifts n to the left by m bits. The result is unspecified if m < 0
+   or m >= bitsize, where bitsize is 32 on a 32-bit platform and 64 on a 64-bit
+   platform.
+  
+
+<<
+  val (lsr) : int -> int -> int
+>>
+    
+    n lsr m shifts n to the right by m bits. This is a logical shift: zeroes
+   are inserted regardless of the sign of n. The result is unspecified if m < 0
+   or m >= bitsize.
+  
+
+<<
+  val (asr) : int -> int -> int
+>>
+    
+    n asr m shifts n to the right by m bits. This is an arithmetic shift: the
+   sign bit of n is replicated. The result is unspecified if m < 0 or m >=
+   bitsize.
+  
+
+Floating-point arithmetic
+=========================
+  
+  Caml's floating-point numbers follow the IEEE 754 standard, using double
+precision (64 bits) numbers. Floating-point operations never raise an exception
+on overflow, underflow, division by zero, etc. Instead, special IEEE numbers
+are returned as appropriate, such as infinity for 1.0 /. 0.0, neg_infinity for
+-1.0 /. 0.0, and nan ("not a number") for 0.0 /. 0.0. These special numbers
+then propagate through floating-point computations as expected: for instance,
+1.0 /. infinity is 0.0, and any arithmetic operation with nan as argument
+returns nan as result.
+
+<<
+  val (~-.) : float -> float
+>>
+    
+    Unary negation. You can also write -. e instead of ~-. e.
+  
+
+<<
+  val (~+.) : float -> float
+>>
+    
+    Unary addition. You can also write +. e instead of ~+. e.
+   Since: 3.12.0
+  
+
+<<
+  val (+.) : float -> float -> float
+>>
+    
+    Floating-point addition
+  
+
+<<
+  val (-.) : float -> float -> float
+>>
+    
+    Floating-point subtraction
+  
+
+<<
+  val ( *. ) : float -> float -> float
+>>
+    
+    Floating-point multiplication
+  
+
+<<
+  val (/.) : float -> float -> float
+>>
+    
+    Floating-point division.
+  
+
+<<
+  val ( ** ) : float -> float -> float
+>>
+    
+    Exponentiation.
+  
+
+<<
+  val sqrt : float -> float
+>>
+    
+    Square root.
+  
+
+<<
+  val exp : float -> float
+>>
+    
+    Exponential.
+  
+
+<<
+  val log : float -> float
+>>
+    
+    Natural logarithm.
+  
+
+<<
+  val log10 : float -> float
+>>
+    
+    Base 10 logarithm.
+  
+
+<<
+  val expm1 : float -> float
+>>
+    
+    expm1 x computes exp x -. 1.0, giving numerically-accurate results even if
+   x is close to 0.0.
+   Since: 3.12.0
+  
+
+<<
+  val log1p : float -> float
+>>
+    
+    log1p x computes log(1.0 +. x) (natural logarithm), giving
+   numerically-accurate results even if x is close to 0.0.
+   Since: 3.12.0
+  
+
+<<
+  val cos : float -> float
+>>
+    
+    Cosine. Argument is in radians.
+  
+
+<<
+  val sin : float -> float
+>>
+    
+    Sine. Argument is in radians.
+  
+
+<<
+  val tan : float -> float
+>>
+    
+    Tangent. Argument is in radians.
+  
+
+<<
+  val acos : float -> float
+>>
+    
+    Arc cosine. The argument must fall within the range [-1.0, 1.0]. Result is
+   in radians and is between 0.0 and pi.
+  
+
+<<
+  val asin : float -> float
+>>
+    
+    Arc sine. The argument must fall within the range [-1.0, 1.0]. Result is in
+   radians and is between -pi/2 and pi/2.
+  
+
+<<
+  val atan : float -> float
+>>
+    
+    Arc tangent. Result is in radians and is between -pi/2 and pi/2.
+  
+
+<<
+  val atan2 : float -> float -> float
+>>
+    
+    atan x y returns the arc tangent of y /. x. The signs of x and y are used
+   to determine the quadrant of the result. Result is in radians and is between
+   -pi and pi.
+  
+
+<<
+  val cosh : float -> float
+>>
+    
+    Hyperbolic cosine. Argument is in radians.
+  
+
+<<
+  val sinh : float -> float
+>>
+    
+    Hyperbolic sine. Argument is in radians.
+  
+
+<<
+  val tanh : float -> float
+>>
+    
+    Hyperbolic tangent. Argument is in radians.
+  
+
+<<
+  val ceil : float -> float
+>>
+    
+    Round above to an integer value. ceil f returns the least integer value
+   greater than or equal to f. The result is returned as a float.
+  
+
+<<
+  val floor : float -> float
+>>
+    
+    Round below to an integer value. floor f returns the greatest integer value
+   less than or equal to f. The result is returned as a float.
+  
+
+<<
+  val abs_float : float -> float
+>>
+    
+    abs_float f returns the absolute value of f.
+  
+
+<<
+  val mod_float : float -> float -> float
+>>
+    
+    mod_float a b returns the remainder of a with respect to b. The returned
+   value is a -. n *. b, where n is the quotient a /. b rounded towards zero to
+   an integer.
+  
+
+<<
+  val frexp : float -> float * int
+>>
+    
+    frexp f returns the pair of the significant and the exponent of f. When f
+   is zero, the significant x and the exponent n of f are equal to zero. When f
+   is non-zero, they are defined by f = x *. 2 ** n and 0.5 <= x < 1.0.
+  
+
+<<
+  val ldexp : float -> int -> float
+>>
+    
+    ldexp x n returns x *. 2 ** n.
+  
+
+<<
+  val modf : float -> float * float
+>>
+    
+    modf f returns the pair of the fractional and integral part of f.
+  
+
+<<
+  val float : int -> float
+>>
+    
+    Same as
+   Pervasives.float_of_int[19.2].
+  
+
+<<
+  val float_of_int : int -> float
+>>
+    
+    Convert an integer to floating-point.
+  
+
+<<
+  val truncate : float -> int
+>>
+    
+    Same as
+   Pervasives.int_of_float[19.2].
+  
+
+<<
+  val int_of_float : float -> int
+>>
+    
+    Truncate the given floating-point number to an integer. The result is
+   unspecified if the argument is nan or falls outside the range of
+   representable integers.
+  
+
+<<
+  val infinity : float
+>>
+    
+    Positive infinity.
+  
+
+<<
+  val neg_infinity : float
+>>
+    
+    Negative infinity.
+  
+
+<<
+  val nan : float
+>>
+    
+    A special floating-point value denoting the result of an undefined
+   operation such as 0.0 /. 0.0. Stands for "not a number". Any floating-point
+   operation with nan as argument returns nan as result. As for floating-point
+   comparisons, =, <, <=, > and >= return false and <> returns true if one or
+   both of their arguments is nan.
+  
+
+<<
+  val max_float : float
+>>
+    
+    The largest positive finite value of type float.
+  
+
+<<
+  val min_float : float
+>>
+    
+    The smallest positive, non-zero, non-denormalized value of type float.
+  
+
+<<
+  val epsilon_float : float
+>>
+    
+    The difference between 1.0 and the smallest exactly representable
+   floating-point number greater than 1.0.
+  
+
+<<
+  type fpclass =
+    | FP_normal
+>>
+   
+    Normal number, none of the below 
+   
+<<
+    | FP_subnormal
+>>
+   
+    Number very close to 0.0, has reduced precision 
+   
+<<
+    | FP_zero
+>>
+   
+    Number is 0.0 or -0.0 
+   
+<<
+    | FP_infinite
+>>
+   
+    Number is positive or negative infinity 
+   
+<<
+    | FP_nan
+>>
+   
+    Not a number: result of an undefined operation 
+    
+    The five classes of floating-point numbers, as determined by the
+   Pervasives.classify_float[19.2] function.
+  
+
+<<
+  val classify_float : float -> fpclass
+>>
+    
+    Return the class of the given floating-point number: normal, subnormal,
+   zero, infinite, or not a number.
+  
+
+String operations
+=================
+  
+  More string operations are provided in module
+String[20.33*Note Section 20-33::].
+
+<<
+  val (^) : string -> string -> string
+>>
+    
+    String concatenation.
+  
+
+Character operations
+====================
+  
+  More character operations are provided in module Char[20.5*Note Section 20-5::].
+
+<<
+  val int_of_char : char -> int
+>>
+    
+    Return the ASCII code of the argument.
+  
+
+<<
+  val char_of_int : int -> char
+>>
+    
+    Return the character with the given ASCII code. Raise Invalid_argument
+   "char_of_int" if the argument is outside the range 0--255.
+  
+
+Unit operations
+===============
+  
+
+<<
+  val ignore : 'a -> unit
+>>
+    
+    Discard the value of its argument and return (). For instance, ignore(f x)
+   discards the result of the side-effecting function f. It is equivalent to f
+   x; (), except that the latter may generate a compiler warning; writing
+   ignore(f x) instead avoids the warning.
+  
+
+String conversion functions
+===========================
+  
+
+<<
+  val string_of_bool : bool -> string
+>>
+    
+    Return the string representation of a boolean.
+  
+
+<<
+  val bool_of_string : string -> bool
+>>
+    
+    Convert the given string to a boolean. Raise Invalid_argument
+   "bool_of_string" if the string is not "true" or "false".
+  
+
+<<
+  val string_of_int : int -> string
+>>
+    
+    Return the string representation of an integer, in decimal.
+  
+
+<<
+  val int_of_string : string -> int
+>>
+    
+    Convert the given string to an integer. The string is read in decimal (by
+   default) or in hexadecimal (if it begins with 0x or 0X), octal (if it begins
+   with 0o or 0O), or binary (if it begins with 0b or 0B). Raise Failure
+   "int_of_string" if the given string is not a valid representation of an
+   integer, or if the integer represented exceeds the range of integers
+   representable in type int.
+  
+
+<<
+  val string_of_float : float -> string
+>>
+    
+    Return the string representation of a floating-point number.
+  
+
+<<
+  val float_of_string : string -> float
+>>
+    
+    Convert the given string to a float. Raise Failure "float_of_string" if the
+   given string is not a valid representation of a float.
+  
+
+Pair operations
+===============
+  
+
+<<
+  val fst : 'a * 'b -> 'a
+>>
+    
+    Return the first component of a pair.
+  
+
+<<
+  val snd : 'a * 'b -> 'b
+>>
+    
+    Return the second component of a pair.
+  
+
+List operations
+===============
+  
+  More list operations are provided in module List[20.17*Note Section 20-17::].
+
+<<
+  val (@) : 'a list -> 'a list -> 'a list
+>>
+    
+    List concatenation.
+  
+
+Input/output
+============
+  
+
+<<
+  type in_channel 
+>>
+    
+    The type of input channel.
+  
+
+<<
+  type out_channel 
+>>
+    
+    The type of output channel.
+  
+
+<<
+  val stdin : in_channel
+>>
+    
+    The standard input for the process.
+  
+
+<<
+  val stdout : out_channel
+>>
+    
+    The standard output for the process.
+  
+
+<<
+  val stderr : out_channel
+>>
+    
+    The standard error ouput for the process.
+  
+
+Output functions on standard output
+-----------------------------------
+  
+
+<<
+  val print_char : char -> unit
+>>
+    
+    Print a character on standard output.
+  
+
+<<
+  val print_string : string -> unit
+>>
+    
+    Print a string on standard output.
+  
+
+<<
+  val print_int : int -> unit
+>>
+    
+    Print an integer, in decimal, on standard output.
+  
+
+<<
+  val print_float : float -> unit
+>>
+    
+    Print a floating-point number, in decimal, on standard output.
+  
+
+<<
+  val print_endline : string -> unit
+>>
+    
+    Print a string, followed by a newline character, on standard output and
+   flush standard output.
+  
+
+<<
+  val print_newline : unit -> unit
+>>
+    
+    Print a newline character on standard output, and flush standard output.
+   This can be used to simulate line buffering of standard output.
+  
+
+Output functions on standard error
+----------------------------------
+  
+
+<<
+  val prerr_char : char -> unit
+>>
+    
+    Print a character on standard error.
+  
+
+<<
+  val prerr_string : string -> unit
+>>
+    
+    Print a string on standard error.
+  
+
+<<
+  val prerr_int : int -> unit
+>>
+    
+    Print an integer, in decimal, on standard error.
+  
+
+<<
+  val prerr_float : float -> unit
+>>
+    
+    Print a floating-point number, in decimal, on standard error.
+  
+
+<<
+  val prerr_endline : string -> unit
+>>
+    
+    Print a string, followed by a newline character on standard error and flush
+   standard error.
+  
+
+<<
+  val prerr_newline : unit -> unit
+>>
+    
+    Print a newline character on standard error, and flush standard error.
+  
+
+Input functions on standard input
+---------------------------------
+  
+
+<<
+  val read_line : unit -> string
+>>
+    
+    Flush standard output, then read characters from standard input until a
+   newline character is encountered. Return the string of all characters read,
+   without the newline character at the end.
+  
+
+<<
+  val read_int : unit -> int
+>>
+    
+    Flush standard output, then read one line from standard input and convert
+   it to an integer. Raise Failure "int_of_string" if the line read is not a
+   valid representation of an integer.
+  
+
+<<
+  val read_float : unit -> float
+>>
+    
+    Flush standard output, then read one line from standard input and convert
+   it to a floating-point number. The result is unspecified if the line read is
+   not a valid representation of a floating-point number.
+  
+
+General output functions
+------------------------
+  
+
+<<
+  type open_flag =
+    | Open_rdonly
+>>
+   
+    open for reading. 
+   
+<<
+    | Open_wronly
+>>
+   
+    open for writing. 
+   
+<<
+    | Open_append
+>>
+   
+    open for appending: always write at end of file. 
+   
+<<
+    | Open_creat
+>>
+   
+    create the file if it does not exist. 
+   
+<<
+    | Open_trunc
+>>
+   
+    empty the file if it already exists. 
+   
+<<
+    | Open_excl
+>>
+   
+    fail if Open_creat and the file already exists. 
+   
+<<
+    | Open_binary
+>>
+   
+    open in binary mode (no conversion). 
+   
+<<
+    | Open_text
+>>
+   
+    open in text mode (may perform conversions). 
+   
+<<
+    | Open_nonblock
+>>
+   
+    open in non-blocking mode. 
+    
+    Opening modes for
+   Pervasives.open_out_gen[19.2] and
+   Pervasives.open_in_gen[19.2].
+  
+
+<<
+  val open_out : string -> out_channel
+>>
+    
+    Open the named file for writing, and return a new output channel on that
+   file, positionned at the beginning of the file. The file is truncated to
+   zero length if it already exists. It is created if it does not already
+   exists. Raise Sys_error if the file could not be opened.
+  
+
+<<
+  val open_out_bin : string -> out_channel
+>>
+    
+    Same as
+   Pervasives.open_out[19.2*Note Section 19-2::], but the
+   file is opened in binary mode, so that no translation takes place during
+   writes. On operating systems that do not distinguish between text mode and
+   binary mode, this function behaves like
+   Pervasives.open_out[19.2*Note Section 19-2::].
+  
+
+<<
+  val open_out_gen : open_flag list -> int -> string -> out_channel
+>>
+    
+    open_out_gen mode perm filename opens the named file for writing, as
+   described above. The extra argument mode specify the opening mode. The extra
+   argument perm specifies the file permissions, in case the file must be
+   created. Pervasives.open_out[19.2*Note Section 19-2::]
+   and
+   Pervasives.open_out_bin[19.2] are special cases of this function.
+  
+
+<<
+  val flush : out_channel -> unit
+>>
+    
+    Flush the buffer associated with the given output channel, performing all
+   pending writes on that channel. Interactive programs must be careful about
+   flushing standard output and standard error at the right time.
+  
+
+<<
+  val flush_all : unit -> unit
+>>
+    
+    Flush all open output channels; ignore errors.
+  
+
+<<
+  val output_char : out_channel -> char -> unit
+>>
+    
+    Write the character on the given output channel.
+  
+
+<<
+  val output_string : out_channel -> string -> unit
+>>
+    
+    Write the string on the given output channel.
+  
+
+<<
+  val output : out_channel -> string -> int -> int -> unit
+>>
+    
+    output oc buf pos len writes len characters from string buf, starting at
+   offset pos, to the given output channel oc. Raise Invalid_argument "output"
+   if pos and len do not designate a valid substring of buf.
+  
+
+<<
+  val output_byte : out_channel -> int -> unit
+>>
+    
+    Write one 8-bit integer (as the single character with that code) on the
+   given output channel. The given integer is taken modulo 256.
+  
+
+<<
+  val output_binary_int : out_channel -> int -> unit
+>>
+    
+    Write one integer in binary format (4 bytes, big-endian) on the given
+   output channel. The given integer is taken modulo 2^32. The only reliable
+   way to read it back is through the
+   Pervasives.input_binary_int[19.2] function. The format is compatible across all machines for
+   a given version of Objective Caml.
+  
+
+<<
+  val output_value : out_channel -> 'a -> unit
+>>
+    
+    Write the representation of a structured value of any type to a channel.
+   Circularities and sharing inside the value are detected and preserved. The
+   object can be read back, by the function
+   Pervasives.input_value[19.2*Note Section 19-2::].
+   See the description of module Marshal[20.19*Note Section 20-19::] for more
+   information.
+   Pervasives.output_value[19.2*Note Section 19-2::]
+   is equivalent to
+   Marshal.to_channel[20.19*Note Section 20-19::] with an
+   empty list of flags.
+  
+
+<<
+  val seek_out : out_channel -> int -> unit
+>>
+    
+    seek_out chan pos sets the current writing position to pos for channel
+   chan. This works only for regular files. On files of other kinds (such as
+   terminals, pipes and sockets), the behavior is unspecified.
+  
+
+<<
+  val pos_out : out_channel -> int
+>>
+    
+    Return the current writing position for the given channel. Does not work on
+   channels opened with the Open_append flag (returns unspecified results).
+  
+
+<<
+  val out_channel_length : out_channel -> int
+>>
+    
+    Return the size (number of characters) of the regular file on which the
+   given channel is opened. If the channel is opened on a file that is not a
+   regular file, the result is meaningless.
+  
+
+<<
+  val close_out : out_channel -> unit
+>>
+    
+    Close the given channel, flushing all buffered write operations. Output
+   functions raise a Sys_error exception when they are applied to a closed
+   output channel, except close_out and flush, which do nothing when applied to
+   an already closed channel. Note that close_out may raise Sys_error if the
+   operating system signals an error when flushing or closing.
+  
+
+<<
+  val close_out_noerr : out_channel -> unit
+>>
+    
+    Same as close_out, but ignore all errors.
+  
+
+<<
+  val set_binary_mode_out : out_channel -> bool -> unit
+>>
+    
+    set_binary_mode_out oc true sets the channel oc to binary mode: no
+   translations take place during output. set_binary_mode_out oc false sets the
+   channel oc to text mode: depending on the operating system, some
+   translations may take place during output. For instance, under Windows,
+   end-of-lines will be translated from \n to \r\n. This function has no effect
+   under operating systems that do not distinguish between text mode and binary
+   mode.
+  
+
+General input functions
+-----------------------
+  
+
+<<
+  val open_in : string -> in_channel
+>>
+    
+    Open the named file for reading, and return a new input channel on that
+   file, positionned at the beginning of the file. Raise Sys_error if the file
+   could not be opened.
+  
+
+<<
+  val open_in_bin : string -> in_channel
+>>
+    
+    Same as Pervasives.open_in[19.2*Note Section 19-2::],
+   but the file is opened in binary mode, so that no translation takes place
+   during reads. On operating systems that do not distinguish between text mode
+   and binary mode, this function behaves like
+   Pervasives.open_in[19.2*Note Section 19-2::].
+  
+
+<<
+  val open_in_gen : open_flag list -> int -> string -> in_channel
+>>
+    
+    open_in_gen mode perm filename opens the named file for reading, as
+   described above. The extra arguments mode and perm specify the opening mode
+   and file permissions.
+   Pervasives.open_in[19.2*Note Section 19-2::] and
+   Pervasives.open_in_bin[19.2] are special cases of this function.
+  
+
+<<
+  val input_char : in_channel -> char
+>>
+    
+    Read one character from the given input channel. Raise End_of_file if there
+   are no more characters to read.
+  
+
+<<
+  val input_line : in_channel -> string
+>>
+    
+    Read characters from the given input channel, until a newline character is
+   encountered. Return the string of all characters read, without the newline
+   character at the end. Raise End_of_file if the end of the file is reached at
+   the beginning of line.
+  
+
+<<
+  val input : in_channel -> string -> int -> int -> int
+>>
+    
+    input ic buf pos len reads up to len characters from the given channel ic,
+   storing them in string buf, starting at character number pos. It returns the
+   actual number of characters read, between 0 and len (inclusive). A return
+   value of 0 means that the end of file was reached. A return value between 0
+   and len exclusive means that not all requested len characters were read,
+   either because no more characters were available at that time, or because
+   the implementation found it convenient to do a partial read; input must be
+   called again to read the remaining characters, if desired. (See also
+   Pervasives.really_input[19.2*Note Section 19-2::]
+   for reading exactly len characters.) Exception Invalid_argument "input" is
+   raised if pos and len do not designate a valid substring of buf.
+  
+
+<<
+  val really_input : in_channel -> string -> int -> int -> unit
+>>
+    
+    really_input ic buf pos len reads len characters from channel ic, storing
+   them in string buf, starting at character number pos. Raise End_of_file if
+   the end of file is reached before len characters have been read. Raise
+   Invalid_argument "really_input" if pos and len do not designate a valid
+   substring of buf.
+  
+
+<<
+  val input_byte : in_channel -> int
+>>
+    
+    Same as
+   Pervasives.input_char[19.2*Note Section 19-2::], but
+   return the 8-bit integer representing the character. Raise End_of_file if an
+   end of file was reached.
+  
+
+<<
+  val input_binary_int : in_channel -> int
+>>
+    
+    Read an integer encoded in binary format (4 bytes, big-endian) from the
+   given input channel. See
+   Pervasives.output_binary_int[19.2]. Raise End_of_file if an end of file was reached while
+   reading the integer.
+  
+
+<<
+  val input_value : in_channel -> 'a
+>>
+    
+    Read the representation of a structured value, as produced by
+   Pervasives.output_value[19.2*Note Section 19-2::],
+   and return the corresponding value. This function is identical to
+   Marshal.from_channel[20.19*Note Section 20-19::]; see
+   the description of module Marshal[20.19*Note Section 20-19::] for more
+   information, in particular concerning the lack of type safety.
+  
+
+<<
+  val seek_in : in_channel -> int -> unit
+>>
+    
+    seek_in chan pos sets the current reading position to pos for channel chan.
+   This works only for regular files. On files of other kinds, the behavior is
+   unspecified.
+  
+
+<<
+  val pos_in : in_channel -> int
+>>
+    
+    Return the current reading position for the given channel.
+  
+
+<<
+  val in_channel_length : in_channel -> int
+>>
+    
+    Return the size (number of characters) of the regular file on which the
+   given channel is opened. If the channel is opened on a file that is not a
+   regular file, the result is meaningless. The returned size does not take
+   into account the end-of-line translations that can be performed when reading
+   from a channel opened in text mode.
+  
+
+<<
+  val close_in : in_channel -> unit
+>>
+    
+    Close the given channel. Input functions raise a Sys_error exception when
+   they are applied to a closed input channel, except close_in, which does
+   nothing when applied to an already closed channel. Note that close_in may
+   raise Sys_error if the operating system signals an error.
+  
+
+<<
+  val close_in_noerr : in_channel -> unit
+>>
+    
+    Same as close_in, but ignore all errors.
+  
+
+<<
+  val set_binary_mode_in : in_channel -> bool -> unit
+>>
+    
+    set_binary_mode_in ic true sets the channel ic to binary mode: no
+   translations take place during input. set_binary_mode_out ic false sets the
+   channel ic to text mode: depending on the operating system, some
+   translations may take place during input. For instance, under Windows,
+   end-of-lines will be translated from \r\n to \n. This function has no effect
+   under operating systems that do not distinguish between text mode and binary
+   mode.
+  
+
+Operations on large files
+-------------------------
+  
+<<
+  module LargeFile : >>
+   
+    sig
+  
+  
+   
+   <<
+     val seek_out : Pervasives.out_channel -> int64 -> unit
+   >>
+  
+   
+   <<
+     val pos_out : Pervasives.out_channel -> int64
+   >>
+  
+   
+   <<
+     val out_channel_length : Pervasives.out_channel -> int64
+   >>
+  
+   
+   <<
+     val seek_in : Pervasives.in_channel -> int64 -> unit
+   >>
+  
+   
+   <<
+     val pos_in : Pervasives.in_channel -> int64
+   >>
+  
+   
+   <<
+     val in_channel_length : Pervasives.in_channel -> int64
+   >>
+   
+    end
+  
+    Operations on large files. This sub-module provides 64-bit variants of the
+   channel functions that manipulate file positions and file sizes. By
+   representing positions and sizes by 64-bit integers (type int64) instead of
+   regular integers (type int), these alternate functions allow operating on
+   files whose sizes are greater than max_int.
+  
+
+References
+==========
+  
+
+<<
+  type 'a ref = {
+    mutable contents : 'a ;
+  }
+>>
+    
+    The type of references (mutable indirection cells) containing a value of
+   type 'a.
+  
+
+<<
+  val ref : 'a -> 'a ref
+>>
+    
+    Return a fresh reference containing the given value.
+  
+
+<<
+  val (!) : 'a ref -> 'a
+>>
+    
+    !r returns the current contents of reference r. Equivalent to fun r ->
+   r.contents.
+  
+
+<<
+  val (:=) : 'a ref -> 'a -> unit
+>>
+    
+    r := a stores the value of a in reference r. Equivalent to fun r v ->
+   r.contents <- v.
+  
+
+<<
+  val incr : int ref -> unit
+>>
+    
+    Increment the integer contained in the given reference. Equivalent to fun r
+   -> r := succ !r.
+  
+
+<<
+  val decr : int ref -> unit
+>>
+    
+    Decrement the integer contained in the given reference. Equivalent to fun r
+   -> r := pred !r.
+  
+
+Operations on format strings
+============================
+  
+  Format strings are used to read and print data using formatted input
+functions in module Scanf[20.27*Note Section 20-27::] and formatted output in
+modules Printf[20.24*Note Section 20-24::] and Format[20.9*Note Section 20-9::].
+
+<<
+  type ('a, 'b, 'c, 'd) format4 = ('a, 'b, 'c, 'c, 'c, 'd) format6 
+>>
+    
+    Format strings have a general and highly polymorphic type ('a, 'b, 'c, 'd,
+   'e, 'f) format6. Type format6 is built in. The two simplified types, format
+   and format4 below are included for backward compatibility with earlier
+   releases of Objective Caml. 'a is the type of the parameters of the format,
+   'c is the result type for the "printf"-style function, and 'b is the type of
+   the first argument given to %a and %t printing functions.
+  
+
+<<
+  type ('a, 'b, 'c) format = ('a, 'b, 'c, 'c) format4 
+>>
+   
+
+<<
+  val string_of_format : ('a, 'b, 'c, 'd, 'e, 'f) format6 -> string
+>>
+    
+    Converts a format string into a string.
+  
+
+<<
+  val format_of_string :
+    ('a, 'b, 'c, 'd, 'e, 'f) format6 -> ('a, 'b, 'c, 'd, 'e, 'f) format6
+>>
+    
+    format_of_string s returns a format string read from the string literal s.
+  
+
+<<
+  val (^^) :
+    ('a, 'b, 'c, 'd, 'e, 'f) format6 ->
+    ('f, 'b, 'c, 'e, 'g, 'h) format6 -> ('a, 'b, 'c, 'd, 'g, 'h) format6
+>>
+    
+    f1 ^^f2 catenates formats f1 and f2. The result is a format that accepts
+   arguments from f1, then arguments from f2.
+  
+
+Program termination
+===================
+  
+
+<<
+  val exit : int -> 'a
+>>
+    
+    Terminate the process, returning the given status code to the operating
+   system: usually 0 to indicate no errors, and a small positive integer to
+   indicate failure. All open output channels are flushed with flush_all. An
+   implicit exit 0 is performed each time a program terminates normally. An
+   implicit exit 2 is performed if the program terminates early because of an
+   uncaught exception.
+  
+
+<<
+  val at_exit : (unit -> unit) -> unit
+>>
+    
+    Register the given function to be called at program termination time. The
+   functions registered with at_exit will be called when the program executes
+   Pervasives.exit[19.2*Note Section 19-2::], or terminates, either
+   normally or because of an uncaught exception. The functions are called in
+   "last in, first out" order: the function most recently added with at_exit is
+   called first.
+  
+   
+   
+
+Node: Chapter 20,	Next: Section 20-1,	Prev: Chapter 19,	Up: Part IV
+  
+
+Chapter 20     The standard library
+***********************************
+    
+  This chapter describes the functions provided by the Objective Caml standard
+library. The modules from the standard library are automatically linked with
+the user's object code files by the ocamlc command. Hence, these modules can be
+used in standalone programs without having to add any .cmo file on the command
+line for the linking phase. Similarly, in interactive use, these globals can be
+used in toplevel phrases without having to load any .cmo file in memory.
+  Unlike the Pervasive module from the core library, the modules from the
+standard library are not automatically "opened" when a compilation starts, or
+when the toplevel system is launched. Hence it is necessary to use qualified
+identifiers to refer to the functions provided by these modules, or to add open
+directives.
+
+
+Conventions
+*=*=*=*=*=*
+
+  
+  For easy reference, the modules are listed below in alphabetical order of
+module names. For each module, the declarations from its signature are printed
+one by one in typewriter font, followed by a short comment. All modules and the
+identifiers they export are indexed at the end of this report.
+  
+* Menu:
+
+* Section 20-1::	Module Arg : Parsing of command line arguments.
+* Section 20-2::	Module Array : Array operations.
+* Section 20-3::	Module Buffer : Extensible string buffers.
+* Section 20-4::	Module Callback : Registering Caml values with the C runtime.
+* Section 20-5::	Module Char : Character operations.
+* Section 20-6::	Module Complex : Complex numbers.
+* Section 20-7::	Module Digest : MD5 message digest.
+* Section 20-8::	Module Filename : Operations on file names.
+* Section 20-9::	Module Format : Pretty printing.
+* Section 20-10::	Module Gc : Memory management control and statistics; finalised values.
+* Section 20-11::	Module Genlex : A generic lexical analyzer.
+* Section 20-12::	Module Hashtbl : Hash tables and hash functions.
+* Section 20-13::	Module Int32 : 32-bit integers.
+* Section 20-14::	Module Int64 : 64-bit integers.
+* Section 20-15::	Module Lazy : Deferred computations.
+* Section 20-16::	Module Lexing : The run-time library for lexers generated by ocamllex.
+* Section 20-17::	Module List : List operations.
+* Section 20-18::	Module Map : Association tables over ordered types.
+* Section 20-19::	Module Marshal : Marshaling of data structures.
+* Section 20-20::	Module Nativeint : Processor-native integers.
+* Section 20-21::	Module Oo : Operations on objects
+* Section 20-22::	Module Parsing : The run-time library for parsers generated by ocamlyacc.
+* Section 20-23::	Module Printexc : Facilities for printing exceptions.
+* Section 20-24::	Module Printf : Formatted output functions.
+* Section 20-25::	Module Queue : First-in first-out queues.
+* Section 20-26::	Module Random : Pseudo-random number generators (PRNG).
+* Section 20-27::	Module Scanf : Formatted input functions.
+* Section 20-28::	Module Set : Sets over ordered types.
+* Section 20-29::	Module Sort : Sorting and merging lists.
+* Section 20-30::	Module Stack : Last-in first-out stacks.
+* Section 20-31::	Module StdLabels : Standard labeled libraries.
+* Section 20-32::	Module Stream : Streams and parsers.
+* Section 20-33::	Module String : String operations.
+* Section 20-34::	Module Sys : System interface.
+* Section 20-35::	Module Weak : Arrays of weak pointers and hash tables of weak pointers.
+
+
+Node: Section 20-1,	Next: Section 20-2,	Prev: Chapter 20,	Up: Chapter 20
+  
+
+20.1   Module Arg : Parsing of command line arguments.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  This module provides a general mechanism for extracting options and arguments
+from the command line to the program.
+  Syntax of command lines: A keyword is a character string starting with a -.
+An option is a keyword alone or followed by an argument. The types of keywords
+are: Unit, Bool, Set, Clear, String, Set_string, Int, Set_int, Float,
+Set_float, Tuple, Symbol, and Rest. Unit, Set and Clear keywords take no
+argument. A Rest keyword takes the remaining of the command line as arguments.
+Every other keyword takes the following word on the command line as argument.
+Arguments not preceded by a keyword are called anonymous arguments.
+  Examples (cmd is assumed to be the command name):
+  
+   - cmd -flag (a unit option) 
+   - cmd -int 1 (an int option with argument 1) 
+   - cmd -string foobar (a string option with argument "foobar") 
+   - cmd -float 12.34 (a float option with argument 12.34) 
+   - cmd a b c (three anonymous arguments: "a", "b", and "c") 
+   - cmd a b -- c d (two anonymous arguments and a rest option with two
+   arguments) 
+  
+  
+  
+
+<<
+  type spec =
+    | Unit of (unit -> unit)
+>>
+   
+    Call the function with unit argument 
+   
+<<
+    | Bool of (bool -> unit)
+>>
+   
+    Call the function with a bool argument 
+   
+<<
+    | Set of bool Pervasives.ref
+>>
+   
+    Set the reference to true 
+   
+<<
+    | Clear of bool Pervasives.ref
+>>
+   
+    Set the reference to false 
+   
+<<
+    | String of (string -> unit)
+>>
+   
+    Call the function with a string argument 
+   
+<<
+    | Set_string of string Pervasives.ref
+>>
+   
+    Set the reference to the string argument 
+   
+<<
+    | Int of (int -> unit)
+>>
+   
+    Call the function with an int argument 
+   
+<<
+    | Set_int of int Pervasives.ref
+>>
+   
+    Set the reference to the int argument 
+   
+<<
+    | Float of (float -> unit)
+>>
+   
+    Call the function with a float argument 
+   
+<<
+    | Set_float of float Pervasives.ref
+>>
+   
+    Set the reference to the float argument 
+   
+<<
+    | Tuple of spec list
+>>
+   
+    Take several arguments according to the spec list 
+   
+<<
+    | Symbol of string list * (string -> unit)
+>>
+   
+    Take one of the symbols as argument and call the function with the symbol 
+   
+<<
+    | Rest of (string -> unit)
+>>
+   
+    Stop interpreting keywords and call the function with each remaining
+   argument 
+    
+    The concrete type describing the behavior associated with a keyword.
+  
+
+<<
+  type key = string 
+>>
+   
+
+<<
+  type doc = string 
+>>
+   
+
+<<
+  type usage_msg = string 
+>>
+   
+
+<<
+  type anon_fun = string -> unit 
+>>
+   
+
+<<
+  val parse : (key * spec * doc) list -> anon_fun -> usage_msg -> unit
+>>
+    
+    Arg.parse speclist anon_fun usage_msg parses the command line. speclist is
+   a list of triples (key, spec, doc). key is the option keyword, it must start
+   with a '-' character. spec gives the option type and the function to call
+   when this option is found on the command line. doc is a one-line description
+   of this option. anon_fun is called on anonymous arguments. The functions in
+   spec and anon_fun are called in the same order as their arguments appear on
+   the command line.
+   If an error occurs, Arg.parse exits the program, after printing an error
+   message as follows:
+     
+      - The reason for the error: unknown option, invalid or missing argument,
+      etc. 
+      - usage_msg 
+      - The list of options, each followed by the corresponding doc string. 
+   
+   For the user to be able to specify anonymous arguments starting with a -,
+   include for example ("-", String anon_fun, doc) in speclist.
+   By default, parse recognizes two unit options, -help and --help, which will
+   display usage_msg and the list of options, and exit the program. You can
+   override this behaviour by specifying your own -help and --help options in
+   speclist.
+  
+
+<<
+  val parse_argv :
+    ?current:int Pervasives.ref ->
+    string array ->
+    (key * spec * doc) list -> anon_fun -> usage_msg -> unit
+>>
+    
+    Arg.parse_argv ~current args speclist anon_fun usage_msg parses the array
+   args as if it were the command line. It uses and updates the value of
+   ~current (if given), or Arg.current. You must set it before calling
+   parse_argv. The initial value of current is the index of the program name
+   (argument 0) in the array. If an error occurs, Arg.parse_argv raises Arg.Bad
+   with the error message as argument. If option -help or --help is given,
+   Arg.parse_argv raises Arg.Help with the help message as argument.
+  
+
+<<
+  exception Help of string
+>>
+    
+    Raised by Arg.parse_argv when the user asks for help.
+  
+
+<<
+  exception Bad of string
+>>
+    
+    Functions in spec or anon_fun can raise Arg.Bad with an error message to
+   reject invalid arguments. Arg.Bad is also raised by Arg.parse_argv in case
+   of an error.
+  
+
+<<
+  val usage : (key * spec * doc) list -> usage_msg -> unit
+>>
+    
+    Arg.usage speclist usage_msg prints an error message including the list of
+   valid options. This is the same message that
+   Arg.parse[20.1*Note Section 20-1::] prints in case of error. speclist and
+   usage_msg are the same as for Arg.parse.
+  
+
+<<
+  val align : (key * spec * doc) list -> (key * spec * doc) list
+>>
+    
+    Align the documentation strings by inserting spaces at the first space,
+   according to the length of the keyword. Use a space as the first character
+   in a doc string if you want to align the whole string. The doc strings
+   corresponding to Symbol arguments are aligned on the next line.
+  
+
+<<
+  val current : int Pervasives.ref
+>>
+    
+    Position (in Sys.argv[20.34*Note Section 20-34::]) of the argument being
+   processed. You can change this value, e.g. to force
+   Arg.parse[20.1*Note Section 20-1::] to skip some arguments.
+   Arg.parse[20.1*Note Section 20-1::] uses the initial value of
+   Arg.current[20.1*Note Section 20-1::] as the index of argument 0 (the
+   program name) and starts parsing arguments at the next element.
+  
+   

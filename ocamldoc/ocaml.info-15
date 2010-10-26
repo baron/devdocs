@@ -1,0 +1,1978 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 20-10,	Next: Section 20-11,	Prev: Section 20-9,	Up: Chapter 20
+  
+
+20.10   Module Gc : Memory management control and statistics; finalised values.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  type stat = {
+    minor_words : float ;
+>>
+   
+    Number of words allocated in the minor heap since the program was started.
+   This number is accurate in byte-code programs, but only an approximation in
+   programs compiled to native code. 
+   
+<<
+    promoted_words : float ;
+>>
+   
+    Number of words allocated in the minor heap that survived a minor
+   collection and were moved to the major heap since the program was started. 
+   
+<<
+    major_words : float ;
+>>
+   
+    Number of words allocated in the major heap, including the promoted words,
+   since the program was started. 
+   
+<<
+    minor_collections : int ;
+>>
+   
+    Number of minor collections since the program was started. 
+   
+<<
+    major_collections : int ;
+>>
+   
+    Number of major collection cycles completed since the program was started. 
+   
+<<
+    heap_words : int ;
+>>
+   
+    Total size of the major heap, in words. 
+   
+<<
+    heap_chunks : int ;
+>>
+   
+    Number of contiguous pieces of memory that make up the major heap. 
+   
+<<
+    live_words : int ;
+>>
+   
+    Number of words of live data in the major heap, including the header words.
+   
+   
+<<
+    live_blocks : int ;
+>>
+   
+    Number of live blocks in the major heap. 
+   
+<<
+    free_words : int ;
+>>
+   
+    Number of words in the free list. 
+   
+<<
+    free_blocks : int ;
+>>
+   
+    Number of blocks in the free list. 
+   
+<<
+    largest_free : int ;
+>>
+   
+    Size (in words) of the largest block in the free list. 
+   
+<<
+    fragments : int ;
+>>
+   
+    Number of wasted words due to fragmentation. These are 1-words free blocks
+   placed between two live blocks. They are not available for allocation. 
+   
+<<
+    compactions : int ;
+>>
+   
+    Number of heap compactions since the program was started. 
+   
+<<
+    top_heap_words : int ;
+>>
+   
+    Maximum size reached by the major heap, in words. 
+   
+<<
+    stack_size : int ;
+>>
+   
+    Current size of the stack, in words. 
+   
+<<
+  }
+>>
+    
+    The memory management counters are returned in a stat record.
+   The total amount of memory allocated by the program since it was started is
+   (in words) minor_words + major_words - promoted_words. Multiply by the word
+   size (4 on a 32-bit machine, 8 on a 64-bit machine) to get the number of
+   bytes.
+  
+
+<<
+  type control = {
+    mutable minor_heap_size : int ;
+>>
+   
+    The size (in words) of the minor heap. Changing this parameter will trigger
+   a minor collection. Default: 32k. 
+   
+<<
+    mutable major_heap_increment : int ;
+>>
+   
+    The minimum number of words to add to the major heap when increasing it.
+   Default: 124k. 
+   
+<<
+    mutable space_overhead : int ;
+>>
+   
+    The major GC speed is computed from this parameter. This is the memory that
+   will be "wasted" because the GC does not immediatly collect unreachable
+   blocks. It is expressed as a percentage of the memory used for live data.
+   The GC will work more (use more CPU time and collect blocks more eagerly) if
+   space_overhead is smaller. Default: 80. 
+   
+<<
+    mutable verbose : int ;
+>>
+   
+    This value controls the GC messages on standard error output. It is a sum
+   of some of the following flags, to print messages on the corresponding
+   events:
+     
+      - 0x001 Start of major GC cycle. 
+      - 0x002 Minor collection and major GC slice. 
+      - 0x004 Growing and shrinking of the heap. 
+      - 0x008 Resizing of stacks and memory manager tables. 
+      - 0x010 Heap compaction. 
+      - 0x020 Change of GC parameters. 
+      - 0x040 Computation of major GC slice size. 
+      - 0x080 Calling of finalisation functions. 
+      - 0x100 Bytecode executable search at start-up. 
+      - 0x200 Computation of compaction triggering condition. Default: 0. 
+   
+   
+<<
+    mutable max_overhead : int ;
+>>
+   
+    Heap compaction is triggered when the estimated amount of "wasted" memory
+   is more than max_overhead percent of the amount of live data. If
+   max_overhead is set to 0, heap compaction is triggered at the end of each
+   major GC cycle (this setting is intended for testing purposes only). If
+   max_overhead >= 1000000, compaction is never triggered. Default: 500. 
+   
+<<
+    mutable stack_limit : int ;
+>>
+   
+    The maximum size of the stack (in words). This is only relevant to the
+   byte-code runtime, as the native code runtime uses the operating system's
+   stack. Default: 256k. 
+   
+<<
+    mutable allocation_policy : int ;
+>>
+   
+    The policy used for allocating in the heap. Possible values are 0 and 1. 0
+   is the next-fit policy, which is quite fast but can result in fragmentation.
+   1 is the first-fit policy, which can be slower in some cases but can be
+   better for programs with fragmentation problems. Default: 0. 
+   
+<<
+  }
+>>
+    
+    The GC parameters are given as a control record. Note that these parameters
+   can also be initialised by setting the OCAMLRUNPARAM environment variable.
+   See the documentation of ocamlrun.
+  
+
+<<
+  val stat : unit -> stat
+>>
+    
+    Return the current values of the memory management counters in a stat
+   record. This function examines every heap block to get the statistics.
+  
+
+<<
+  val quick_stat : unit -> stat
+>>
+    
+    Same as stat except that live_words, live_blocks, free_words, free_blocks,
+   largest_free, and fragments are set to 0. This function is much faster than
+   stat because it does not need to go through the heap.
+  
+
+<<
+  val counters : unit -> float * float * float
+>>
+    
+    Return (minor_words, promoted_words, major_words). This function is as fast
+   at quick_stat.
+  
+
+<<
+  val get : unit -> control
+>>
+    
+    Return the current values of the GC parameters in a control record.
+  
+
+<<
+  val set : control -> unit
+>>
+    
+    set r changes the GC parameters according to the control record r. The
+   normal usage is: Gc.set { (Gc.get()) with Gc.verbose = 0x00d }
+  
+
+<<
+  val minor : unit -> unit
+>>
+    
+    Trigger a minor collection.
+  
+
+<<
+  val major_slice : int -> int
+>>
+    
+    Do a minor collection and a slice of major collection. The argument is the
+   size of the slice, 0 to use the automatically-computed slice size. In all
+   cases, the result is the computed slice size.
+  
+
+<<
+  val major : unit -> unit
+>>
+    
+    Do a minor collection and finish the current major collection cycle.
+  
+
+<<
+  val full_major : unit -> unit
+>>
+    
+    Do a minor collection, finish the current major collection cycle, and
+   perform a complete new cycle. This will collect all currently unreachable
+   blocks.
+  
+
+<<
+  val compact : unit -> unit
+>>
+    
+    Perform a full major collection and compact the heap. Note that heap
+   compaction is a lengthy operation.
+  
+
+<<
+  val print_stat : Pervasives.out_channel -> unit
+>>
+    
+    Print the current values of the memory management counters (in
+   human-readable form) into the channel argument.
+  
+
+<<
+  val allocated_bytes : unit -> float
+>>
+    
+    Return the total number of bytes allocated since the program was started.
+   It is returned as a float to avoid overflow problems with int on 32-bit
+   machines.
+  
+
+<<
+  val finalise : ('a -> unit) -> 'a -> unit
+>>
+    
+    finalise f v registers f as a finalisation function for v. v must be
+   heap-allocated. f will be called with v as argument at some point between
+   the first time v becomes unreachable and the time v is collected by the GC.
+   Several functions can be registered for the same value, or even several
+   instances of the same function. Each instance will be called once (or never,
+   if the program terminates before v becomes unreachable).
+   The GC will call the finalisation functions in the order of deallocation.
+   When several values become unreachable at the same time (i.e. during the
+   same GC cycle), the finalisation functions will be called in the reverse
+   order of the corresponding calls to finalise. If finalise is called in the
+   same order as the values are allocated, that means each value is finalised
+   before the values it depends upon. Of course, this becomes false if
+   additional dependencies are introduced by assignments.
+   Anything reachable from the closure of finalisation functions is considered
+   reachable, so the following code will not work as expected:
+     
+      -  let v = ... in Gc.finalise (fun x -> ...) v  
+   
+   Instead you should write:
+     
+      -  let f = fun x -> ... ;; let v = ... in Gc.finalise f v  
+   
+   The f function can use all features of O'Caml, including assignments that
+   make the value reachable again. It can also loop forever (in this case, the
+   other finalisation functions will not be called during the execution of f,
+   unless it calls finalise_release). It can call finalise on v or other values
+   to register other functions or even itself. It can raise an exception; in
+   this case the exception will interrupt whatever the program was doing when
+   the function was called.
+   finalise will raise Invalid_argument if v is not heap-allocated. Some
+   examples of values that are not heap-allocated are integers, constant
+   constructors, booleans, the empty array, the empty list, the unit value. The
+   exact list of what is heap-allocated or not is implementation-dependent.
+   Some constant values can be heap-allocated but never deallocated during the
+   lifetime of the program, for example a list of integer constants; this is
+   also implementation-dependent. You should also be aware that compiler
+   optimisations may duplicate some immutable values, for example
+   floating-point numbers when stored into arrays, so they can be finalised and
+   collected while another copy is still in use by the program.
+   The results of calling String.make[20.33*Note Section 20-33::],
+   String.create[20.33*Note Section 20-33::],
+   Array.make[20.2*Note Section 20-2::], and
+   Pervasives.ref[19.2*Note Section 19-2::] are guaranteed to be
+   heap-allocated and non-constant except when the length argument is 0.
+  
+
+<<
+  val finalise_release : unit -> unit
+>>
+    
+    A finalisation function may call finalise_release to tell the GC that it
+   can launch the next finalisation function without waiting for the current
+   one to return.
+  
+
+<<
+  type alarm 
+>>
+    
+    An alarm is a piece of data that calls a user function at the end of each
+   major GC cycle. The following functions are provided to create and delete
+   alarms.
+  
+
+<<
+  val create_alarm : (unit -> unit) -> alarm
+>>
+    
+    create_alarm f will arrange for f to be called at the end of each major GC
+   cycle, starting with the current cycle or the next one. A value of type
+   alarm is returned that you can use to call delete_alarm.
+  
+
+<<
+  val delete_alarm : alarm -> unit
+>>
+    
+    delete_alarm a will stop the calls to the function associated to a. Calling
+   delete_alarm a again has no effect.
+  
+   
+
+Node: Section 20-11,	Next: Section 20-12,	Prev: Section 20-10,	Up: Chapter 20
+  
+
+20.11   Module Genlex : A generic lexical analyzer.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module implements a simple "standard" lexical analyzer, presented as a
+function from character streams to token streams. It implements roughly the
+lexical conventions of Caml, but is parameterized by the set of keywords of
+your language.
+  Example: a lexer suitable for a desk calculator is obtained by 
+<<
+       let lexer = make_lexer ["+";"-";"*";"/";"let";"="; "("; ")"]  
+>>
+  
+  The associated parser would be a function from token stream to, for instance,
+int, and would have rules such as:
+<<
+  
+             let parse_expr = parser
+                    [< 'Int n >] -> n
+                  | [< 'Kwd "("; n = parse_expr; 'Kwd ")" >] -> n
+                  | [< n1 = parse_expr; n2 = parse_remainder n1 >] -> n2
+             and parse_remainder n1 = parser
+                    [< 'Kwd "+"; n2 = parse_expr >] -> n1+n2
+                  | ...
+     
+>>
+  
+  
+  
+
+<<
+  type token =
+    | Kwd of string
+    | Ident of string
+    | Int of int
+    | Float of float
+    | String of string
+    | Char of char
+>>
+    
+    The type of tokens. The lexical classes are: Int and Float for integer and
+   floating-point numbers; String for string literals, enclosed in double
+   quotes; Char for character literals, enclosed in single quotes; Ident for
+   identifiers (either sequences of letters, digits, underscores and quotes, or
+   sequences of "operator characters" such as +, *, etc); and Kwd for keywords
+   (either identifiers or single "special characters" such as (, }, etc).
+  
+
+<<
+  val make_lexer : string list -> char Stream.t -> token Stream.t
+>>
+    
+    Construct the lexer function. The first argument is the list of keywords.
+   An identifier s is returned as Kwd s if s belongs to this list, and as Ident
+   s otherwise. A special character s is returned as Kwd s if s belongs to this
+   list, and cause a lexical error (exception Parse_error) otherwise. Blanks
+   and newlines are skipped. Comments delimited by (* and *) are skipped as
+   well, and can be nested.
+  
+   
+
+Node: Section 20-12,	Next: Section 20-13,	Prev: Section 20-11,	Up: Chapter 20
+  
+
+20.12   Module Hashtbl : Hash tables and hash functions.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  Hash tables are hashed association tables, with in-place modification.
+  
+  
+
+Generic interface
+=================
+  
+
+<<
+  type ('a, 'b) t 
+>>
+    
+    The type of hash tables from type 'a to type 'b.
+  
+
+<<
+  val create : int -> ('a, 'b) t
+>>
+    
+    Hashtbl.create n creates a new, empty hash table, with initial size n. For
+   best results, n should be on the order of the expected number of elements
+   that will be in the table. The table grows as needed, so n is just an
+   initial guess.
+  
+
+<<
+  val clear : ('a, 'b) t -> unit
+>>
+    
+    Empty a hash table.
+  
+
+<<
+  val add : ('a, 'b) t -> 'a -> 'b -> unit
+>>
+    
+    Hashtbl.add tbl x y adds a binding of x to y in table tbl. Previous
+   bindings for x are not removed, but simply hidden. That is, after performing
+   Hashtbl.remove[20.12*Note Section 20-12::] tbl x, the previous binding
+   for x, if any, is restored. (Same behavior as with association lists.)
+  
+
+<<
+  val copy : ('a, 'b) t -> ('a, 'b) t
+>>
+    
+    Return a copy of the given hashtable.
+  
+
+<<
+  val find : ('a, 'b) t -> 'a -> 'b
+>>
+    
+    Hashtbl.find tbl x returns the current binding of x in tbl, or raises
+   Not_found if no such binding exists.
+  
+
+<<
+  val find_all : ('a, 'b) t -> 'a -> 'b list
+>>
+    
+    Hashtbl.find_all tbl x returns the list of all data associated with x in
+   tbl. The current binding is returned first, then the previous bindings, in
+   reverse order of introduction in the table.
+  
+
+<<
+  val mem : ('a, 'b) t -> 'a -> bool
+>>
+    
+    Hashtbl.mem tbl x checks if x is bound in tbl.
+  
+
+<<
+  val remove : ('a, 'b) t -> 'a -> unit
+>>
+    
+    Hashtbl.remove tbl x removes the current binding of x in tbl, restoring the
+   previous binding if it exists. It does nothing if x is not bound in tbl.
+  
+
+<<
+  val replace : ('a, 'b) t -> 'a -> 'b -> unit
+>>
+    
+    Hashtbl.replace tbl x y replaces the current binding of x in tbl by a
+   binding of x to y. If x is unbound in tbl, a binding of x to y is added to
+   tbl. This is functionally equivalent to
+   Hashtbl.remove[20.12*Note Section 20-12::] tbl x followed by
+   Hashtbl.add[20.12*Note Section 20-12::] tbl x y.
+  
+
+<<
+  val iter : ('a -> 'b -> unit) -> ('a, 'b) t -> unit
+>>
+    
+    Hashtbl.iter f tbl applies f to all bindings in table tbl. f receives the
+   key as first argument, and the associated value as second argument. Each
+   binding is presented exactly once to f. The order in which the bindings are
+   passed to f is unspecified. However, if the table contains several bindings
+   for the same key, they are passed to f in reverse order of introduction,
+   that is, the most recent binding is passed first.
+  
+
+<<
+  val fold : ('a -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+>>
+    
+    Hashtbl.fold f tbl init computes (f kN dN ... (f k1 d1 init)...), where k1
+   ... kN are the keys of all bindings in tbl, and d1 ... dN are the associated
+   values. Each binding is presented exactly once to f. The order in which the
+   bindings are passed to f is unspecified. However, if the table contains
+   several bindings for the same key, they are passed to f in reverse order of
+   introduction, that is, the most recent binding is passed first.
+  
+
+<<
+  val length : ('a, 'b) t -> int
+>>
+    
+    Hashtbl.length tbl returns the number of bindings in tbl. Multiple bindings
+   are counted multiply, so Hashtbl.length gives the number of times
+   Hashtbl.iter calls its first argument.
+  
+
+Functorial interface
+====================
+  
+<<
+  module type HashedType = >>
+   
+    sig
+  
+  
+   
+   <<
+     type t 
+   >>
+   
+       The type of the hashtable keys.
+ 
+   
+   <<
+     val equal : t -> t -> bool
+   >>
+   
+       The equality predicate used to compare keys.
+ 
+   
+   <<
+     val hash : t -> int
+   >>
+   
+       A hashing function on keys. It must be such that if two keys are equal
+      according to equal, then they have identical hash values as computed by
+      hash. Examples: suitable (equal, hash) pairs for arbitrary key types
+      include ((=), Hashtbl.hash[20.12*Note Section 20-12::]) for comparing
+      objects by structure, ((fun x y -> compare x y = 0),
+      Hashtbl.hash[20.12*Note Section 20-12::]) for comparing objects by
+      structure and handling Pervasives.nan[19.2*Note Section 19-2::]
+      correctly, and ((==), Hashtbl.hash[20.12*Note Section 20-12::]) for
+      comparing objects by addresses (e.g. for cyclic keys).
+  
+    end
+  
+    The input signature of the functor
+   Hashtbl.Make[20.12*Note Section 20-12::].
+  
+<<
+  module type S = >>
+   
+    sig
+  
+  
+   
+   <<
+     type key 
+   >>
+  
+   
+   <<
+     type 'a t 
+   >>
+  
+   
+   <<
+     val create : int -> 'a t
+   >>
+  
+   
+   <<
+     val clear : 'a t -> unit
+   >>
+  
+   
+   <<
+     val copy : 'a t -> 'a t
+   >>
+  
+   
+   <<
+     val add : 'a t -> key -> 'a -> unit
+   >>
+  
+   
+   <<
+     val remove : 'a t -> key -> unit
+   >>
+  
+   
+   <<
+     val find : 'a t -> key -> 'a
+   >>
+  
+   
+   <<
+     val find_all : 'a t -> key -> 'a list
+   >>
+  
+   
+   <<
+     val replace : 'a t -> key -> 'a -> unit
+   >>
+  
+   
+   <<
+     val mem : 'a t -> key -> bool
+   >>
+  
+   
+   <<
+     val iter : (key -> 'a -> unit) -> 'a t -> unit
+   >>
+  
+   
+   <<
+     val fold : (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+   >>
+  
+   
+   <<
+     val length : 'a t -> int
+   >>
+   
+    end
+  
+    The output signature of the functor
+   Hashtbl.Make[20.12*Note Section 20-12::].
+  
+<<
+  module Make : >>
+   
+  functor (H : HashedType) -> S  with type key = H.t
+    Functor building an implementation of the hashtable structure. The functor
+   Hashtbl.Make returns a structure containing a type key of keys and a type 'a
+   t of hash tables associating data of type 'a to keys of type key. The
+   operations perform similarly to those of the generic interface, but use the
+   hashing and equality functions specified in the functor argument H instead
+   of generic equality and hashing.
+  
+
+The polymorphic hash primitive
+==============================
+  
+
+<<
+  val hash : 'a -> int
+>>
+    
+    Hashtbl.hash x associates a positive integer to any value of any type. It
+   is guaranteed that if x = y or Pervasives.compare x y = 0, then hash x =
+   hash y. Moreover, hash always terminates, even on cyclic structures.
+  
+
+<<
+  val hash_param : int -> int -> 'a -> int
+>>
+    
+    Hashtbl.hash_param n m x computes a hash value for x, with the same
+   properties as for hash. The two extra parameters n and m give more precise
+   control over hashing. Hashing performs a depth-first, right-to-left
+   traversal of the structure x, stopping after n meaningful nodes were
+   encountered, or m nodes, meaningful or not, were encountered. Meaningful
+   nodes are: integers; floating-point numbers; strings; characters; booleans;
+   and constant constructors. Larger values of m and n means that more nodes
+   are taken into account to compute the final hash value, and therefore
+   collisions are less likely to happen. However, hashing takes longer. The
+   parameters m and n govern the tradeoff between accuracy and speed.
+  
+   
+
+Node: Section 20-13,	Next: Section 20-14,	Prev: Section 20-12,	Up: Chapter 20
+  
+
+20.13   Module Int32 : 32-bit integers.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module provides operations on the type int32 of signed 32-bit integers.
+Unlike the built-in int type, the type int32 is guaranteed to be exactly 32-bit
+wide on all platforms. All arithmetic operations over int32 are taken modulo
+2^32.
+  Performance notice: values of type int32 occupy more memory space than values
+of type int, and arithmetic operations on int32 are generally slower than those
+on int. Use int32 only when the application requires exact 32-bit arithmetic.
+  
+  
+
+<<
+  val zero : int32
+>>
+    
+    The 32-bit integer 0.
+  
+
+<<
+  val one : int32
+>>
+    
+    The 32-bit integer 1.
+  
+
+<<
+  val minus_one : int32
+>>
+    
+    The 32-bit integer -1.
+  
+
+<<
+  val neg : int32 -> int32
+>>
+    
+    Unary negation.
+  
+
+<<
+  val add : int32 -> int32 -> int32
+>>
+    
+    Addition.
+  
+
+<<
+  val sub : int32 -> int32 -> int32
+>>
+    
+    Subtraction.
+  
+
+<<
+  val mul : int32 -> int32 -> int32
+>>
+    
+    Multiplication.
+  
+
+<<
+  val div : int32 -> int32 -> int32
+>>
+    
+    Integer division. Raise Division_by_zero if the second argument is zero.
+   This division rounds the real quotient of its arguments towards zero, as
+   specified for Pervasives.(/)[19.2*Note Section 19-2::].
+  
+
+<<
+  val rem : int32 -> int32 -> int32
+>>
+    
+    Integer remainder. If y is not zero, the result of Int32.rem x y satisfies
+   the following property: x = Int32.add (Int32.mul (Int32.div x y) y)
+   (Int32.rem x y). If y = 0, Int32.rem x y raises Division_by_zero.
+  
+
+<<
+  val succ : int32 -> int32
+>>
+    
+    Successor. Int32.succ x is Int32.add x Int32.one.
+  
+
+<<
+  val pred : int32 -> int32
+>>
+    
+    Predecessor. Int32.pred x is Int32.sub x Int32.one.
+  
+
+<<
+  val abs : int32 -> int32
+>>
+    
+    Return the absolute value of its argument.
+  
+
+<<
+  val max_int : int32
+>>
+    
+    The greatest representable 32-bit integer, 2^31 - 1.
+  
+
+<<
+  val min_int : int32
+>>
+    
+    The smallest representable 32-bit integer, -2^31.
+  
+
+<<
+  val logand : int32 -> int32 -> int32
+>>
+    
+    Bitwise logical and.
+  
+
+<<
+  val logor : int32 -> int32 -> int32
+>>
+    
+    Bitwise logical or.
+  
+
+<<
+  val logxor : int32 -> int32 -> int32
+>>
+    
+    Bitwise logical exclusive or.
+  
+
+<<
+  val lognot : int32 -> int32
+>>
+    
+    Bitwise logical negation
+  
+
+<<
+  val shift_left : int32 -> int -> int32
+>>
+    
+    Int32.shift_left x y shifts x to the left by y bits. The result is
+   unspecified if y < 0 or y >= 32.
+  
+
+<<
+  val shift_right : int32 -> int -> int32
+>>
+    
+    Int32.shift_right x y shifts x to the right by y bits. This is an
+   arithmetic shift: the sign bit of x is replicated and inserted in the
+   vacated bits. The result is unspecified if y < 0 or y >= 32.
+  
+
+<<
+  val shift_right_logical : int32 -> int -> int32
+>>
+    
+    Int32.shift_right_logical x y shifts x to the right by y bits. This is a
+   logical shift: zeroes are inserted in the vacated bits regardless of the
+   sign of x. The result is unspecified if y < 0 or y >= 32.
+  
+
+<<
+  val of_int : int -> int32
+>>
+    
+    Convert the given integer (type int) to a 32-bit integer (type int32).
+  
+
+<<
+  val to_int : int32 -> int
+>>
+    
+    Convert the given 32-bit integer (type int32) to an integer (type int). On
+   32-bit platforms, the 32-bit integer is taken modulo 2^31, i.e. the
+   high-order bit is lost during the conversion. On 64-bit platforms, the
+   conversion is exact.
+  
+
+<<
+  val of_float : float -> int32
+>>
+    
+    Convert the given floating-point number to a 32-bit integer, discarding the
+   fractional part (truncate towards 0). The result of the conversion is
+   undefined if, after truncation, the number is outside the range
+   [Int32.min_int[20.13*Note Section 20-13::],
+   Int32.max_int[20.13*Note Section 20-13::]].
+  
+
+<<
+  val to_float : int32 -> float
+>>
+    
+    Convert the given 32-bit integer to a floating-point number.
+  
+
+<<
+  val of_string : string -> int32
+>>
+    
+    Convert the given string to a 32-bit integer. The string is read in decimal
+   (by default) or in hexadecimal, octal or binary if the string begins with
+   0x, 0o or 0b respectively. Raise Failure "int_of_string" if the given string
+   is not a valid representation of an integer, or if the integer represented
+   exceeds the range of integers representable in type int32.
+  
+
+<<
+  val to_string : int32 -> string
+>>
+    
+    Return the string representation of its argument, in signed decimal.
+  
+
+<<
+  val bits_of_float : float -> int32
+>>
+    
+    Return the internal representation of the given float according to the IEEE
+   754 floating-point "single format" bit layout. Bit 31 of the result
+   represents the sign of the float; bits 30 to 23 represent the (biased)
+   exponent; bits 22 to 0 represent the mantissa.
+  
+
+<<
+  val float_of_bits : int32 -> float
+>>
+    
+    Return the floating-point number whose internal representation, according
+   to the IEEE 754 floating-point "single format" bit layout, is the given
+   int32.
+  
+
+<<
+  type t = int32 
+>>
+    
+    An alias for the type of 32-bit integers.
+  
+
+<<
+  val compare : t -> t -> int
+>>
+    
+    The comparison function for 32-bit integers, with the same specification as
+   Pervasives.compare[19.2*Note Section 19-2::]. Along with the type
+   t, this function compare allows the module Int32 to be passed as argument to
+   the functors Set.Make[20.28*Note Section 20-28::] and
+   Map.Make[20.18*Note Section 20-18::].
+  
+   
+
+Node: Section 20-14,	Next: Section 20-15,	Prev: Section 20-13,	Up: Chapter 20
+  
+
+20.14   Module Int64 : 64-bit integers.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module provides operations on the type int64 of signed 64-bit integers.
+Unlike the built-in int type, the type int64 is guaranteed to be exactly 64-bit
+wide on all platforms. All arithmetic operations over int64 are taken modulo
+2^64
+  Performance notice: values of type int64 occupy more memory space than values
+of type int, and arithmetic operations on int64 are generally slower than those
+on int. Use int64 only when the application requires exact 64-bit arithmetic.
+  
+  
+
+<<
+  val zero : int64
+>>
+    
+    The 64-bit integer 0.
+  
+
+<<
+  val one : int64
+>>
+    
+    The 64-bit integer 1.
+  
+
+<<
+  val minus_one : int64
+>>
+    
+    The 64-bit integer -1.
+  
+
+<<
+  val neg : int64 -> int64
+>>
+    
+    Unary negation.
+  
+
+<<
+  val add : int64 -> int64 -> int64
+>>
+    
+    Addition.
+  
+
+<<
+  val sub : int64 -> int64 -> int64
+>>
+    
+    Subtraction.
+  
+
+<<
+  val mul : int64 -> int64 -> int64
+>>
+    
+    Multiplication.
+  
+
+<<
+  val div : int64 -> int64 -> int64
+>>
+    
+    Integer division. Raise Division_by_zero if the second argument is zero.
+   This division rounds the real quotient of its arguments towards zero, as
+   specified for Pervasives.(/)[19.2*Note Section 19-2::].
+  
+
+<<
+  val rem : int64 -> int64 -> int64
+>>
+    
+    Integer remainder. If y is not zero, the result of Int64.rem x y satisfies
+   the following property: x = Int64.add (Int64.mul (Int64.div x y) y)
+   (Int64.rem x y). If y = 0, Int64.rem x y raises Division_by_zero.
+  
+
+<<
+  val succ : int64 -> int64
+>>
+    
+    Successor. Int64.succ x is Int64.add x Int64.one.
+  
+
+<<
+  val pred : int64 -> int64
+>>
+    
+    Predecessor. Int64.pred x is Int64.sub x Int64.one.
+  
+
+<<
+  val abs : int64 -> int64
+>>
+    
+    Return the absolute value of its argument.
+  
+
+<<
+  val max_int : int64
+>>
+    
+    The greatest representable 64-bit integer, 2^63 - 1.
+  
+
+<<
+  val min_int : int64
+>>
+    
+    The smallest representable 64-bit integer, -2^63.
+  
+
+<<
+  val logand : int64 -> int64 -> int64
+>>
+    
+    Bitwise logical and.
+  
+
+<<
+  val logor : int64 -> int64 -> int64
+>>
+    
+    Bitwise logical or.
+  
+
+<<
+  val logxor : int64 -> int64 -> int64
+>>
+    
+    Bitwise logical exclusive or.
+  
+
+<<
+  val lognot : int64 -> int64
+>>
+    
+    Bitwise logical negation
+  
+
+<<
+  val shift_left : int64 -> int -> int64
+>>
+    
+    Int64.shift_left x y shifts x to the left by y bits. The result is
+   unspecified if y < 0 or y >= 64.
+  
+
+<<
+  val shift_right : int64 -> int -> int64
+>>
+    
+    Int64.shift_right x y shifts x to the right by y bits. This is an
+   arithmetic shift: the sign bit of x is replicated and inserted in the
+   vacated bits. The result is unspecified if y < 0 or y >= 64.
+  
+
+<<
+  val shift_right_logical : int64 -> int -> int64
+>>
+    
+    Int64.shift_right_logical x y shifts x to the right by y bits. This is a
+   logical shift: zeroes are inserted in the vacated bits regardless of the
+   sign of x. The result is unspecified if y < 0 or y >= 64.
+  
+
+<<
+  val of_int : int -> int64
+>>
+    
+    Convert the given integer (type int) to a 64-bit integer (type int64).
+  
+
+<<
+  val to_int : int64 -> int
+>>
+    
+    Convert the given 64-bit integer (type int64) to an integer (type int). On
+   64-bit platforms, the 64-bit integer is taken modulo 2^63, i.e. the
+   high-order bit is lost during the conversion. On 32-bit platforms, the
+   64-bit integer is taken modulo 2^31, i.e. the top 33 bits are lost during
+   the conversion.
+  
+
+<<
+  val of_float : float -> int64
+>>
+    
+    Convert the given floating-point number to a 64-bit integer, discarding the
+   fractional part (truncate towards 0). The result of the conversion is
+   undefined if, after truncation, the number is outside the range
+   [Int64.min_int[20.14*Note Section 20-14::],
+   Int64.max_int[20.14*Note Section 20-14::]].
+  
+
+<<
+  val to_float : int64 -> float
+>>
+    
+    Convert the given 64-bit integer to a floating-point number.
+  
+
+<<
+  val of_int32 : int32 -> int64
+>>
+    
+    Convert the given 32-bit integer (type int32) to a 64-bit integer (type
+   int64).
+  
+
+<<
+  val to_int32 : int64 -> int32
+>>
+    
+    Convert the given 64-bit integer (type int64) to a 32-bit integer (type
+   int32). The 64-bit integer is taken modulo 2^32, i.e. the top 32 bits are
+   lost during the conversion.
+  
+
+<<
+  val of_nativeint : nativeint -> int64
+>>
+    
+    Convert the given native integer (type nativeint) to a 64-bit integer (type
+   int64).
+  
+
+<<
+  val to_nativeint : int64 -> nativeint
+>>
+    
+    Convert the given 64-bit integer (type int64) to a native integer. On
+   32-bit platforms, the 64-bit integer is taken modulo 2^32. On 64-bit
+   platforms, the conversion is exact.
+  
+
+<<
+  val of_string : string -> int64
+>>
+    
+    Convert the given string to a 64-bit integer. The string is read in decimal
+   (by default) or in hexadecimal, octal or binary if the string begins with
+   0x, 0o or 0b respectively. Raise Failure "int_of_string" if the given string
+   is not a valid representation of an integer, or if the integer represented
+   exceeds the range of integers representable in type int64.
+  
+
+<<
+  val to_string : int64 -> string
+>>
+    
+    Return the string representation of its argument, in decimal.
+  
+
+<<
+  val bits_of_float : float -> int64
+>>
+    
+    Return the internal representation of the given float according to the IEEE
+   754 floating-point "double format" bit layout. Bit 63 of the result
+   represents the sign of the float; bits 62 to 52 represent the (biased)
+   exponent; bits 51 to 0 represent the mantissa.
+  
+
+<<
+  val float_of_bits : int64 -> float
+>>
+    
+    Return the floating-point number whose internal representation, according
+   to the IEEE 754 floating-point "double format" bit layout, is the given
+   int64.
+  
+
+<<
+  type t = int64 
+>>
+    
+    An alias for the type of 64-bit integers.
+  
+
+<<
+  val compare : t -> t -> int
+>>
+    
+    The comparison function for 64-bit integers, with the same specification as
+   Pervasives.compare[19.2*Note Section 19-2::]. Along with the type
+   t, this function compare allows the module Int64 to be passed as argument to
+   the functors Set.Make[20.28*Note Section 20-28::] and
+   Map.Make[20.18*Note Section 20-18::].
+  
+   
+
+Node: Section 20-15,	Next: Section 20-16,	Prev: Section 20-14,	Up: Chapter 20
+  
+
+20.15   Module Lazy : Deferred computations.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  
+  
+
+<<
+  type 'a t = 'a lazy_t 
+>>
+    
+    A value of type 'a Lazy.t is a deferred computation, called a suspension,
+   that has a result of type 'a. The special expression syntax lazy (expr)
+   makes a suspension of the computation of expr, without computing expr itself
+   yet. "Forcing" the suspension will then compute expr and return its result.
+   Note: lazy_t is the built-in type constructor used by the compiler for the
+   lazy keyword. You should not use it directly. Always use Lazy.t instead.
+   Note: Lazy.force is not thread-safe. If you use this module in a
+   multi-threaded program, you will need to add some locks.
+   Note: if the program is compiled with the -rectypes option, ill-founded
+   recursive definitions of the form let rec x = lazy x or let rec x =
+   lazy(lazy(...(lazy x))) are accepted by the type-checker and lead, when
+   forced, to ill-formed values that trigger infinite loops in the garbage
+   collector and other parts of the run-time system. Without the -rectypes
+   option, such ill-founded recursive definitions are rejected by the
+   type-checker.
+  
+
+<<
+  exception Undefined
+>>
+   
+
+<<
+  val force : 'a t -> 'a
+>>
+   
+  force x forces the suspension x and returns its result. If x has already been
+forced, Lazy.force x returns the same value again without recomputing it. If it
+raised an exception, the same exception is raised again. Raise Undefined if the
+forcing of x tries to force x itself recursively.
+
+<<
+  val force_val : 'a t -> 'a
+>>
+    
+    force_val x forces the suspension x and returns its result. If x has
+   already been forced, force_val x returns the same value again without
+   recomputing it. Raise Undefined if the forcing of x tries to force x itself
+   recursively. If the computation of x raises an exception, it is unspecified
+   whether force_val x raises the same exception or Undefined.
+  
+
+<<
+  val lazy_from_fun : (unit -> 'a) -> 'a t
+>>
+    
+    lazy_from_fun f is the same as lazy (f ()) but slightly more efficient.
+  
+
+<<
+  val lazy_from_val : 'a -> 'a t
+>>
+    
+    lazy_from_val v returns an already-forced suspension of v This is for
+   special purposes only and should not be confused with lazy (v).
+  
+
+<<
+  val lazy_is_val : 'a t -> bool
+>>
+    
+    lazy_is_val x returns true if x has already been forced and did not raise
+   an exception.
+  
+   
+
+Node: Section 20-16,	Next: Section 20-17,	Prev: Section 20-15,	Up: Chapter 20
+  
+
+20.16   Module Lexing : The run-time library for lexers generated by ocamllex.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  
+  
+
+Positions
+=========
+  
+
+<<
+  type position = {
+    pos_fname : string ;
+    pos_lnum : int ;
+    pos_bol : int ;
+    pos_cnum : int ;
+  }
+>>
+    
+    A value of type position describes a point in a source file. pos_fname is
+   the file name; pos_lnum is the line number; pos_bol is the offset of the
+   beginning of the line (number of characters between the beginning of the
+   file and the beginning of the line); pos_cnum is the offset of the position
+   (number of characters between the beginning of the file and the position).
+   See the documentation of type lexbuf for information about how the lexing
+   engine will manage positions.
+  
+
+<<
+  val dummy_pos : position
+>>
+    
+    A value of type position, guaranteed to be different from any valid
+   position.
+  
+
+Lexer buffers
+=============
+  
+
+<<
+  type lexbuf = {
+    refill_buff : lexbuf -> unit ;
+    mutable lex_buffer : string ;
+    mutable lex_buffer_len : int ;
+    mutable lex_abs_pos : int ;
+    mutable lex_start_pos : int ;
+    mutable lex_curr_pos : int ;
+    mutable lex_last_pos : int ;
+    mutable lex_last_action : int ;
+    mutable lex_eof_reached : bool ;
+    mutable lex_mem : int array ;
+    mutable lex_start_p : position ;
+    mutable lex_curr_p : position ;
+  }
+>>
+    
+    The type of lexer buffers. A lexer buffer is the argument passed to the
+   scanning functions defined by the generated scanners. The lexer buffer holds
+   the current state of the scanner, plus a function to refill the buffer from
+   the input.
+   At each token, the lexing engine will copy lex_curr_p to lex_start_p, then
+   change the pos_cnum field of lex_curr_p by updating it with the number of
+   characters read since the start of the lexbuf. The other fields are left
+   unchanged by the lexing engine. In order to keep them accurate, they must be
+   initialised before the first use of the lexbuf, and updated by the relevant
+   lexer actions (i.e. at each end of line -- see also new_line).
+  
+
+<<
+  val from_channel : Pervasives.in_channel -> lexbuf
+>>
+    
+    Create a lexer buffer on the given input channel. Lexing.from_channel
+   inchan returns a lexer buffer which reads from the input channel inchan, at
+   the current reading position.
+  
+
+<<
+  val from_string : string -> lexbuf
+>>
+    
+    Create a lexer buffer which reads from the given string. Reading starts
+   from the first character in the string. An end-of-input condition is
+   generated when the end of the string is reached.
+  
+
+<<
+  val from_function : (string -> int -> int) -> lexbuf
+>>
+    
+    Create a lexer buffer with the given function as its reading method. When
+   the scanner needs more characters, it will call the given function, giving
+   it a character string s and a character count n. The function should put n
+   characters or less in s, starting at character number 0, and return the
+   number of characters provided. A return value of 0 means end of input.
+  
+
+Functions for lexer semantic actions
+====================================
+  
+  The following functions can be called from the semantic actions of lexer
+definitions (the ML code enclosed in braces that computes the value returned by
+lexing functions). They give access to the character string matched by the
+regular expression associated with the semantic action. These functions must be
+applied to the argument lexbuf, which, in the code generated by ocamllex, is
+bound to the lexer buffer passed to the parsing function.
+
+<<
+  val lexeme : lexbuf -> string
+>>
+    
+    Lexing.lexeme lexbuf returns the string matched by the regular expression.
+  
+
+<<
+  val lexeme_char : lexbuf -> int -> char
+>>
+    
+    Lexing.lexeme_char lexbuf i returns character number i in the matched
+   string.
+  
+
+<<
+  val lexeme_start : lexbuf -> int
+>>
+    
+    Lexing.lexeme_start lexbuf returns the offset in the input stream of the
+   first character of the matched string. The first character of the stream has
+   offset 0.
+  
+
+<<
+  val lexeme_end : lexbuf -> int
+>>
+    
+    Lexing.lexeme_end lexbuf returns the offset in the input stream of the
+   character following the last character of the matched string. The first
+   character of the stream has offset 0.
+  
+
+<<
+  val lexeme_start_p : lexbuf -> position
+>>
+    
+    Like lexeme_start, but return a complete position instead of an offset.
+  
+
+<<
+  val lexeme_end_p : lexbuf -> position
+>>
+    
+    Like lexeme_end, but return a complete position instead of an offset.
+  
+
+<<
+  val new_line : lexbuf -> unit
+>>
+    
+    Update the lex_curr_p field of the lexbuf to reflect the start of a new
+   line. You can call this function in the semantic action of the rule that
+   matches the end-of-line character.
+   Since: 3.11.0
+  
+
+Miscellaneous functions
+=======================
+  
+
+<<
+  val flush_input : lexbuf -> unit
+>>
+    
+    Discard the contents of the buffer and reset the current position to 0. The
+   next use of the lexbuf will trigger a refill.
+  
+   
+
+Node: Section 20-17,	Next: Section 20-18,	Prev: Section 20-16,	Up: Chapter 20
+  
+
+20.17   Module List : List operations.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+   
+  Some functions are flagged as not tail-recursive. A tail-recursive function
+uses constant stack space, while a non-tail-recursive function uses stack space
+proportional to the length of its list argument, which can be a problem with
+very long lists. When the function takes several list arguments, an approximate
+formula giving stack usage (in some unspecified constant unit) is shown in
+parentheses.
+  The above considerations can usually be ignored if your lists are not longer
+than about 10000 elements.
+  
+  
+
+<<
+  val length : 'a list -> int
+>>
+    
+    Return the length (number of elements) of the given list.
+  
+
+<<
+  val hd : 'a list -> 'a
+>>
+    
+    Return the first element of the given list. Raise Failure "hd" if the list
+   is empty.
+  
+
+<<
+  val tl : 'a list -> 'a list
+>>
+    
+    Return the given list without its first element. Raise Failure "tl" if the
+   list is empty.
+  
+
+<<
+  val nth : 'a list -> int -> 'a
+>>
+    
+    Return the n-th element of the given list. The first element (head of the
+   list) is at position 0. Raise Failure "nth" if the list is too short. Raise
+   Invalid_argument "List.nth" if n is negative.
+  
+
+<<
+  val rev : 'a list -> 'a list
+>>
+    
+    List reversal.
+  
+
+<<
+  val append : 'a list -> 'a list -> 'a list
+>>
+    
+    Catenate two lists. Same function as the infix operator @. Not
+   tail-recursive (length of the first argument). The @ operator is not
+   tail-recursive either.
+  
+
+<<
+  val rev_append : 'a list -> 'a list -> 'a list
+>>
+    
+    List.rev_append l1 l2 reverses l1 and concatenates it to l2. This is
+   equivalent to List.rev[20.17*Note Section 20-17::] l1 @ l2, but rev_append
+   is tail-recursive and more efficient.
+  
+
+<<
+  val concat : 'a list list -> 'a list
+>>
+    
+    Concatenate a list of lists. The elements of the argument are all
+   concatenated together (in the same order) to give the result. Not
+   tail-recursive (length of the argument + length of the longest sub-list).
+  
+
+<<
+  val flatten : 'a list list -> 'a list
+>>
+    
+    Same as concat. Not tail-recursive (length of the argument + length of the
+   longest sub-list).
+  
+
+Iterators
+=========
+  
+
+<<
+  val iter : ('a -> unit) -> 'a list -> unit
+>>
+    
+    List.iter f [a1; ...; an] applies function f in turn to a1; ...; an. It is
+   equivalent to begin f a1; f a2; ...; f an; () end.
+  
+
+<<
+  val map : ('a -> 'b) -> 'a list -> 'b list
+>>
+    
+    List.map f [a1; ...; an] applies function f to a1, ..., an, and builds the
+   list [f a1; ...; f an] with the results returned by f. Not tail-recursive.
+  
+
+<<
+  val rev_map : ('a -> 'b) -> 'a list -> 'b list
+>>
+    
+    List.rev_map f l gives the same result as
+   List.rev[20.17*Note Section 20-17::] (List.map[20.17*Note Section 20-17::] f
+   l), but is tail-recursive and more efficient.
+  
+
+<<
+  val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b list -> 'a
+>>
+    
+    List.fold_left f a [b1; ...; bn] is f (... (f (f a b1) b2) ...) bn.
+  
+
+<<
+  val fold_right : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
+>>
+    
+    List.fold_right f [a1; ...; an] b is f a1 (f a2 (... (f an b) ...)). Not
+   tail-recursive.
+  
+
+Iterators on two lists
+======================
+  
+
+<<
+  val iter2 : ('a -> 'b -> unit) -> 'a list -> 'b list -> unit
+>>
+    
+    List.iter2 f [a1; ...; an] [b1; ...; bn] calls in turn f a1 b1; ...; f an
+   bn. Raise Invalid_argument if the two lists have different lengths.
+  
+
+<<
+  val map2 : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list
+>>
+    
+    List.map2 f [a1; ...; an] [b1; ...; bn] is [f a1 b1; ...; f an bn]. Raise
+   Invalid_argument if the two lists have different lengths. Not
+   tail-recursive.
+  
+
+<<
+  val rev_map2 : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list
+>>
+    
+    List.rev_map2 f l1 l2 gives the same result as
+   List.rev[20.17*Note Section 20-17::] (List.map2[20.17*Note Section 20-17::]
+   f l1 l2), but is tail-recursive and more efficient.
+  
+
+<<
+  val fold_left2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b list -> 'c list -> 'a
+>>
+    
+    List.fold_left2 f a [b1; ...; bn] [c1; ...; cn] is f (... (f (f a b1 c1) b2
+   c2) ...) bn cn. Raise Invalid_argument if the two lists have different
+   lengths.
+  
+
+<<
+  val fold_right2 : ('a -> 'b -> 'c -> 'c) -> 'a list -> 'b list -> 'c -> 'c
+>>
+    
+    List.fold_right2 f [a1; ...; an] [b1; ...; bn] c is f a1 b1 (f a2 b2 (...
+   (f an bn c) ...)). Raise Invalid_argument if the two lists have different
+   lengths. Not tail-recursive.
+  
+
+List scanning
+=============
+  
+
+<<
+  val for_all : ('a -> bool) -> 'a list -> bool
+>>
+    
+    for_all p [a1; ...; an] checks if all elements of the list satisfy the
+   predicate p. That is, it returns (p a1) && (p a2) && ... && (p an).
+  
+
+<<
+  val exists : ('a -> bool) -> 'a list -> bool
+>>
+    
+    exists p [a1; ...; an] checks if at least one element of the list satisfies
+   the predicate p. That is, it returns (p a1) || (p a2) || ... || (p an).
+  
+
+<<
+  val for_all2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
+>>
+    
+    Same as List.for_all[20.17*Note Section 20-17::], but for a
+   two-argument predicate. Raise Invalid_argument if the two lists have
+   different lengths.
+  
+
+<<
+  val exists2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
+>>
+    
+    Same as List.exists[20.17*Note Section 20-17::], but for a two-argument
+   predicate. Raise Invalid_argument if the two lists have different lengths.
+  
+
+<<
+  val mem : 'a -> 'a list -> bool
+>>
+    
+    mem a l is true if and only if a is equal to an element of l.
+  
+
+<<
+  val memq : 'a -> 'a list -> bool
+>>
+    
+    Same as List.mem[20.17*Note Section 20-17::], but uses physical equality
+   instead of structural equality to compare list elements.
+  
+
+List searching
+==============
+  
+
+<<
+  val find : ('a -> bool) -> 'a list -> 'a
+>>
+    
+    find p l returns the first element of the list l that satisfies the
+   predicate p. Raise Not_found if there is no value that satisfies p in the
+   list l.
+  
+
+<<
+  val filter : ('a -> bool) -> 'a list -> 'a list
+>>
+    
+    filter p l returns all the elements of the list l that satisfy the
+   predicate p. The order of the elements in the input list is preserved.
+  
+
+<<
+  val find_all : ('a -> bool) -> 'a list -> 'a list
+>>
+    
+    find_all is another name for List.filter[20.17*Note Section 20-17::].
+  
+
+<<
+  val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
+>>
+    
+    partition p l returns a pair of lists (l1, l2), where l1 is the list of all
+   the elements of l that satisfy the predicate p, and l2 is the list of all
+   the elements of l that do not satisfy p. The order of the elements in the
+   input list is preserved.
+  
+
+Association lists
+=================
+  
+
+<<
+  val assoc : 'a -> ('a * 'b) list -> 'b
+>>
+    
+    assoc a l returns the value associated with key a in the list of pairs l.
+   That is, assoc a [ ...; (a,b); ...] = b if (a,b) is the leftmost binding of
+   a in list l. Raise Not_found if there is no value associated with a in the
+   list l.
+  
+
+<<
+  val assq : 'a -> ('a * 'b) list -> 'b
+>>
+    
+    Same as List.assoc[20.17*Note Section 20-17::], but uses physical
+   equality instead of structural equality to compare keys.
+  
+
+<<
+  val mem_assoc : 'a -> ('a * 'b) list -> bool
+>>
+    
+    Same as List.assoc[20.17*Note Section 20-17::], but simply return true if
+   a binding exists, and false if no bindings exist for the given key.
+  
+
+<<
+  val mem_assq : 'a -> ('a * 'b) list -> bool
+>>
+    
+    Same as List.mem_assoc[20.17*Note Section 20-17::], but
+   uses physical equality instead of structural equality to compare keys.
+  
+
+<<
+  val remove_assoc : 'a -> ('a * 'b) list -> ('a * 'b) list
+>>
+    
+    remove_assoc a l returns the list of pairs l without the first pair with
+   key a, if any. Not tail-recursive.
+  
+
+<<
+  val remove_assq : 'a -> ('a * 'b) list -> ('a * 'b) list
+>>
+    
+    Same as List.remove_assoc[20.17*Note Section 20-17::],
+   but uses physical equality instead of structural equality to compare keys.
+   Not tail-recursive.
+  
+
+Lists of pairs
+==============
+  
+
+<<
+  val split : ('a * 'b) list -> 'a list * 'b list
+>>
+    
+    Transform a list of pairs into a pair of lists: split [(a1,b1); ...;
+   (an,bn)] is ([a1; ...; an], [b1; ...; bn]). Not tail-recursive.
+  
+
+<<
+  val combine : 'a list -> 'b list -> ('a * 'b) list
+>>
+    
+    Transform a pair of lists into a list of pairs: combine [a1; ...; an] [b1;
+   ...; bn] is [(a1,b1); ...; (an,bn)]. Raise Invalid_argument if the two lists
+   have different lengths. Not tail-recursive.
+  
+
+Sorting
+=======
+  
+
+<<
+  val sort : ('a -> 'a -> int) -> 'a list -> 'a list
+>>
+    
+    Sort a list in increasing order according to a comparison function. The
+   comparison function must return 0 if its arguments compare as equal, a
+   positive integer if the first is greater, and a negative integer if the
+   first is smaller (see Array.sort for a complete specification). For example,
+   Pervasives.compare[19.2*Note Section 19-2::] is a suitable
+   comparison function. The resulting list is sorted in increasing order.
+   List.sort is guaranteed to run in constant heap space (in addition to the
+   size of the result list) and logarithmic stack space.
+   The current implementation uses Merge Sort. It runs in constant heap space
+   and logarithmic stack space.
+  
+
+<<
+  val stable_sort : ('a -> 'a -> int) -> 'a list -> 'a list
+>>
+    
+    Same as List.sort[20.17*Note Section 20-17::], but the sorting algorithm
+   is guaranteed to be stable (i.e. elements that compare equal are kept in
+   their original order) .
+   The current implementation uses Merge Sort. It runs in constant heap space
+   and logarithmic stack space.
+  
+
+<<
+  val fast_sort : ('a -> 'a -> int) -> 'a list -> 'a list
+>>
+    
+    Same as List.sort[20.17*Note Section 20-17::] or
+   List.stable_sort[20.17*Note Section 20-17::], whichever is
+   faster on typical input.
+  
+
+<<
+  val merge : ('a -> 'a -> int) -> 'a list -> 'a list -> 'a list
+>>
+    
+    Merge two lists: Assuming that l1 and l2 are sorted according to the
+   comparison function cmp, merge cmp l1 l2 will return a sorted list
+   containting all the elements of l1 and l2. If several elements compare
+   equal, the elements of l1 will be before the elements of l2. Not
+   tail-recursive (sum of the lengths of the arguments).
+  
+   

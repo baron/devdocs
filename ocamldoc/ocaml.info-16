@@ -1,0 +1,2035 @@
+This file has been translated from LaTeX by HeVeA.
+
+Node: Section 20-18,	Next: Section 20-19,	Prev: Section 20-17,	Up: Chapter 20
+  
+
+20.18   Module Map : Association tables over ordered types.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module implements applicative association tables, also known as finite
+maps or dictionaries, given a total ordering function over the keys. All
+operations over maps are purely applicative (no side-effects). The
+implementation uses balanced binary trees, and therefore searching and
+insertion take time logarithmic in the size of the map.
+  
+  
+<<
+  module type OrderedType = >>
+   
+    sig
+  
+  
+   
+   <<
+     type t 
+   >>
+   
+       The type of the map keys.
+ 
+   
+   <<
+     val compare : t -> t -> int
+   >>
+   
+       A total ordering function over the keys. This is a two-argument function
+      f such that f e1 e2 is zero if the keys e1 and e2 are equal, f e1 e2 is
+      strictly negative if e1 is smaller than e2, and f e1 e2 is strictly
+      positive if e1 is greater than e2. Example: a suitable ordering function
+      is the generic structural comparison function
+      Pervasives.compare[19.2*Note Section 19-2::].
+  
+    end
+  
+    Input signature of the functor Map.Make[20.18*Note Section 20-18::].
+  
+<<
+  module type S = >>
+   
+    sig
+  
+  
+   
+   <<
+     type key 
+   >>
+   
+       The type of the map keys.
+ 
+   
+   <<
+     type +'a t 
+   >>
+   
+       The type of maps from type key to type 'a.
+ 
+   
+   <<
+     val empty : 'a t
+   >>
+   
+       The empty map.
+ 
+   
+   <<
+     val is_empty : 'a t -> bool
+   >>
+   
+       Test whether a map is empty or not.
+ 
+   
+   <<
+     val mem : key -> 'a t -> bool
+   >>
+   
+       mem x m returns true if m contains a binding for x, and false otherwise.
+ 
+   
+   <<
+     val add : key -> 'a -> 'a t -> 'a t
+   >>
+   
+       add x y m returns a map containing the same bindings as m, plus a
+      binding of x to y. If x was already bound in m, its previous binding
+      disappears.
+ 
+   
+   <<
+     val singleton : key -> 'a -> 'a t
+   >>
+   
+       singleton x y returns the one-element map that contains a binding y for
+      x.
+      Since: 3.12.0
+ 
+   
+   <<
+     val remove : key -> 'a t -> 'a t
+   >>
+   
+       remove x m returns a map containing the same bindings as m, except for x
+      which is unbound in the returned map.
+ 
+   
+   <<
+     val merge :
+       (key -> 'a option -> 'b option -> 'c option) ->
+       'a t -> 'b t -> 'c t
+   >>
+   
+       merge f m1 m2 computes a map whose keys is a subset of keys of m1 and of
+      m2. The presence of each such binding, and the corresponding value, is
+      determined with the function f.
+      Since: 3.12.0
+ 
+   
+   <<
+     val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+   >>
+   
+       Total ordering between maps. The first argument is a total ordering used
+      to compare data associated with equal keys in the two maps.
+ 
+   
+   <<
+     val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+   >>
+   
+       equal cmp m1 m2 tests whether the maps m1 and m2 are equal, that is,
+      contain equal keys and associate them with equal data. cmp is the
+      equality predicate used to compare the data associated with the keys.
+ 
+   
+   <<
+     val iter : (key -> 'a -> unit) -> 'a t -> unit
+   >>
+   
+       iter f m applies f to all bindings in map m. f receives the key as first
+      argument, and the associated value as second argument. The bindings are
+      passed to f in increasing order with respect to the ordering over the
+      type of the keys.
+ 
+   
+   <<
+     val fold : (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+   >>
+   
+       fold f m a computes (f kN dN ... (f k1 d1 a)...), where k1 ... kN are
+      the keys of all bindings in m (in increasing order), and d1 ... dN are
+      the associated data.
+ 
+   
+   <<
+     val for_all : (key -> 'a -> bool) -> 'a t -> bool
+   >>
+   
+       for_all p m checks if all the bindings of the map satisfy the predicate
+      p.
+      Since: 3.12.0
+ 
+   
+   <<
+     val exists : (key -> 'a -> bool) -> 'a t -> bool
+   >>
+   
+       exists p m checks if at least one binding of the map satisfy the
+      predicate p.
+      Since: 3.12.0
+ 
+   
+   <<
+     val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+   >>
+   
+       filter p m returns the map with all the bindings in m that satisfy
+      predicate p.
+      Since: 3.12.0
+ 
+   
+   <<
+     val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
+   >>
+   
+       partition p m returns a pair of maps (m1, m2), where m1 contains all the
+      bindings of s that satisfy the predicate p, and m2 is the map with all
+      the bindings of s that do not satisfy p.
+      Since: 3.12.0
+ 
+   
+   <<
+     val cardinal : 'a t -> int
+   >>
+   
+       Return the number of bindings of a map.
+      Since: 3.12.0
+ 
+   
+   <<
+     val bindings : 'a t -> (key * 'a) list
+   >>
+   
+       Return the list of all bindings of the given map. The returned list is
+      sorted in increasing order with respect to the ordering Ord.compare,
+      where Ord is the argument given to Map.Make[20.18*Note Section 20-18::].
+      Since: 3.12.0
+ 
+   
+   <<
+     val min_binding : 'a t -> key * 'a
+   >>
+   
+       Return the smallest binding of the given map (with respect to the
+      Ord.compare ordering), or raise Not_found if the map is empty.
+      Since: 3.12.0
+ 
+   
+   <<
+     val max_binding : 'a t -> key * 'a
+   >>
+   
+       Same as
+      Map.S.max_binding[20.18*Note Section 20-18::], but
+      returns the largest binding of the given map.
+      Since: 3.12.0
+ 
+   
+   <<
+     val choose : 'a t -> key * 'a
+   >>
+   
+       Return one binding of the given map, or raise Not_found if the map is
+      empty. Which binding is chosen is unspecified, but equal bindings will be
+      chosen for equal maps.
+      Since: 3.12.0
+ 
+   
+   <<
+     val split : key -> 'a t -> 'a t * 'a option * 'a t
+   >>
+   
+       split x m returns a triple (l, data, r), where l is the map with all the
+      bindings of m whose key is strictly less than x; r is the map with all
+      the bindings of m whose key is strictly greater than x; data is None if m
+      contains no binding for x, or Some v if m binds v to x.
+      Since: 3.12.0
+ 
+   
+   <<
+     val find : key -> 'a t -> 'a
+   >>
+   
+       find x m returns the current binding of x in m, or raises Not_found if
+      no such binding exists.
+ 
+   
+   <<
+     val map : ('a -> 'b) -> 'a t -> 'b t
+   >>
+   
+       map f m returns a map with same domain as m, where the associated value
+      a of all bindings of m has been replaced by the result of the application
+      of f to a. The bindings are passed to f in increasing order with respect
+      to the ordering over the type of the keys.
+ 
+   
+   <<
+     val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+   >>
+   
+       Same as Map.S.map[20.18*Note Section 20-18::], but the function
+      receives as arguments both the key and the associated value for each
+      binding of the map.
+  
+    end
+  
+    Output signature of the functor Map.Make[20.18*Note Section 20-18::].
+  
+<<
+  module Make : >>
+   
+  functor (Ord : OrderedType) -> S  with type key = Ord.t
+    Functor building an implementation of the map structure given a totally
+   ordered type.
+  
+   
+
+Node: Section 20-19,	Next: Section 20-20,	Prev: Section 20-18,	Up: Chapter 20
+  
+
+20.19   Module Marshal : Marshaling of data structures.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module provides functions to encode arbitrary data structures as
+sequences of bytes, which can then be written on a file or sent over a pipe or
+network connection. The bytes can then be read back later, possibly in another
+process, and decoded back into a data structure. The format for the byte
+sequences is compatible across all machines for a given version of Objective
+Caml.
+  Warning: marshaling is currently not type-safe. The type of marshaled data is
+not transmitted along the value of the data, making it impossible to check that
+the data read back possesses the type expected by the context. In particular,
+the result type of the Marshal.from_* functions is given as 'a, but this is
+misleading: the returned Caml value does not possess type 'a for all 'a; it has
+one, unique type which cannot be determined at compile-type. The programmer
+should explicitly give the expected type of the returned value, using the
+following syntax:
+  
+   - (Marshal.from_channel chan : type). Anything can happen at run-time if the
+   object in the file does not belong to the given type. 
+  
+  The representation of marshaled values is not human-readable, and uses bytes
+that are not printable characters. Therefore, input and output channels used in
+conjunction with Marshal.to_channel and Marshal.from_channel must be opened in
+binary mode, using e.g. open_out_bin or open_in_bin; channels opened in text
+mode will cause unmarshaling errors on platforms where text channels behave
+differently than binary channels, e.g. Windows.
+  
+  
+
+<<
+  type extern_flags =
+    | No_sharing
+>>
+   
+    Don't preserve sharing 
+   
+<<
+    | Closures
+>>
+   
+    Send function closures 
+    
+    The flags to the Marshal.to_* functions below.
+  
+
+<<
+  val to_channel : Pervasives.out_channel -> 'a -> extern_flags list -> unit
+>>
+    
+    Marshal.to_channel chan v flags writes the representation of v on channel
+   chan. The flags argument is a possibly empty list of flags that governs the
+   marshaling behavior with respect to sharing and functional values.
+   If flags does not contain Marshal.No_sharing, circularities and sharing
+   inside the value v are detected and preserved in the sequence of bytes
+   produced. In particular, this guarantees that marshaling always terminates.
+   Sharing between values marshaled by successive calls to Marshal.to_channel
+   is not detected, though. If flags contains Marshal.No_sharing, sharing is
+   ignored. This results in faster marshaling if v contains no shared
+   substructures, but may cause slower marshaling and larger byte
+   representations if v actually contains sharing, or even non-termination if v
+   contains cycles.
+   If flags does not contain Marshal.Closures, marshaling fails when it
+   encounters a functional value inside v: only "pure" data structures,
+   containing neither functions nor objects, can safely be transmitted between
+   different programs. If flags contains Marshal.Closures, functional values
+   will be marshaled as a position in the code of the program. In this case,
+   the output of marshaling can only be read back in processes that run exactly
+   the same program, with exactly the same compiled code. (This is checked at
+   un-marshaling time, using an MD5 digest of the code transmitted along with
+   the code position.)
+  
+
+<<
+  val to_string : 'a -> extern_flags list -> string
+>>
+    
+    Marshal.to_string v flags returns a string containing the representation of
+   v as a sequence of bytes. The flags argument has the same meaning as for
+   Marshal.to_channel[20.19*Note Section 20-19::].
+  
+
+<<
+  val to_buffer : string -> int -> int -> 'a -> extern_flags list -> int
+>>
+    
+    Marshal.to_buffer buff ofs len v flags marshals the value v, storing its
+   byte representation in the string buff, starting at character number ofs,
+   and writing at most len characters. It returns the number of characters
+   actually written to the string. If the byte representation of v does not fit
+   in len characters, the exception Failure is raised.
+  
+
+<<
+  val from_channel : Pervasives.in_channel -> 'a
+>>
+    
+    Marshal.from_channel chan reads from channel chan the byte representation
+   of a structured value, as produced by one of the Marshal.to_* functions, and
+   reconstructs and returns the corresponding value.
+  
+
+<<
+  val from_string : string -> int -> 'a
+>>
+    
+    Marshal.from_string buff ofs unmarshals a structured value like
+   Marshal.from_channel[20.19*Note Section 20-19::] does,
+   except that the byte representation is not read from a channel, but taken
+   from the string buff, starting at position ofs.
+  
+
+<<
+  val header_size : int
+>>
+    
+    The bytes representing a marshaled value are composed of a fixed-size
+   header and a variable-sized data part, whose size can be determined from the
+   header. Marshal.header_size[20.19*Note Section 20-19::]
+   is the size, in characters, of the header.
+   Marshal.data_size[20.19*Note Section 20-19::] buff ofs is
+   the size, in characters, of the data part, assuming a valid header is stored
+   in buff starting at position ofs. Finally,
+   Marshal.total_size[20.19*Note Section 20-19::] buff ofs
+   is the total size, in characters, of the marshaled value. Both
+   Marshal.data_size[20.19*Note Section 20-19::] and
+   Marshal.total_size[20.19*Note Section 20-19::] raise
+   Failure if buff, ofs does not contain a valid header.
+   To read the byte representation of a marshaled value into a string buffer,
+   the program needs to read first
+   Marshal.header_size[20.19*Note Section 20-19::]
+   characters into the buffer, then determine the length of the remainder of
+   the representation using
+   Marshal.data_size[20.19*Note Section 20-19::], make sure
+   the buffer is large enough to hold the remaining data, then read it, and
+   finally call
+   Marshal.from_string[20.19*Note Section 20-19::] to
+   unmarshal the value.
+  
+
+<<
+  val data_size : string -> int -> int
+>>
+    
+    See Marshal.header_size[20.19*Note Section 20-19::].
+  
+
+<<
+  val total_size : string -> int -> int
+>>
+    
+    See Marshal.header_size[20.19*Note Section 20-19::].
+  
+   
+
+Node: Section 20-20,	Next: Section 20-21,	Prev: Section 20-19,	Up: Chapter 20
+  
+
+20.20   Module Nativeint : Processor-native integers.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module provides operations on the type nativeint of signed 32-bit
+integers (on 32-bit platforms) or signed 64-bit integers (on 64-bit platforms).
+This integer type has exactly the same width as that of a long integer type in
+the C compiler. All arithmetic operations over nativeint are taken modulo 2^32
+or 2^64 depending on the word size of the architecture.
+  Performance notice: values of type nativeint occupy more memory space than
+values of type int, and arithmetic operations on nativeint are generally slower
+than those on int. Use nativeint only when the application requires the extra
+bit of precision over the int type.
+  
+  
+
+<<
+  val zero : nativeint
+>>
+    
+    The native integer 0.
+  
+
+<<
+  val one : nativeint
+>>
+    
+    The native integer 1.
+  
+
+<<
+  val minus_one : nativeint
+>>
+    
+    The native integer -1.
+  
+
+<<
+  val neg : nativeint -> nativeint
+>>
+    
+    Unary negation.
+  
+
+<<
+  val add : nativeint -> nativeint -> nativeint
+>>
+    
+    Addition.
+  
+
+<<
+  val sub : nativeint -> nativeint -> nativeint
+>>
+    
+    Subtraction.
+  
+
+<<
+  val mul : nativeint -> nativeint -> nativeint
+>>
+    
+    Multiplication.
+  
+
+<<
+  val div : nativeint -> nativeint -> nativeint
+>>
+    
+    Integer division. Raise Division_by_zero if the second argument is zero.
+   This division rounds the real quotient of its arguments towards zero, as
+   specified for Pervasives.(/)[19.2*Note Section 19-2::].
+  
+
+<<
+  val rem : nativeint -> nativeint -> nativeint
+>>
+    
+    Integer remainder. If y is not zero, the result of Nativeint.rem x y
+   satisfies the following properties: Nativeint.zero <= Nativeint.rem x y <
+   Nativeint.abs y and x = Nativeint.add (Nativeint.mul (Nativeint.div x y) y)
+   (Nativeint.rem x y). If y = 0, Nativeint.rem x y raises Division_by_zero.
+  
+
+<<
+  val succ : nativeint -> nativeint
+>>
+    
+    Successor. Nativeint.succ x is Nativeint.add x Nativeint.one.
+  
+
+<<
+  val pred : nativeint -> nativeint
+>>
+    
+    Predecessor. Nativeint.pred x is Nativeint.sub x Nativeint.one.
+  
+
+<<
+  val abs : nativeint -> nativeint
+>>
+    
+    Return the absolute value of its argument.
+  
+
+<<
+  val size : int
+>>
+    
+    The size in bits of a native integer. This is equal to 32 on a 32-bit
+   platform and to 64 on a 64-bit platform.
+  
+
+<<
+  val max_int : nativeint
+>>
+    
+    The greatest representable native integer, either 2^31 - 1 on a 32-bit
+   platform, or 2^63 - 1 on a 64-bit platform.
+  
+
+<<
+  val min_int : nativeint
+>>
+    
+    The greatest representable native integer, either -2^31 on a 32-bit
+   platform, or -2^63 on a 64-bit platform.
+  
+
+<<
+  val logand : nativeint -> nativeint -> nativeint
+>>
+    
+    Bitwise logical and.
+  
+
+<<
+  val logor : nativeint -> nativeint -> nativeint
+>>
+    
+    Bitwise logical or.
+  
+
+<<
+  val logxor : nativeint -> nativeint -> nativeint
+>>
+    
+    Bitwise logical exclusive or.
+  
+
+<<
+  val lognot : nativeint -> nativeint
+>>
+    
+    Bitwise logical negation
+  
+
+<<
+  val shift_left : nativeint -> int -> nativeint
+>>
+    
+    Nativeint.shift_left x y shifts x to the left by y bits. The result is
+   unspecified if y < 0 or y >= bitsize, where bitsize is 32 on a 32-bit
+   platform and 64 on a 64-bit platform.
+  
+
+<<
+  val shift_right : nativeint -> int -> nativeint
+>>
+    
+    Nativeint.shift_right x y shifts x to the right by y bits. This is an
+   arithmetic shift: the sign bit of x is replicated and inserted in the
+   vacated bits. The result is unspecified if y < 0 or y >= bitsize.
+  
+
+<<
+  val shift_right_logical : nativeint -> int -> nativeint
+>>
+    
+    Nativeint.shift_right_logical x y shifts x to the right by y bits. This is
+   a logical shift: zeroes are inserted in the vacated bits regardless of the
+   sign of x. The result is unspecified if y < 0 or y >= bitsize.
+  
+
+<<
+  val of_int : int -> nativeint
+>>
+    
+    Convert the given integer (type int) to a native integer (type nativeint).
+  
+
+<<
+  val to_int : nativeint -> int
+>>
+    
+    Convert the given native integer (type nativeint) to an integer (type int).
+   The high-order bit is lost during the conversion.
+  
+
+<<
+  val of_float : float -> nativeint
+>>
+    
+    Convert the given floating-point number to a native integer, discarding the
+   fractional part (truncate towards 0). The result of the conversion is
+   undefined if, after truncation, the number is outside the range
+   [Nativeint.min_int[20.20*Note Section 20-20::],
+   Nativeint.max_int[20.20*Note Section 20-20::]].
+  
+
+<<
+  val to_float : nativeint -> float
+>>
+    
+    Convert the given native integer to a floating-point number.
+  
+
+<<
+  val of_int32 : int32 -> nativeint
+>>
+    
+    Convert the given 32-bit integer (type int32) to a native integer.
+  
+
+<<
+  val to_int32 : nativeint -> int32
+>>
+    
+    Convert the given native integer to a 32-bit integer (type int32). On
+   64-bit platforms, the 64-bit native integer is taken modulo 2^32, i.e. the
+   top 32 bits are lost. On 32-bit platforms, the conversion is exact.
+  
+
+<<
+  val of_string : string -> nativeint
+>>
+    
+    Convert the given string to a native integer. The string is read in decimal
+   (by default) or in hexadecimal, octal or binary if the string begins with
+   0x, 0o or 0b respectively. Raise Failure "int_of_string" if the given string
+   is not a valid representation of an integer, or if the integer represented
+   exceeds the range of integers representable in type nativeint.
+  
+
+<<
+  val to_string : nativeint -> string
+>>
+    
+    Return the string representation of its argument, in decimal.
+  
+
+<<
+  type t = nativeint 
+>>
+    
+    An alias for the type of native integers.
+  
+
+<<
+  val compare : t -> t -> int
+>>
+    
+    The comparison function for native integers, with the same specification as
+   Pervasives.compare[19.2*Note Section 19-2::]. Along with the type
+   t, this function compare allows the module Nativeint to be passed as
+   argument to the functors Set.Make[20.28*Note Section 20-28::] and
+   Map.Make[20.18*Note Section 20-18::].
+  
+   
+
+Node: Section 20-21,	Next: Section 20-22,	Prev: Section 20-20,	Up: Chapter 20
+  
+
+20.21   Module Oo : Operations on objects
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  val copy : (< .. > as 'a) -> 'a
+>>
+    
+    Oo.copy o returns a copy of object o, that is a fresh object with the same
+   methods and instance variables as o
+  
+
+<<
+  val id : < .. > -> int
+>>
+    
+    Return an integer identifying this object, unique for the current execution
+   of the program.
+  
+   
+
+Node: Section 20-22,	Next: Section 20-23,	Prev: Section 20-21,	Up: Chapter 20
+  
+
+20.22   Module Parsing : The run-time library for parsers generated by
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ocamlyacc.
+*=*=*=*=*=
+
+   
+  
+  
+
+<<
+  val symbol_start : unit -> int
+>>
+    
+    symbol_start and
+   Parsing.symbol_end[20.22*Note Section 20-22::] are to be
+   called in the action part of a grammar rule only. They return the offset of
+   the string that matches the left-hand side of the rule: symbol_start()
+   returns the offset of the first character; symbol_end() returns the offset
+   after the last character. The first character in a file is at offset 0.
+  
+
+<<
+  val symbol_end : unit -> int
+>>
+    
+    See Parsing.symbol_start[20.22*Note Section 20-22::].
+  
+
+<<
+  val rhs_start : int -> int
+>>
+    
+    Same as
+   Parsing.symbol_start[20.22*Note Section 20-22::] and
+   Parsing.symbol_end[20.22*Note Section 20-22::], but
+   return the offset of the string matching the nth item on the right-hand side
+   of the rule, where n is the integer parameter to rhs_start and rhs_end. n is
+   1 for the leftmost item.
+  
+
+<<
+  val rhs_end : int -> int
+>>
+    
+    See Parsing.rhs_start[20.22*Note Section 20-22::].
+  
+
+<<
+  val symbol_start_pos : unit -> Lexing.position
+>>
+    
+    Same as symbol_start, but return a position instead of an offset.
+  
+
+<<
+  val symbol_end_pos : unit -> Lexing.position
+>>
+    
+    Same as symbol_end, but return a position instead of an offset.
+  
+
+<<
+  val rhs_start_pos : int -> Lexing.position
+>>
+    
+    Same as rhs_start, but return a position instead of an offset.
+  
+
+<<
+  val rhs_end_pos : int -> Lexing.position
+>>
+    
+    Same as rhs_end, but return a position instead of an offset.
+  
+
+<<
+  val clear_parser : unit -> unit
+>>
+    
+    Empty the parser stack. Call it just after a parsing function has returned,
+   to remove all pointers from the parser stack to structures that were built
+   by semantic actions during parsing. This is optional, but lowers the memory
+   requirements of the programs.
+  
+
+<<
+  exception Parse_error
+>>
+    
+    Raised when a parser encounters a syntax error. Can also be raised from the
+   action part of a grammar rule, to initiate error recovery.
+  
+
+<<
+  val set_trace : bool -> bool
+>>
+    
+    Control debugging support for ocamlyacc-generated parsers. After
+   Parsing.set_trace true, the pushdown automaton that executes the parsers
+   prints a trace of its actions (reading a token, shifting a state, reducing
+   by a rule) on standard output. Parsing.set_trace false turns this debugging
+   trace off. The boolean returned is the previous state of the trace flag.
+   Since: 3.11.0
+  
+   
+
+Node: Section 20-23,	Next: Section 20-24,	Prev: Section 20-22,	Up: Chapter 20
+  
+
+20.23   Module Printexc : Facilities for printing exceptions.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  val to_string : exn -> string
+>>
+    
+    Printexc.to_string e returns a string representation of the exception e.
+  
+
+<<
+  val print : ('a -> 'b) -> 'a -> 'b
+>>
+    
+    Printexc.print fn x applies fn to x and returns the result. If the
+   evaluation of fn x raises any exception, the name of the exception is
+   printed on standard error output, and the exception is raised again. The
+   typical use is to catch and report exceptions that escape a function
+   application.
+  
+
+<<
+  val catch : ('a -> 'b) -> 'a -> 'b
+>>
+    
+    Printexc.catch fn x is similar to
+   Printexc.print[20.23*Note Section 20-23::], but aborts the program
+   with exit code 2 after printing the uncaught exception. This function is
+   deprecated: the runtime system is now able to print uncaught exceptions as
+   precisely as Printexc.catch does. Moreover, calling Printexc.catch makes it
+   harder to track the location of the exception using the debugger or the
+   stack backtrace facility. So, do not use Printexc.catch in new code.
+  
+
+<<
+  val print_backtrace : Pervasives.out_channel -> unit
+>>
+    
+    Printexc.print_backtrace oc prints an exception backtrace on the output
+   channel oc. The backtrace lists the program locations where the
+   most-recently raised exception was raised and where it was propagated
+   through function calls.
+   Since: 3.11.0
+  
+
+<<
+  val get_backtrace : unit -> string
+>>
+    
+    Printexc.get_backtrace () returns a string containing the same exception
+   backtrace that Printexc.print_backtrace would print.
+   Since: 3.11.0
+  
+
+<<
+  val record_backtrace : bool -> unit
+>>
+    
+    Printexc.record_backtrace b turns recording of exception backtraces on (if
+   b = true) or off (if b = false). Initially, backtraces are not recorded,
+   unless the b flag is given to the program through the OCAMLRUNPARAM
+   variable.
+   Since: 3.11.0
+  
+
+<<
+  val backtrace_status : unit -> bool
+>>
+    
+    Printexc.backtrace_status() returns true if exception backtraces are
+   currently recorded, false if not.
+   Since: 3.11.0
+  
+
+<<
+  val register_printer : (exn -> string option) -> unit
+>>
+    
+    Printexc.register_printer fn registers fn as an exception printer. The
+   printer should return None or raise an exception if it does not know how to
+   convert the passed exception, and Some  s with s the resulting string if it
+   can convert the passed exception. Exceptions raised by the printer are
+   ignored.
+   When converting an exception into a string, the printers will be invoked in
+   the reverse order of their registrations, until a printer returns a Some s
+   value (if no such printer exists, the runtime will use a generic printer).
+   Since: 3.11.2
+  
+   
+
+Node: Section 20-24,	Next: Section 20-25,	Prev: Section 20-23,	Up: Chapter 20
+  
+
+20.24   Module Printf : Formatted output functions.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+<<
+  val fprintf :
+    Pervasives.out_channel ->
+    ('a, Pervasives.out_channel, unit) Pervasives.format -> 'a
+>>
+    
+    fprintf outchan format arg1 ... argN formats the arguments arg1 to argN
+   according to the format string format, and outputs the resulting string on
+   the channel outchan.
+   The format is a character string which contains two types of objects: plain
+   characters, which are simply copied to the output channel, and conversion
+   specifications, each of which causes conversion and printing of arguments.
+   Conversion specifications have the following form:
+   % [flags] [width] [.precision] type
+   In short, a conversion specification consists in the % character, followed
+   by optional modifiers and a type which is made of one or two characters. The
+   types and their meanings are:
+   
+     
+      - d, i, n, l, L, or N: convert an integer argument to signed decimal. 
+      - u: convert an integer argument to unsigned decimal. 
+      - x: convert an integer argument to unsigned hexadecimal, using lowercase
+      letters. 
+      - X: convert an integer argument to unsigned hexadecimal, using uppercase
+      letters. 
+      - o: convert an integer argument to unsigned octal. 
+      - s: insert a string argument. 
+      - S: insert a string argument in Caml syntax (double quotes, escapes). 
+      - c: insert a character argument. 
+      - C: insert a character argument in Caml syntax (single quotes, escapes).
+      
+      - f: convert a floating-point argument to decimal notation, in the style
+      dddd.ddd. 
+      - F: convert a floating-point argument to Caml syntax (dddd. or dddd.ddd
+      or d.ddd e+-dd). 
+      - e or E: convert a floating-point argument to decimal notation, in the
+      style d.ddd e+-dd (mantissa and exponent). 
+      - g or G: convert a floating-point argument to decimal notation, in style
+      f or e, E (whichever is more compact). 
+      - B: convert a boolean argument to the string true or false 
+      - b: convert a boolean argument (for backward compatibility; do not use
+      in new programs). 
+      - ld, li, lu, lx, lX, lo: convert an int32 argument to the format
+      specified by the second letter (decimal, hexadecimal, etc). 
+      - nd, ni, nu, nx, nX, no: convert a nativeint argument to the format
+      specified by the second letter. 
+      - Ld, Li, Lu, Lx, LX, Lo: convert an int64 argument to the format
+      specified by the second letter. 
+      - a: user-defined printer. Takes two arguments and applies the first one
+      to outchan (the current output channel) and to the second argument. The
+      first argument must therefore have type out_channel -> 'b -> unit and the
+      second 'b. The output produced by the function is inserted in the output
+      of fprintf at the current point. 
+      - t: same as %a, but takes only one argument (with type out_channel ->
+      unit) and apply it to outchan. 
+      - { fmt %}: convert a format string argument. The argument must have the
+      same type as the internal format string fmt. 
+      - ( fmt %): format string substitution. Takes a format string argument
+      and substitutes it to the internal format string fmt to print following
+      arguments. The argument must have the same type as fmt. 
+      - !: take no argument and flush the output. 
+      - %: take no argument and output one % character. 
+      - ,: the no-op delimiter for conversion specifications. 
+   
+   The optional flags are:
+     
+      - -: left-justify the output (default is right justification). 
+      - 0: for numerical conversions, pad with zeroes instead of spaces. 
+      - +: for numerical conversions, prefix number with a + sign if positive. 
+      - space: for numerical conversions, prefix number with a space if
+      positive. 
+      - '#': request an alternate formatting style for numbers. 
+   
+   The optional width is an integer indicating the minimal width of the result.
+   For instance, %6d prints an integer, prefixing it with spaces to fill at
+   least 6 characters.
+   The optional precision is a dot . followed by an integer indicating how many
+   digits follow the decimal point in the %f, %e, and %E conversions. For
+   instance, %.4f prints a float with 4 fractional digits.
+   The integer in a width or precision can also be specified as *, in which
+   case an extra integer argument is taken to specify the corresponding width
+   or precision. This integer argument precedes immediately the argument to
+   print. For instance, %.*f prints a float with as many fractional digits as
+   the value of the argument given before the float.
+  
+
+<<
+  val printf : ('a, Pervasives.out_channel, unit) Pervasives.format -> 'a
+>>
+    
+    Same as Printf.fprintf[20.24*Note Section 20-24::], but output on
+   stdout.
+  
+
+<<
+  val eprintf : ('a, Pervasives.out_channel, unit) Pervasives.format -> 'a
+>>
+    
+    Same as Printf.fprintf[20.24*Note Section 20-24::], but output on
+   stderr.
+  
+
+<<
+  val ifprintf : 'a -> ('b, 'a, unit) Pervasives.format -> 'b
+>>
+    
+    Same as Printf.fprintf[20.24*Note Section 20-24::], but does not
+   print anything. Useful to ignore some material when conditionally printing.
+   Since: 3.10.0
+  
+
+<<
+  val sprintf : ('a, unit, string) Pervasives.format -> 'a
+>>
+    
+    Same as Printf.fprintf[20.24*Note Section 20-24::], but instead of
+   printing on an output channel, return a string containing the result of
+   formatting the arguments.
+  
+
+<<
+  val bprintf : Buffer.t -> ('a, Buffer.t, unit) Pervasives.format -> 'a
+>>
+    
+    Same as Printf.fprintf[20.24*Note Section 20-24::], but instead of
+   printing on an output channel, append the formatted arguments to the given
+   extensible buffer (see module Buffer[20.3*Note Section 20-3::]).
+  
+  Formatted output functions with continuations.
+
+<<
+  val kfprintf :
+    (Pervasives.out_channel -> 'a) ->
+    Pervasives.out_channel ->
+    ('b, Pervasives.out_channel, unit, 'a) Pervasives.format4 -> 'b
+>>
+    
+    Same as fprintf, but instead of returning immediately, passes the out
+   channel to its first argument at the end of printing.
+   Since: 3.09.0
+  
+
+<<
+  val ksprintf :
+    (string -> 'a) -> ('b, unit, string, 'a) Pervasives.format4 -> 'b
+>>
+    
+    Same as sprintf above, but instead of returning the string, passes it to
+   the first argument.
+   Since: 3.09.0
+  
+
+<<
+  val kbprintf :
+    (Buffer.t -> 'a) ->
+    Buffer.t -> ('b, Buffer.t, unit, 'a) Pervasives.format4 -> 'b
+>>
+    
+    Same as bprintf, but instead of returning immediately, passes the buffer to
+   its first argument at the end of printing.
+   Since: 3.10.0
+  
+
+<<
+  val kprintf :
+    (string -> 'a) -> ('b, unit, string, 'a) Pervasives.format4 -> 'b
+>>
+    
+    A deprecated synonym for ksprintf.
+  
+   
+
+Node: Section 20-25,	Next: Section 20-26,	Prev: Section 20-24,	Up: Chapter 20
+  
+
+20.25   Module Queue : First-in first-out queues.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  This module implements queues (FIFOs), with in-place modification.
+  
+  
+
+<<
+  type 'a t 
+>>
+    
+    The type of queues containing elements of type 'a.
+  
+
+<<
+  exception Empty
+>>
+    
+    Raised when Queue.take[20.25*Note Section 20-25::] or
+   Queue.peek[20.25*Note Section 20-25::] is applied to an empty queue.
+  
+
+<<
+  val create : unit -> 'a t
+>>
+    
+    Return a new queue, initially empty.
+  
+
+<<
+  val add : 'a -> 'a t -> unit
+>>
+    
+    add x q adds the element x at the end of the queue q.
+  
+
+<<
+  val push : 'a -> 'a t -> unit
+>>
+    
+    push is a synonym for add.
+  
+
+<<
+  val take : 'a t -> 'a
+>>
+    
+    take q removes and returns the first element in queue q, or raises Empty if
+   the queue is empty.
+  
+
+<<
+  val pop : 'a t -> 'a
+>>
+    
+    pop is a synonym for take.
+  
+
+<<
+  val peek : 'a t -> 'a
+>>
+    
+    peek q returns the first element in queue q, without removing it from the
+   queue, or raises Empty if the queue is empty.
+  
+
+<<
+  val top : 'a t -> 'a
+>>
+    
+    top is a synonym for peek.
+  
+
+<<
+  val clear : 'a t -> unit
+>>
+    
+    Discard all elements from a queue.
+  
+
+<<
+  val copy : 'a t -> 'a t
+>>
+    
+    Return a copy of the given queue.
+  
+
+<<
+  val is_empty : 'a t -> bool
+>>
+    
+    Return true if the given queue is empty, false otherwise.
+  
+
+<<
+  val length : 'a t -> int
+>>
+    
+    Return the number of elements in a queue.
+  
+
+<<
+  val iter : ('a -> unit) -> 'a t -> unit
+>>
+    
+    iter f q applies f in turn to all elements of q, from the least recently
+   entered to the most recently entered. The queue itself is unchanged.
+  
+
+<<
+  val fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
+>>
+    
+    fold f accu q is equivalent to List.fold_left f accu l, where l is the list
+   of q's elements. The queue remains unchanged.
+  
+
+<<
+  val transfer : 'a t -> 'a t -> unit
+>>
+    
+    transfer q1 q2 adds all of q1's elements at the end of the queue q2, then
+   clears q1. It is equivalent to the sequence iter (fun x -> add x q2) q1;
+   clear q1, but runs in constant time.
+  
+   
+
+Node: Section 20-26,	Next: Section 20-27,	Prev: Section 20-25,	Up: Chapter 20
+  
+
+20.26   Module Random : Pseudo-random number generators (PRNG).
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+Basic functions
+===============
+  
+
+<<
+  val init : int -> unit
+>>
+    
+    Initialize the generator, using the argument as a seed. The same seed will
+   always yield the same sequence of numbers.
+  
+
+<<
+  val full_init : int array -> unit
+>>
+    
+    Same as Random.init[20.26*Note Section 20-26::] but takes more data as
+   seed.
+  
+
+<<
+  val self_init : unit -> unit
+>>
+    
+    Initialize the generator with a more-or-less random seed chosen in a
+   system-dependent way.
+  
+
+<<
+  val bits : unit -> int
+>>
+    
+    Return 30 random bits in a nonnegative integer.
+   Before 3.12.0 used a different algorithm (affects all the following
+   functions)
+  
+
+<<
+  val int : int -> int
+>>
+    
+    Random.int bound returns a random integer between 0 (inclusive) and bound
+   (exclusive). bound must be greater than 0 and less than 2^30.
+  
+
+<<
+  val int32 : Int32.t -> Int32.t
+>>
+    
+    Random.int32 bound returns a random integer between 0 (inclusive) and bound
+   (exclusive). bound must be greater than 0.
+  
+
+<<
+  val nativeint : Nativeint.t -> Nativeint.t
+>>
+    
+    Random.nativeint bound returns a random integer between 0 (inclusive) and
+   bound (exclusive). bound must be greater than 0.
+  
+
+<<
+  val int64 : Int64.t -> Int64.t
+>>
+    
+    Random.int64 bound returns a random integer between 0 (inclusive) and bound
+   (exclusive). bound must be greater than 0.
+  
+
+<<
+  val float : float -> float
+>>
+    
+    Random.float bound returns a random floating-point number between 0
+   (inclusive) and bound (exclusive). If bound is negative, the result is
+   negative or zero. If bound is 0, the result is 0.
+  
+
+<<
+  val bool : unit -> bool
+>>
+    
+    Random.bool () returns true or false with probability 0.5 each.
+  
+
+Advanced functions
+==================
+  
+  The functions from module State manipulate the current state of the random
+generator explicitely. This allows using one or several deterministic PRNGs,
+even in a multi-threaded program, without interference from other parts of the
+program.
+<<
+  module State : >>
+   
+    sig
+  
+  
+   
+   <<
+     type t 
+   >>
+   
+       The type of PRNG states.
+ 
+   
+   <<
+     val make : int array -> t
+   >>
+   
+       Create a new state and initialize it with the given seed.
+ 
+   
+   <<
+     val make_self_init : unit -> t
+   >>
+   
+       Create a new state and initialize it with a system-dependent low-entropy
+      seed.
+ 
+   
+   <<
+     val copy : t -> t
+   >>
+   
+       Return a copy of the given state.
+ 
+   
+   <<
+     val bits : t -> int
+   >>
+  
+   
+   <<
+     val int : t -> int -> int
+   >>
+  
+   
+   <<
+     val int32 : t -> Int32.t -> Int32.t
+   >>
+  
+   
+   <<
+     val nativeint : t -> Nativeint.t -> Nativeint.t
+   >>
+  
+   
+   <<
+     val int64 : t -> Int64.t -> Int64.t
+   >>
+  
+   
+   <<
+     val float : t -> float -> float
+   >>
+  
+   
+   <<
+     val bool : t -> bool
+   >>
+   
+       These functions are the same as the basic functions, except that they
+      use (and update) the given PRNG state instead of the default one.
+  
+    end
+  
+
+<<
+  val get_state : unit -> State.t
+>>
+    
+    Return the current state of the generator used by the basic functions.
+  
+
+<<
+  val set_state : State.t -> unit
+>>
+    
+    Set the state of the generator used by the basic functions.
+  
+   
+
+Node: Section 20-27,	Next: Section 20-28,	Prev: Section 20-26,	Up: Chapter 20
+  
+
+20.27   Module Scanf : Formatted input functions.
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+   
+  
+  
+
+Introduction
+============
+  
+
+Functional input with format strings
+------------------------------------
+  
+  The module Scanf provides formatted input functions or scanners.
+  The formatted input functions can read from any kind of input, including
+strings, files, or anything that can return characters. The more general source
+of characters is named a formatted input channel (or scanning buffer) and has
+type
+Scanf.Scanning.in_channel[20.27]. The more general formatted input function reads from any scanning buffer
+and is named bscanf.
+  Generally speaking, the formatted input functions have 3 arguments:
+  
+   - the first argument is a source of characters for the input, 
+   - the second argument is a format string that specifies the values to read, 
+   - the third argument is a receiver function that is applied to the values
+   read. 
+  
+  Hence, a typical call to the formatted input function
+Scanf.bscanf[20.27*Note Section 20-27::] is bscanf ic fmt f, where:
+  
+  
+   - ic is a source of characters (typically a formatted input channel with
+   type
+   Scanf.Scanning.in_channel[20.27]), 
+   
+  
+   - fmt is a format string (the same format strings as those used to print
+   material with module Printf[20.24*Note Section 20-24::] or
+   Format[20.9*Note Section 20-9::]), 
+   
+  
+   - f is a function that has as many arguments as the number of values to read
+   in the input. 
+  
+
+A simple example
+----------------
+  
+  As suggested above, the expression bscanf ic "%d" f reads a decimal integer n
+from the source of characters ic and returns f n.
+  For instance,
+  
+  
+   - if we use stdin as the source of characters
+   (Scanf.Scanning.stdin[20.27*Note Section 20-27::] is the
+   predefined formatted input channel that reads from standard input), 
+   
+  
+   - if we define the receiver f as let f x = x + 1, 
+  
+  then bscanf Scanning.stdin "%d" f reads an integer n from the standard input
+and returns f n (that is n + 1). Thus, if we evaluate bscanf stdin  "%d" f, and
+then enter 41 at the keyboard, we get 42 as the final result.
+
+Formatted input as a functional feature
+---------------------------------------
+  
+  The Caml scanning facility is reminiscent of the corresponding C feature.
+However, it is also largely different, simpler, and yet more powerful: the
+formatted input functions are higher-order functionals and the parameter
+passing mechanism is just the regular function application not the variable
+assignment based mechanism which is typical for formatted input in imperative
+languages; the Caml format strings also feature useful additions to easily
+define complex tokens; as expected within a functional programming language,
+the formatted input functions also support polymorphism, in particular
+arbitrary interaction with polymorphic user-defined scanners. Furthermore, the
+Caml formatted input facility is fully type-checked at compile time.
+<<
+  module Scanning : >>
+   
+    sig
+  
+  
+   
+   <<
+     type in_channel 
+   >>
+  
+   
+   <<
+     type scanbuf = in_channel 
+   >>
+   
+       The type of scanning buffers. A scanning buffer is the source from which
+      a formatted input function gets characters. The scanning buffer holds the
+      current state of the scan, plus a function to get the next char from the
+      input, and a token buffer to store the string matched so far.
+      Note: a scanning action may often require to examine one character in
+      advance; when this "lookahead" character does not belong to the token
+      read, it is stored back in the scanning buffer and becomes the next
+      character read.
+ 
+   
+   <<
+     val stdin : in_channel
+   >>
+   
+       The standard input notion for the module Scanf. stdin is equivalent to
+      Scanning.from_channel Pervasives.stdin.
+      Note: when input is read interactively from stdin, the newline character
+      that triggers the evaluation is incorporated in the input; thus, scanning
+      specifications must properly skip this character (simply add a '\n' as
+      the last character of the format string).
+      Since: 3.12.0
+ 
+   
+   <<
+     val open_in : string -> in_channel
+   >>
+   
+       Bufferized file reading in text mode. The efficient and usual way to
+      scan text mode files (in effect, from_file returns a scanning buffer that
+      reads characters in large chunks, rather than one character at a time as
+      buffers returned by from_channel below do). Scanning.from_file fname
+      returns a scanning buffer which reads from the given file fname in text
+      mode.
+      Since: 3.12.0
+ 
+   
+   <<
+     val open_in_bin : string -> in_channel
+   >>
+   
+       Bufferized file reading in binary mode.
+      Since: 3.12.0
+ 
+   
+   <<
+     val close_in : in_channel -> unit
+   >>
+   
+       Close the Pervasives.input_channel associated with the given
+      Scanning.in_channel.
+      Since: 3.12.0
+ 
+   
+   <<
+     val from_file : string -> in_channel
+   >>
+   
+       An alias for open_in above.
+ 
+   
+   <<
+     val from_file_bin : string -> in_channel
+   >>
+   
+       An alias for open_in_bin above.
+ 
+   
+   <<
+     val from_string : string -> in_channel
+   >>
+   
+       Scanning.from_string s returns a formatted input channel which reads
+      from the given string. Reading starts from the first character in the
+      string. The end-of-input condition is set when the end of the string is
+      reached.
+ 
+   
+   <<
+     val from_function : (unit -> char) -> in_channel
+   >>
+   
+       Scanning.from_function f returns a scanning buffer with the given
+      function as its reading method.
+      When scanning needs one more character, the given function is called.
+      When the function has no more character to provide, it must signal an
+      end-of-input condition by raising the exception End_of_file.
+ 
+   
+   <<
+     val from_channel : Pervasives.in_channel -> in_channel
+   >>
+   
+       Scanning.from_channel ic returns a formatted input channel which reads
+      from the regular input channel ic argument, starting at the current
+      reading position.
+ 
+   
+   <<
+     val end_of_input : in_channel -> bool
+   >>
+   
+       Scanning.end_of_input ic tests the end-of-input condition of the given
+      formatted input channel.
+ 
+   
+   <<
+     val beginning_of_input : in_channel -> bool
+   >>
+   
+       Scanning.beginning_of_input ic tests the beginning of input condition of
+      the given formatted input channel.
+ 
+   
+   <<
+     val name_of_input : in_channel -> string
+   >>
+   
+       Scanning.file_name_of_input ic returns the name of the character source
+      for the formatted input channel ic.
+      Since: 3.09.0
+ 
+   
+   <<
+     val stdib : in_channel
+   >>
+   
+       A deprecated alias for Scanning.stdin, the scanning buffer reading from
+      Pervasives.stdin.
+  
+    end
+  
+   
+   
+   Formatted input channel
+   =======================
+   
+  
+
+Type of formatted input functions
+=================================
+  
+
+<<
+  type ('a, 'b, 'c, 'd) scanner = ('a, Scanning.in_channel, 'b, 'c, 'a -> 'd,
+'d) format6 -> 'c 
+>>
+    
+    The type of formatted input scanners: ('a, 'b, 'c, 'd) scanner is the type
+   of a formatted input function that reads from some formatted input channel
+   according to some format string; more precisely, if scan is some formatted
+   input function, then scan ic fmt f applies f to the arguments specified by
+   the format string fmt, when scan has read those arguments from the formatted
+   input channel ic.
+   For instance, the scanf function below has type ('a, 'b, 'c, 'd)  scanner,
+   since it is a formatted input function that reads from Scanning.stdin: scanf
+   fmt f applies f to the arguments specified by fmt, reading those arguments
+   from Pervasives.stdin as expected.
+   If the format fmt has some %r indications, the corresponding input functions
+   must be provided before the receiver f argument. For instance, if read_elem
+   is an input function for values of type t, then bscanf ic "%r;" read_elem f
+   reads a value v of type t followed by a ';' character, and returns f v.
+   Since: 3.10.0
+  
+
+<<
+  exception Scan_failure of string
+>>
+    
+    The exception that formatted input functions raise when the input cannot be
+   read according to the given format.
+  
+
+The general formatted input function
+====================================
+  
+
+<<
+  val bscanf : Scanning.in_channel -> ('a, 'b, 'c, 'd) scanner
+>>
+    
+    bscanf ic fmt r1 ... rN f reads arguments for the function f, from the
+   formatted input channel ic, according to the format string fmt, and applies
+   f to these values. The result of this call to f is returned as the result of
+   the entire bscanf call. For instance, if f is the function fun s i -> i + 1,
+   then Scanf.sscanf "x= 1" "%s = %i" f returns 2.
+   Arguments r1 to rN are user-defined input functions that read the argument
+   corresponding to a %r conversion.
+  
+
+Format string description
+=========================
+  
+  The format is a character string which contains three types of objects:
+  
+   - plain characters, which are simply matched with the characters of the
+   input (with a special case for [20.27*Note Section 20-27::] and line feed), 
+   - conversion specifications, each of which causes reading and conversion of
+   one argument for the function f (see [20.27*Note Section 20-27::]), 
+   - scanning indications to specify boundaries of tokens (see scanning
+   [20.27*Note Section 20-27::]). 
+  
+
+The space character in format strings
+-------------------------------------
+   
+  As mentioned above, a plain character in the format string is just matched
+with the next character of the input; however, two characters are special
+exceptions to this rule: the space character (' ' or ASCII code 32) and the
+line feed character ('\n' or ASCII code 10). A space does not match a single
+space character, but any amount of "whitespace" in the input. More precisely, a
+space inside the format string matches any number of tab, space, line feed and
+carriage return characters. Similarly, a line feed character in the format
+string matches either a single line feed or a carriage return followed by a
+line feed.
+  Matching any amount of whitespace, a space in the format string also matches
+no amount of whitespace at all; hence, the call bscanf ib  "Price = %d $" (fun
+p -> p) succeeds and returns 1 when reading an input with various whitespace in
+it, such as Price = 1 $, Price = 1 $, or even Price=1$.
+
+Conversion specifications in format strings
+-------------------------------------------
+   
+  Conversion specifications consist in the % character, followed by an optional
+flag, an optional field width, and followed by one or two conversion
+characters. The conversion characters and their meanings are:
+  
+  
+   - d: reads an optionally signed decimal integer. 
+   - i: reads an optionally signed integer (usual input conventions for decimal
+   (0-9+), hexadecimal (0x[0-9a-f]+ and 0X[0-9A-F]+), octal (0o[0-7]+), and
+   binary (0b[0-1]+) notations are understood). 
+   - u: reads an unsigned decimal integer. 
+   - x or X: reads an unsigned hexadecimal integer ([0-9a-f]+ or [0-9A-F]+). 
+   - o: reads an unsigned octal integer ([0-7]+). 
+   - s: reads a string argument that spreads as much as possible, until the
+   following bounding condition holds: 
+   - a whitespace has been found (see [20.27*Note Section 20-27::]), 
+   - a scanning indication (see scanning [20.27*Note Section 20-27::]) has
+   been encountered, 
+   - the end-of-input has been reached. Hence, this conversion always succeeds:
+   it returns an empty string, if the bounding condition holds when the scan
+   begins. 
+   - S: reads a delimited string argument (delimiters and special escaped
+   characters follow the lexical conventions of Caml). 
+   - c: reads a single character. To test the current input character without
+   reading it, specify a null field width, i.e. use specification %0c. Raise
+   Invalid_argument, if the field width specification is greater than 1. 
+   - C: reads a single delimited character (delimiters and special escaped
+   characters follow the lexical conventions of Caml). 
+   - f, e, E, g, G: reads an optionally signed floating-point number in decimal
+   notation, in the style dddd.ddd  e/E+-dd. 
+   - F: reads a floating point number according to the lexical conventions of
+   Caml (hence the decimal point is mandatory if the exponent part is not
+   mentioned). 
+   - B: reads a boolean argument (true or false). 
+   - b: reads a boolean argument (for backward compatibility; do not use in new
+   programs). 
+   - ld, li, lu, lx, lX, lo: reads an int32 argument to the format specified by
+   the second letter for regular integers. 
+   - nd, ni, nu, nx, nX, no: reads a nativeint argument to the format specified
+   by the second letter for regular integers. 
+   - Ld, Li, Lu, Lx, LX, Lo: reads an int64 argument to the format specified by
+   the second letter for regular integers. 
+   - [ range ]: reads characters that matches one of the characters mentioned
+   in the range of characters range (or not mentioned in it, if the range
+   starts with ^). Reads a string that can be empty, if the next input
+   character does not match the range. The set of characters from c1 to c2
+   (inclusively) is denoted by c1-c2. Hence, %[0-9] returns a string
+   representing a decimal number or an empty string if no decimal digit is
+   found; similarly, %[\\048-\\057\\065-\\070] returns a string of hexadecimal
+   digits. If a closing bracket appears in a range, it must occur as the first
+   character of the range (or just after the ^ in case of range negation);
+   hence []] matches a ] character and [^]] matches any character that is not
+   ]. 
+   - r: user-defined reader. Takes the next ri formatted input function and
+   applies it to the scanning buffer ib to read the next argument. The input
+   function ri must therefore have type Scanning.in_channel -> 'a and the
+   argument read has type 'a. 
+   - { fmt %}: reads a format string argument. The format string read must have
+   the same type as the format string specification fmt. For instance, "%{ %i
+   %}" reads any format string that can read a value of type int; hence
+   Scanf.sscanf "fmt:\"number is %u\"" "fmt:%{%i%}" succeeds and returns the
+   format string "number is %u". 
+   - \( fmt %\): scanning format substitution. Reads a format string to read
+   with it instead of fmt. The format string read must have the same type as
+   the format string specification fmt that is replaces. For instance, "%( %i
+   %)" reads any format string that can read a value of type int. Returns the
+   format string read, and the value read using the format string read. Hence,
+   Scanf.sscanf "\"%4d\"1234.00" "%(%i%)"  (fun fmt i -> fmt, i) evaluates to
+   ("%4d", 1234). If the special flag _ is used, the conversion discards the
+   format string read and only returns the value read with the format string
+   read. Hence, Scanf.sscanf "\"%4d\"1234.00" "%_(%i%)" is simply equivalent to
+   Scanf.sscanf "1234.00" "%4d". 
+   - l: returns the number of lines read so far. 
+   - n: returns the number of characters read so far. 
+   - N or L: returns the number of tokens read so far. 
+   - !: matches the end of input condition. 
+   - %: matches one % character in the input. 
+   - ,: the no-op delimiter for conversion specifications. 
+  
+  Following the % character that introduces a conversion, there may be the
+special flag _: the conversion that follows occurs as usual, but the resulting
+value is discarded. For instance, if f is the function fun i -> i + 1, then
+Scanf.sscanf "x = 1" "%_s = %i" f returns 2.
+  The field width is composed of an optional integer literal indicating the
+maximal width of the token to read. For instance, %6d reads an integer, having
+at most 6 decimal digits; %4f reads a float with at most 4 characters; and
+%8[\\000-\\255] returns the next 8 characters (or all the characters still
+available, if fewer than 8 characters are available in the input).
+  Notes:
+  
+  
+   - as mentioned above, a %s conversion always succeeds, even if there is
+   nothing to read in the input: in this case, it simply returns "". 
+   
+  
+   - in addition to the relevant digits, '_' characters may appear inside
+   numbers (this is reminiscent to the usual Caml lexical conventions). If
+   stricter scanning is desired, use the range conversion facility instead of
+   the number conversions. 
+   
+  
+   - the scanf facility is not intended for heavy duty lexical analysis and
+   parsing. If it appears not expressive enough for your needs, several
+   alternative exists: regular expressions (module Str), stream parsers,
+   ocamllex-generated lexers, ocamlyacc-generated parsers. 
+  
+
+Scanning indications in format strings
+--------------------------------------
+   
+  Scanning indications appear just after the string conversions %s and %[ range
+] to delimit the end of the token. A scanning indication is introduced by a @
+character, followed by some constant character c. It means that the string
+token should end just before the next matching c (which is skipped). If no c
+character is encountered, the string token spreads as much as possible. For
+instance, "%s@\t" reads a string up to the next tab character or to the end of
+input. If a scanning indication @c does not follow a string conversion, it is
+treated as a plain c character.
+  Note:
+  
+  
+   - the scanning indications introduce slight differences in the syntax of
+   Scanf format strings, compared to those used for the Printf module. However,
+   the scanning indications are similar to those used in the Format module;
+   hence, when producing formatted text to be scanned by !Scanf.bscanf, it is
+   wise to use printing functions from the Format module (or, if you need to
+   use functions from Printf, banish or carefully double check the format
+   strings that contain '@' characters). 
+  
+
+Exceptions during scanning
+--------------------------
+  
+  Scanners may raise the following exceptions when the input cannot be read
+according to the format string:
+  
+  
+   - Raise Scanf.Scan_failure if the input does not match the format. 
+   
+  
+   - Raise Failure if a conversion to a number is not possible. 
+   
+  
+   - Raise End_of_file if the end of input is encountered while some more
+   characters are needed to read the current conversion specification. 
+   
+  
+   - Raise Invalid_argument if the format string is invalid. 
+  
+  Note:
+  
+  
+   - as a consequence, scanning a %s conversion never raises exception
+   End_of_file: if the end of input is reached the conversion succeeds and
+   simply returns the characters read so far, or "" if none were ever read. 
+  
+
+Specialised formatted input functions
+=====================================
+  
+
+<<
+  val fscanf : Pervasives.in_channel -> ('a, 'b, 'c, 'd) scanner
+>>
+    
+    Same as Scanf.bscanf[20.27*Note Section 20-27::], but reads from the
+   given regular input channel.
+   Warning: since all formatted input functions operate from a formatted input
+   channel, be aware that each fscanf invocation will operate with a formatted
+   input channel reading from the given channel. This extra level of
+   bufferization can lead to strange scanning behaviour if you use low level
+   primitives on the channel (reading characters, seeking the reading position,
+   and so on).
+   As a consequence, never mix direct low level reading and high level scanning
+   from the same regular input channel.
+  
+
+<<
+  val sscanf : string -> ('a, 'b, 'c, 'd) scanner
+>>
+    
+    Same as Scanf.bscanf[20.27*Note Section 20-27::], but reads from the
+   given string.
+  
+
+<<
+  val scanf : ('a, 'b, 'c, 'd) scanner
+>>
+    
+    Same as Scanf.bscanf[20.27*Note Section 20-27::], but reads from the
+   predefined formatted input channel
+   Scanf.Scanning.stdin[20.27*Note Section 20-27::] that is
+   connected to Pervasives.stdin.
+  
+
+<<
+  val kscanf :
+    Scanning.in_channel ->
+    (Scanning.in_channel -> exn -> 'a) -> ('b, 'c, 'd, 'a) scanner
+>>
+    
+    Same as Scanf.bscanf[20.27*Note Section 20-27::], but takes an
+   additional function argument ef that is called in case of error: if the
+   scanning process or some conversion fails, the scanning function aborts and
+   calls the error handling function ef with the scanning buffer and the
+   exception that aborted the scanning process as arguments.
+  
+
+Reading format strings from input
+=================================
+  
+
+<<
+  val bscanf_format :
+    Scanning.in_channel ->
+    ('a, 'b, 'c, 'd, 'e, 'f) format6 ->
+    (('a, 'b, 'c, 'd, 'e, 'f) format6 -> 'g) -> 'g
+>>
+    
+    bscanf_format ic fmt f reads a format string token from the formatted input
+   channel ic, according to the given format string fmt, and applies f to the
+   resulting format string value. Raise Scan_failure if the format string value
+   read does not have the same type as fmt.
+   Since: 3.09.0
+  
+
+<<
+  val sscanf_format :
+    string ->
+    ('a, 'b, 'c, 'd, 'e, 'f) format6 ->
+    (('a, 'b, 'c, 'd, 'e, 'f) format6 -> 'g) -> 'g
+>>
+    
+    Same as
+   Scanf.bscanf_format[20.27*Note Section 20-27::], but
+   reads from the given string.
+   Since: 3.09.0
+  
+
+<<
+  val format_from_string :
+    string ->
+    ('a, 'b, 'c, 'd, 'e, 'f) format6 -> ('a, 'b, 'c, 'd, 'e, 'f) format6
+>>
+    
+    format_from_string s fmt converts a string argument to a format string,
+   according to the given format string fmt. Raise Scan_failure if s,
+   considered as a format string, does not have the same type as fmt.
+   Since: 3.10.0
+  
+   

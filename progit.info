@@ -1,0 +1,281 @@
+これは progit.info、progit.texi より makeinfo バージョン 4.8
+によって作成されました。
+
+
+Indirect:
+progit.info-1: 110
+progit.info-2: 299787
+
+Tag Table:
+(Indirect)
+Node: Top110
+Node: Getting Started347
+Node: About Version Control999
+Node: Local Version Control Systems2241
+Node: Centralized Version Control Systems3599
+Node: Distributed Version Control Systems5493
+Node: A Short History of Git6673
+Node: Git Basics8220
+Node: Snapshots Not Differences9144
+Node: Nearly Every Operation Is Local11107
+Node: Git Has Integrity13052
+Node: Git Generally Only Adds Data14170
+Node: The Three States15035
+Node: Installing Git17370
+Node: Installing from Source17846
+Node: Installing on Linux19372
+Node: Installing on Mac19882
+Node: Installing on Windows20753
+Node: First-Time Git Setup21271
+Node: Your Identity22964
+Node: Your Editor23755
+Node: Your Diff Tool24250
+Node: Checking Your Settings24800
+Node: Getting Help25589
+Node: Summary26394
+Node: Getting a Git Repository27698
+Node: Initializing a Repository in an Existing Directory28163
+Node: Cloning an Existing Repository29359
+Node: Recording Changes to the Repository31472
+Node: Checking the Status of Your Files33112
+Node: Tracking New Files34901
+Node: Staging Modified Files36013
+Node: Ignoring Files38670
+Node: Viewing Your Staged and Unstaged Changes40895
+Node: Committing Your Changes44775
+Node: Skipping the Staging Area47719
+Node: Removing Files48686
+Node: Moving Files51053
+Node: Viewing the Commit History52501
+Node: Limiting Log Output61059
+Node: Using a GUI to Visualize History64253
+Node: Undoing Things65174
+Node: Changing Your Last Commit65711
+Node: Unstaging a Staged File66970
+Node: Unmodifying a Modified File68517
+Node: Working with Remotes70491
+Node: Showing Your Remotes71553
+Node: Adding Remote Repositories73148
+Node: Fetching and Pulling from Your Remotes74538
+Node: Pushing to Your Remotes76382
+Node: Inspecting a Remote77444
+Node: Removing and Renaming Remotes79447
+Node: Tagging80308
+Node: Listing Your Tags80901
+Node: Creating Tags81503
+Node: Annotated Tags82279
+Node: Signed Tags83324
+Node: Lightweight Tags84427
+Node: Verifying Tags85191
+Node: Tagging Later86279
+Node: Sharing Tags87790
+Node: Tips and Tricks89133
+Node: Auto-Completion89630
+Node: Git Aliases91263
+Node: Git Branching93615
+Node: What a Branch Is94818
+Node: Basic Branching and Merging101959
+Node: Basic Branching102848
+Node: Basic Merging108799
+Node: Basic Merge Conflicts111243
+Node: Branch Management115499
+Node: Branching Workflows117815
+Node: Long-Running Branches118324
+Node: Topic Branches120756
+Node: Remote Branches123265
+Node: Pushing127427
+Node: Tracking Branches130430
+Node: Deleting Remote Branches132127
+Node: Rebasing133225
+Node: The Basic Rebase133694
+Node: More Interesting Rebases137191
+Node: The Perils of Rebasing140265
+Node: Git on the Server144293
+Node: The Protocols146790
+Node: Local Protocol147376
+Node: The Pros149349
+Node: The Cons150298
+Node: The SSH Protocol151056
+Node: The Git Protocol153452
+Node: The HTTP/S Protocol155849
+Node: Getting Git on a Server159949
+Node: Putting the Bare Repository on a Server161412
+Node: Small Setups163554
+Node: SSH Access164106
+Node: Generating Your SSH Public Key165898
+Node: Setting Up the Server168688
+Node: Public Access172396
+Node: GitWeb175279
+Node: Gitosis178387
+Node: Gitolite187047
+Node: Installing187895
+Node: Customising the Install190432
+Node: Config File and Access Control Rules191290
+Node: Advanced Access Control with "deny" rules195053
+Node: Restricting pushes by files changed196314
+Node: Personal Branches197165
+Node: "Wildcard" repositories198391
+Node: Other Features199182
+Node: Git Daemon201633
+Node: Hosted Git205759
+Node: GitHub207424
+Node: Setting Up a User Account208239
+Node: Creating a New Repository209758
+Node: Importing from Subversion212336
+Node: Adding Collaborators213231
+Node: Your Project215021
+Node: Forking Projects216310
+Node: GitHub Summary217701
+Node: Distributed Git219060
+Node: Distributed Workflows219910
+Node: Centralized Workflow220998
+Node: Integration-Manager Workflow222730
+Node: Dictator and Lieutenants Workflow224631
+Node: Contributing to a Project226616
+Node: Commit Guidelines229519
+Node: Private Small Team233781
+Node: Private Managed Team241582
+Node: Public Small Project248126
+Node: Public Large Project254844
+Node: Maintaining a Project260606
+Node: Working in Topic Branches261596
+Node: Applying Patches from E-mail262887
+Node: Applying a Patch with apply263415
+Node: Applying a Patch with am265079
+Node: Checking Out Remote Branches270569
+Node: Determining What Is Introduced272896
+Node: Integrating Contributed Work276320
+Node: Merging Workflows276914
+Node: Large-Merging Workflows279668
+Node: Rebasing and Cherry Picking Workflows281881
+Node: Tagging Your Releases284071
+Node: Generating a Build Number286437
+Node: Preparing a Release287936
+Node: The Shortlog288893
+Node: Git Tools290501
+Node: Revision Selection291276
+Node: Single Revisions291717
+Node: Short SHA292068
+Node: A SHORT NOTE ABOUT SHA-1294094
+Node: Branch References295808
+Node: RefLog Shortnames296994
+Node: Ancestry References299787
+Node: Commit Ranges302463
+Node: Double Dot302983
+Node: Multiple Points305072
+Node: Triple Dot306175
+Node: Interactive Staging307165
+Node: Staging and Unstaging Files308859
+Node: Staging Patches312162
+Node: Stashing314752
+Node: Stashing Your Work315506
+Node: Un-applying a Stash319403
+Node: Creating a Branch from a Stash320316
+Node: Rewriting History321545
+Node: Changing the Last Commit322769
+Node: Changing Multiple Commit Messages324224
+Node: Reordering Commits328325
+Node: Squashing a Commit329228
+Node: Splitting a Commit330731
+Node: The Nuclear Option filter-branch332720
+Node: Removing a File from Every Commit333638
+Node: Making a Subdirectory the New Root335218
+Node: Changing E-Mail Addresses Globally336071
+Node: Debugging with Git337322
+Node: File Annotation337779
+Node: Binary Search341768
+Node: Submodules345730
+Node: Starting with Submodules347292
+Node: Cloning a Project with Submodules351379
+Node: Superprojects355596
+Node: Issues with Submodules356387
+Node: Subtree Merging360481
+Node: Customizing Git366149
+Node: Git Configuration366879
+Node: Basic Client Configuration368689
+Node: coreeditor369585
+Node: committemplate370112
+Node: corepager371419
+Node: usersigningkey371950
+Node: coreexcludesfile372470
+Node: helpautocorrect373109
+Node: Colors in Git373608
+Node: colorui374001
+Node: color*375042
+Node: External Merge and Diff Tools376085
+Node: Formatting and Whitespace380481
+Node: coreautocrlf381204
+Node: corewhitespace382926
+Node: Server Configuration384939
+Node: receivefsckObjects385340
+Node: receivedenyNonFastForwards386214
+Node: receivedenyDeletes387230
+Node: Git Attributes387990
+Node: Binary Files389048
+Node: Identifying Binary Files389616
+Node: Diffing Binary Files390883
+Node: Keyword Expansion395452
+Node: Exporting Your Repository400681
+Node: export-ignore401027
+Node: export-subst401818
+Node: Merge Strategies402773
+Node: Git Hooks403889
+Node: Installing a Hook404565
+Node: Client-Side Hooks405607
+Node: Committing-Workflow Hooks406022
+Node: E-mail Workflow Hooks408782
+Node: Other Client Hooks410290
+Node: Server-Side Hooks411470
+Node: pre-receive and post-receive412070
+Node: update413272
+Node: An Example Git-Enforced Policy413988
+Node: Server-Side Hook415080
+Node: Enforcing a Specific Commit-Message Format416407
+Node: Enforcing a User-Based ACL System419565
+Node: Enforcing Fast-Forward-Only Pushes424298
+Node: Git and Other Systems434774
+Node: Git and Subversion435598
+Node: git svn437053
+Node: Setting Up438208
+Node: Committing Back to Subversion444243
+Node: Pulling in New Changes446553
+Node: Git Branching Issues450225
+Node: Subversion Branching452204
+Node: Creating a New SVN Branch452632
+Node: Switching Active Branches453550
+Node: Subversion Commands455752
+Node: SVN Style History456283
+Node: SVN Annotation457585
+Node: SVN Server Information458573
+Node: Ignoring What Subversion Ignores459376
+Node: Git-Svn Summary460422
+Node: Migrating to Git461675
+Node: Importing462196
+Node: Subversion462593
+Node: Perforce466371
+Node: A Custom Importer469638
+Node: Git Internals480994
+Node: Plumbing and Porcelain482709
+Node: Git Objects485314
+Node: Tree Objects489190
+Node: Commit Objects494511
+Node: Object Storage498714
+Node: Git References501408
+Node: The HEAD503913
+Node: Tags505228
+Node: Remotes507311
+Node: Packfiles508508
+Node: The Refspec515916
+Node: Pushing Refspecs519611
+Node: Deleting References520540
+Node: Transfer Protocols520978
+Node: The Dumb Protocol521449
+Node: The Smart Protocol526415
+Node: Uploading Data527030
+Node: Downloading Data529715
+Node: Maintenance and Data Recovery532365
+Node: Maintenance532808
+Node: Data Recovery535119
+Node: Removing Objects539864
+
+End Tag Table
