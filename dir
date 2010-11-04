@@ -38,3 +38,6 @@ Documentation tools
 
 Emacs
 * RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
+
+GNU Emacs Lisp
+* Wanderlust: (wl).         Yet Another Message Interface On Emacsen
