@@ -26,6 +26,15 @@ Latex Related
 
 R Statistics Programming
 * ESS: (ess.info.gz). Emacs Speaks Statistics.
+* R-lang: (R-lang.info.gz). R Language.
+
+* R-lang: (R-intro.info.gz). R-intro.
+* R-admin: (R-admin.info.gz). R admin.
+* R-data: (R-data.info.gz). R data.
+* R-exts: (R-exts.info.gz). R exts.
+* R-ints: (R-ints.info.gz). R ints.
+* R-FAQ: (R-FAQ.info.gz). R FAQ.
+
 
 Programming Languages
 * Ocaml: (ocamldoc/ocaml.info). OCaml doc.
