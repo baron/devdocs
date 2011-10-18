@@ -48,6 +48,7 @@ Documentation tools
 
 Emacs
 * RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
+* Org Mode: (org).      Outline-based notes management and organizer
 
 GNU Emacs Lisp
 * Wanderlust: (wl).             Yet Another Message Interface On Emacsen
