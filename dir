@@ -44,10 +44,14 @@ Tools
 
 Documentation tools
 * Python: (python.info).    The Python Programming Language
-* Javascript: (javascript_ecma_262_5th_ed.info). Javascript ECMA 262 5th Edition
 
 Emacs
+* Org Mode: (org).      Outline-based notes management and organizer
 * RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
 
 GNU Emacs Lisp
 * Wanderlust: (wl).             Yet Another Message Interface On Emacsen
+
+Software libraries
+* ECMA Script.                 javascript.
+* Libc: (libc).                 C library.

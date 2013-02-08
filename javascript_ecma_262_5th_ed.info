@@ -1,6 +1,11 @@
 これは javascript_ecma_262_5th_ed.info、es5.texi より makeinfo
 バージョン 4.8 によって作成されました。
 
+
+INFO-DIR-SECTION Software libraries
+START-INFO-DIR-ENTRY
+* ECMA Script.                 javascript.
+END-INFO-DIR-ENTRY
 
 Indirect:
 javascript_ecma_262_5th_ed.info-1: 127
