@@ -46,6 +46,7 @@ Documentation tools
 * Python: (python.info).    The Python Programming Language
 
 Emacs
+* Emacs: (emacs).       The extensible self-documenting text editor.
 * Org Mode: (org).      Outline-based notes management and organizer
 * RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
 
