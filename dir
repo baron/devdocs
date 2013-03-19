@@ -52,6 +52,7 @@ Emacs
 * Org Mode: (org).      Outline-based notes management and organizer
 
 GNU Emacs Lisp
+* Elisp: (elisp).       The Emacs Lisp Reference Manual.
 * Wanderlust: (wl).             Yet Another Message Interface On Emacsen
 
 Software libraries
