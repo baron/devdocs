@@ -1,6 +1,7 @@
-This is org, produced by makeinfo version 4.13 from org.texi.
+これは org、org.texi より makeinfo バージョン 4.8
+によって作成されました。
 
-This manual is for Org version 7.4.
+   This manual is for Org version 7.4.
 
    Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software
 Foundation, Inc.
@@ -549,7 +550,7 @@ File: org,  Node: Installation,  Next: Activation,  Prev: Summary,  Up: Introduc
 
 Important: If you are using a version of Org that is part of the Emacs
 distribution or an XEmacs package, please skip this section and go
-directly to *note Activation::.
+directly to *Note Activation::.
 
    If you have downloaded Org from the Web, either as a distribution
 `.zip' or `.tar' file, or as a Git archive, you must take the following
@@ -801,7 +802,7 @@ start with one or more stars, on the left margin(1).  For example:
 
 Some people find the many stars too noisy and would prefer an outline
 that has whitespace followed by a single star as headline starters.
-*note Clean view::, describes a setup to realize this.
+*Note Clean view::, describes a setup to realize this.
 
    An empty line after the end of a subtree is considered part of it and
 will be hidden when the subtree is folded.  However, if you leave at
@@ -1738,7 +1739,7 @@ Miscellaneous
      `TABLE_EXPORT_FILE' and `TABLE_EXPORT_FORMAT' to specify the file
      name and the format for table export in a subtree.  Org supports
      quite general formats for exported tables.  The exporter format is
-     the same as the format used by Orgtbl radio tables, see *note
+     the same as the format used by Orgtbl radio tables, see *Note
      Translator functions::, for a detailed description.
 
    If you don't like the automatic table editor because it gets in your
@@ -1859,7 +1860,7 @@ mail mode, use
 tables in arbitrary syntax with Orgtbl mode.  For example, it is
 possible to construct LaTeX tables with the underlying ease and power of
 Orgtbl mode, including spreadsheet capabilities.  For details, see
-*note Tables in arbitrary syntax::.
+*Note Tables in arbitrary syntax::.
 
 
 File: org,  Node: The spreadsheet,  Next: Org-Plot,  Prev: Orgtbl mode,  Up: Tables
@@ -2002,7 +2003,7 @@ entry and in the hierarchy above it.  If you have the `constants.el'
 package, it will also be used to resolve constants, including natural
 constants like `$h' for Planck's constant, and units like `$km' for
 kilometers(3).  Column names and parameters can be specified in special
-table lines.  These are described below, see *note Advanced features::.
+table lines.  These are described below, see *Note Advanced features::.
 All names must start with a letter, and further consist of letters and
 numbers.
 
@@ -2214,7 +2215,7 @@ configure the variable `org-table-use-standard-references'.
 
 `C-c =  or  C-u C-c =     (`org-table-eval-formula')'
      Edit the formula associated with the current column/field in the
-     minibuffer.  See *note Column formulas::, and *note Field
+     minibuffer.  See *Note Column formulas::, and *Note Field
      formulas::.  
 
 `C-u C-u C-c =     (`org-table-eval-formula')'
@@ -2311,7 +2312,7 @@ File: org,  Node: Updating the table,  Next: Advanced features,  Prev: Editing a
 ------------------------
 
 Recalculation of a table is normally not automatic, but needs to be
-triggered by a command.  See *note Advanced features::, for a way to
+triggered by a command.  See *Note Advanced features::, for a way to
 make recalculation at least semi-automatic.
 
    In order to recalculate a line of a table or the entire table, use
@@ -2754,9 +2755,9 @@ it into an Org file, and to follow the link.
      words will form the basis of the search string.  If the
      automatically created link is not working correctly or accurately
      enough, you can write custom functions to select the search string
-     and to do the search for particular file types--see *note Custom
+     and to do the search for particular file types--see *Note Custom
      searches::.  The key binding `C-c l' is only a suggestion--see
-     *note Installation::.
+     *Note Installation::.
 
      Agenda view
      When the cursor is in an agenda view, the created link points to
@@ -2972,7 +2973,7 @@ link, together with an explanation:
 
 `My Target'
      Search for a link target `<<My Target>>', or do a text search for
-     `my target', similar to the search in internal links, see *note
+     `my target', similar to the search in internal links, see *Note
      Internal links::.  In HTML export (*note HTML export::), such a
      file link will become an HTML reference to the corresponding named
      anchor in the linked file.
@@ -3076,13 +3077,13 @@ The most important commands to work with TODO entries are:
 `C-u C-c C-t'
      Select a specific keyword using completion or (if it has been set
      up) the fast selection interface.  For the latter, you need to
-     assign keys to TODO states, see *note Per-file keywords::, and
-     *note Setting tags::, for more information.
+     assign keys to TODO states, see *Note Per-file keywords::, and
+     *Note Setting tags::, for more information.
 
 `S-<right>  /  S-<left>'
      Select the following/preceding TODO state, similar to cycling.
      Useful mostly if more than two TODO states are possible (*note
-     TODO extensions::).  See also *note Conflicts::, for a discussion
+     TODO extensions::).  See also *Note Conflicts::, for a discussion
      of the interaction with `shift-selection-mode'.  See also the
      variable `org-treat-S-cursor-todo-selection-as-state-change'.  
 
@@ -3158,7 +3159,7 @@ VERIFY.  Or you can use `S-<left>' to go backward through the sequence.
 If you define many keywords, you can use in-buffer completion (*note
 Completion::) or even a special one-key selection scheme (*note Fast
 access to TODO states::) to insert these words into the buffer.
-Changing a TODO state can be logged with a timestamp, see *note
+Changing a TODO state can be logged with a timestamp, see *Note
 Tracking TODO state changes::, for more information.
 
    ---------- Footnotes ----------
@@ -3239,7 +3240,7 @@ using completion, you may also apply the following commands:
 `S-<left>'
      `S-<<left>>' and `S-<<right>>' and walk through _all_ keywords
      from all sets, so for example `S-<<right>>' would switch from
-     `DONE' to `REPORT' in the example above.  See also *note
+     `DONE' to `REPORT' in the example above.  See also *Note
      Conflicts::, for a discussion of the interaction with
      `shift-selection-mode'.
 
@@ -3396,7 +3397,7 @@ Org-mode can automatically record a timestamp and possibly a note when
 you mark a TODO item as DONE, or even each time you change the state of
 a TODO item.  This system is highly configurable, settings can be on a
 per-keyword basis and can be localized to a file or even a subtree.  For
-information on how to clock working time for a task, see *note Clocking
+information on how to clock working time for a task, see *Note Clocking
 work time::.
 
 * Menu:
@@ -3563,9 +3564,9 @@ here's an actual habit with some history:
 
    What this habit says is: I want to shave at most every 2 days (given
 by the `SCHEDULED' date and repeat interval) and at least every 4 days.
-If today is the 15th, then the habit first appears in the agenda on Oct
-17, after the minimum of 2 days has elapsed, and will appear overdue on
-Oct 19, after four days have elapsed.
+If today is the 15th, then the habit first appears in the agenda on
+Oct 17, after the minimum of 2 days has elapsed, and will appear
+overdue on Oct 19, after four days have elapsed.
 
    What's really useful about habits is that they are displayed along
 with a consistency graph, to show how consistent you've been at getting
@@ -3649,7 +3650,7 @@ be TODO items.
 `S-<down>     (`org-priority-down')'
      Increase/decrease priority of current headline(1).  Note that
      these keys are also used to modify timestamps (*note Creating
-     timestamps::).  See also *note Conflicts::, for a discussion of
+     timestamps::).  See also *Note Conflicts::, for a discussion of
      the interaction with `shift-selection-mode'.
 
    You can change the range of allowed priorities by setting the
@@ -4076,7 +4077,7 @@ Boolean logic like `+boss+urgent-project1', to find entries with tags
 entries which are tagged, like `Kathy' or `Sally'.  The full syntax of
 the search string is rich and allows also matching against TODO
 keywords, entry levels and properties.  For a complete description with
-many examples, see *note Matching tags and properties::.
+many examples, see *Note Matching tags and properties::.
 
 
 File: org,  Node: Properties and Columns,  Next: Dates and Times,  Prev: Tags,  Up: Top
@@ -4240,7 +4241,7 @@ searches::).
      check only TODO items and force checking of subitems (see variable
      `org-tags-match-list-sublevels').
 
-   The syntax for the search string is described in *note Matching tags
+   The syntax for the search string is described in *Note Matching tags
 and properties::.
 
    There is also a special command for creating sparse trees based on a
@@ -4618,7 +4619,7 @@ File: org,  Node: Property API,  Prev: Column view,  Up: Properties and Columns
 
 There is a full API for accessing and changing properties.  This API can
 be used by Emacs Lisp programs to work with properties and to implement
-features based on them.  For more information see *note Using the
+features based on them.  For more information see *Note Using the
 property API::.
 
 
@@ -4703,7 +4704,7 @@ INACTIVE TIMESTAMP
    ---------- Footnotes ----------
 
    (1) This is inspired by the standard ISO 8601 date/time format.  To
-use an alternative format, see *note Custom time format::.
+use an alternative format, see *Note Custom time format::.
 
 
 File: org,  Node: Creating timestamps,  Next: Deadlines and scheduling,  Prev: Timestamps,  Up: Dates and Times
@@ -5096,7 +5097,7 @@ task--just make sure that the repeater intervals on both are the same.
 
    An alternative to using a repeater is to create a number of copies
 of a task subtree, with dates shifted in each copy.  The command `C-c
-C-x c' was created for this purpose, it is described in *note Structure
+C-x c' was created for this purpose, it is described in *Note Structure
 editing::.
 
    ---------- Footnotes ----------
@@ -5367,9 +5368,9 @@ choices to correct the discrepancy:
 
 `k'
      To keep some or all of the minutes and stay clocked in, press `k'.
-     Org will ask how many of the minutes to keep.  Press <RET> to keep
-     them all, effectively changing nothing, or enter a number to keep
-     that many minutes.
+     Org will ask how many of the minutes to keep.  Press <RET> to
+     keep them all, effectively changing nothing, or enter a number to
+     keep that many minutes.
 
 `K'
      If you use the shift key and press `K', it will keep however many
@@ -5830,7 +5831,8 @@ PROPERTIES
 
     `:unnarrowed'
           Do not narrow the target buffer, simply show the full buffer.
-          Default is to narrow it so that you only see the new material.
+          Default is to narrow it so that you only see the new
+          material.
 
     `:kill-buffer'
           If the target file was not yet visited when capture was
@@ -6464,7 +6466,7 @@ the agenda, or to a span name, such a `day', `week', `month' or `year'.
    Remote editing from the agenda buffer means, for example, that you
 can change the dates of deadlines and appointments from the agenda
 buffer.  The commands available in the Agenda buffer are listed in
-*note Agenda commands::.
+*Note Agenda commands::.
 
 Calendar/Diary integration
 ..........................
@@ -6593,7 +6595,7 @@ collected into a single place.
 
    Remote editing of TODO items means that you can change the state of a
 TODO entry with a single key press.  The commands available in the TODO
-list are described in *note Agenda commands::.
+list are described in *Note Agenda commands::.
 
    Normally the global TODO list simply shows all headlines with TODO
 keywords.  This list can become very long.  There are two ways to keep
@@ -6638,9 +6640,9 @@ sparse trees with `C-c / m'.
      items, see the variable
      `org-agenda-tags-todo-honor-ignore-options'.  Matching specific
      TODO keywords together with a tags match is also possible, see
-     *note Tag searches::.
+     *Note Tag searches::.
 
-   The commands available in the tags list are described in *note
+   The commands available in the tags list are described in *Note
 Agenda commands::.
 
 Match syntax
@@ -6733,7 +6735,7 @@ additional properties is cheap again.
 
    You can configure Org-mode to use property inheritance during a
 search, but beware that this can slow down searches considerably.  See
-*note Property inheritance::, for details.
+*Note Property inheritance::, for details.
 
    For backward compatibility, and also for typing speed, there is also
 a different way to test TODO states in a search.  For this, terminate
@@ -6774,7 +6776,7 @@ give an overview over events in a project.
      items.  When called with a `C-u' prefix, all unfinished TODO
      entries (scheduled or not) are also listed under the current date.
 
-The commands available in the timeline buffer are listed in *note
+The commands available in the timeline buffer are listed in *Note
 Agenda commands::.
 
 

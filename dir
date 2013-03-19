@@ -49,6 +49,7 @@ Emacs
 * Emacs: (emacs).       The extensible self-documenting text editor.
 * Org Mode: (org).      Outline-based notes management and organizer
 * RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
+* Org Mode: (org).      Outline-based notes management and organizer
 
 GNU Emacs Lisp
 * Wanderlust: (wl).             Yet Another Message Interface On Emacsen

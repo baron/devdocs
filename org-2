@@ -1,6 +1,7 @@
-This is org, produced by makeinfo version 4.13 from org.texi.
+これは org、org.texi より makeinfo バージョン 4.8
+によって作成されました。
 
-This manual is for Org version 7.4.
+   This manual is for Org version 7.4.
 
    Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software
 Foundation, Inc.
@@ -161,7 +162,7 @@ Change display
      Go to the currently clocked-in task in the agenda buffer.  
 
 `D     (`org-agenda-toggle-diary')'
-     Toggle the inclusion of diary entries.  See *note Weekly/daily
+     Toggle the inclusion of diary entries.  See *Note Weekly/daily
      agenda::.  
 
 `v l  or short  l     (`org-agenda-log-mode')'
@@ -763,8 +764,9 @@ command
      the selected file name, the view will be exported as HTML
      (extension `.html' or `.htm'), Postscript (extension `.ps'),
      iCalendar (extension `.ics'), or plain text (any other extension).
-     Use the variable `org-agenda-exporter-settings' to set options for
-     `ps-print' and for `htmlize' to be used during export, for example
+     Use the variable `org-agenda-exporter-settings' to set options
+     for `ps-print' and for `htmlize' to be used during export, for
+     example
 
           (setq org-agenda-exporter-settings
                 '((ps-number-of-columns 2)
@@ -849,7 +851,7 @@ From the command line you may also use
 `~/org/project.org', without diary entries and with a 30-day extent.
 
    You can also extract agenda information in a way that allows further
-processing by other programs.  See *note Extracting agenda
+processing by other programs.  See *Note Extracting agenda
 information::, for more information.
 
    ---------- Footnotes ----------
@@ -984,7 +986,7 @@ File: org,  Node: Headings and sections,  Next: Table of contents,  Prev: Docume
 Headings and sections
 ---------------------
 
-The outline structure of the document as described in *note Document
+The outline structure of the document as described in *Note Document
 Structure::, forms the basis for defining sections of the exported
 document.  However, since the outline structure is also used for (for
 example) lists of tasks, only the first three outline levels will be
@@ -1045,7 +1047,7 @@ File: org,  Node: Lists,  Next: Paragraphs,  Prev: Initial text,  Up: Structural
 Lists
 -----
 
-Plain lists as described in *note Plain lists::, are translated to the
+Plain lists as described in *Note Plain lists::, are translated to the
 backend's syntax for such lists.  Most backends support unordered,
 ordered, and description lists.
 
@@ -1092,7 +1094,7 @@ File: org,  Node: Footnote markup,  Next: Emphasis and monospace,  Prev: Paragra
 Footnote markup
 ---------------
 
-Footnotes defined in the way described in *note Footnotes::, will be
+Footnotes defined in the way described in *Note Footnotes::, will be
 exported by all backends.  Org allows multiple references to the same
 note, and different backends support this to varying degrees.
 
@@ -1313,7 +1315,7 @@ File: org,  Node: Index entries,  Next: Macro replacement,  Prev: Include files,
 
 You can specify entries that will be used for generating an index during
 publishing.  This is done by lines starting with `#+INDEX'.  An entry
-the contains an exclamation mark will create a sub item.  See *note
+the contains an exclamation mark will create a sub item.  See *Note
 Generating an index:: for more information.
 
      * Curriculum Vitae
@@ -1664,7 +1666,7 @@ The whole set of lines can be inserted into the buffer with `C-c C-e
 t'.  For individual lines, a good way to make sure the keyword is
 correct is to type `#+' and then use `M-<TAB>' completion (*note
 Completion::).   For a summary of other in-buffer settings not
-specifically related to export, see *note In-buffer settings::.  In
+specifically related to export, see *Note In-buffer settings::.  In
 particular, note that you can place commonly-used (export) options in a
 separate file which can be included using `#+SETUPFILE'.
 
@@ -1941,7 +1943,7 @@ is on the same relative path as the published Org file.  Links to other
 that an HTML version also exists of the linked file, at the same
 relative path.  `id:' links can then be used to jump to specific
 entries across files.  For information related to linking files while
-publishing them to a publishing directory see *note Publishing links::.
+publishing them to a publishing directory see *Note Publishing links::.
 
    If you want to specify attributes for links, you can do so using a
 special `#+ATTR_HTML' line to define attributes that will be added to
@@ -2298,7 +2300,7 @@ File: org,  Node: Quoting LaTeX code,  Next: Tables in LaTeX export,  Prev: Head
 12.6.3 Quoting LaTeX code
 -------------------------
 
-Embedded LaTeX as described in *note Embedded LaTeX::, will be correctly
+Embedded LaTeX as described in *Note Embedded LaTeX::, will be correctly
 inserted into the LaTeX file.  This includes simple macros like
 `\ref{LABEL}' to create a cross reference to a figure.  Furthermore,
 you can add special code that should only be present in LaTeX export
@@ -2341,7 +2343,7 @@ Images that are linked to without a description part in the link, like
 `[[file:img.jpg]]' or `[[./img.jpg]]' will be inserted into the PDF
 output file resulting from LaTeX processing.  Org will use an
 `\includegraphics' macro to insert the image.  If you have specified a
-caption and/or a label as described in *note Images and tables::, the
+caption and/or a label as described in *Note Images and tables::, the
 figure will be wrapped into a `figure' environment and thus become a
 floating element.  You can use an `#+ATTR_LaTeX:' line to specify the
 various options that can be used in the optional argument of the
@@ -2631,7 +2633,7 @@ Images that are linked to without a description part in the link, like
 `[[file:img.jpg]]' or `[[./img.jpg]]', will be exported to DocBook
 using `mediaobject' elements.  Each `mediaobject' element contains an
 `imageobject' that wraps an `imagedata' element.  If you have specified
-a caption for an image as described in *note Images and tables::, a
+a caption for an image as described in *Note Images and tables::, a
 `caption' element will be added in `mediaobject'.  If a label is also
 specified, it will be exported as an `xml:id' attribute of the
 `mediaobject' element.
@@ -2884,7 +2886,8 @@ different instances originate.
 
 `C-c C-e I     (`org-export-icalendar-all-agenda-files')'
      Like `C-c C-e i', but do this for all files in `org-agenda-files'.
-     For each of these files, a separate iCalendar file will be written.  
+     For each of these files, a separate iCalendar file will be
+     written.  
 
 `C-c C-e c     (`org-export-icalendar-combine-agenda-files')'
      Create a single large iCalendar file from all files in
@@ -3159,7 +3162,7 @@ converted to link to the corresponding `html' file.
 
    You may also link to related files, such as images. Provided you are
 careful with relative file names, and provided you have also configured
-Org to upload the related files, these links will work too. See *note
+Org to upload the related files, these links will work too. See *Note
 Complex example::, for an example of this usage.
 
    Sometimes an Org file to be published may contain links that are
@@ -3436,18 +3439,18 @@ blocks as
      the `#+tblname' lines that can be used to name tables in Org-mode
      files.  Referencing the name of a code block makes it possible to
      evaluate the block from other places in the file, other files, or
-     from Org-mode table formulas (see *note The spreadsheet::).
+     from Org-mode table formulas (see *Note The spreadsheet::).
 
 `<language>'
      The language of the code in the block.
 
 `<switches>'
      Switches controlling exportation of the code block (see switches
-     discussion in *note Literal examples::)
+     discussion in *Note Literal examples::)
 
 `<header arguments>'
      Optional header arguments control many aspects of evaluation,
-     export and tangling of code blocks. See the *note Header
+     export and tangling of code blocks. See the *Note Header
      arguments:: section. Header arguments can also be set on a
      per-buffer or per-subtree basis using properties.
 
@@ -3499,7 +3502,7 @@ It is possible to export the _contents_ of code blocks, the _results_
 of code block evaluation, _neither_, or _both_.  For most languages,
 the default exports the contents of code blocks. However, for some
 languages (e.g. `ditaa') the default exports the results of code block
-evaluation.  For information on exporting code block bodies, see *note
+evaluation.  For information on exporting code block bodies, see *Note
 Literal examples::.
 
    The `:exports' header argument can be used to specify export
@@ -3510,7 +3513,7 @@ Header arguments:
 
 `:exports code'
      The default in most languages. The body of the code block is
-     exported, as described in *note Literal examples::.
+     exported, as described in *Note Literal examples::.
 
 `:exports results'
      The code block will be evaluated and the results will be placed in
@@ -3542,7 +3545,7 @@ Creating pure source code files by extracting code from source blocks is
 referred to as "tangling"--a term adopted from the literate programming
 community.  During "tangling" of code blocks their bodies are expanded
 using `org-babel-expand-src-block' which can expand both variable and
-"noweb" style references  (see *note Noweb reference syntax::).
+"noweb" style references  (see *Note Noweb reference syntax::).
 
 Header arguments
 ................
@@ -3584,7 +3587,7 @@ File: org,  Node: Evaluating code blocks,  Next: Library of Babel,  Prev: Extrac
 Code blocks can be evaluated(1) and the results placed in the Org-mode
 buffer.  By default, evaluation is only turned on for `emacs-lisp' code
 blocks, however support exists for evaluating blocks in many languages.
-See *note Languages:: for a list of supported languages.  See *note
+See *Note Languages:: for a list of supported languages.  See *Note
 Structure of code blocks:: for information on the syntax used to define
 a code block.
 
@@ -3597,7 +3600,7 @@ the block and insert its results into the Org-mode buffer.
 Org-mode buffer or an Org-mode table.  `#+call' (or synonymously
 `#+function' or `#+lob') lines can be used to remotely execute code
 blocks located in the current Org-mode buffer or in the "Library of
-Babel" (see *note Library of Babel::).  These lines use the following
+Babel" (see *Note Library of Babel::).  These lines use the following
 syntax.
 
      #+call: <name>(<arguments>) <header arguments>
@@ -3613,14 +3616,14 @@ syntax.
 
 `<header arguments>'
      Header arguments can be placed after the function invocation.  See
-     *note Header arguments:: for more information on header arguments.
+     *Note Header arguments:: for more information on header arguments.
 
    ---------- Footnotes ----------
 
    (1) Whenever code is evaluated there is a potential for that code to
 do harm.  Org-mode provides a number of safeguards to ensure that it
 only evaluates code with explicit confirmation from the user.  For
-information on these safeguards (and on how to disable them) see *note
+information on these safeguards (and on how to disable them) see *Note
 Code evaluation security::.
 
    (2) The `org-babel-no-eval-on-ctrl-c-ctrl-c' variable can be used to
@@ -3638,7 +3641,7 @@ located in the `contrib' directory of Org-mode.  Org-mode users can
 deposit functions they believe to be generally useful in the library.
 
    Code blocks defined in the "Library of Babel" can be called remotely
-as if they were in the current Org-mode buffer (see *note Evaluating
+as if they were in the current Org-mode buffer (see *Note Evaluating
 code blocks:: for information on the syntax of remote code block
 evaluation).
 
@@ -3784,7 +3787,7 @@ File: org,  Node: Header arguments in Org-mode properties,  Next: Code block spe
 Header arguments in Org-mode properties
 .......................................
 
-Header arguments are also read from Org-mode properties (see *note
+Header arguments are also read from Org-mode properties (see *Note
 Property syntax::), which can be set on a buffer-wide or per-heading
 basis. An example of setting a header argument for all code blocks in a
 buffer is
@@ -4149,7 +4152,7 @@ File: org,  Node: file,  Next: dir,  Prev: results,  Up: Specific header argumen
 
 The header argument `:file' is used to specify a path for file output.
 An Org-mode style `file:' link is inserted into the buffer as the result
-(see *note Link format::). Common examples are graphical output from R,
+(see *Note Link format::). Common examples are graphical output from R,
 gnuplot, ditaa and LaTeX code blocks.
 
    Note that for some languages, including R, gnuplot, LaTeX and ditaa,
@@ -4306,8 +4309,8 @@ File: org,  Node: no-expand,  Next: session,  Prev: comments,  Up: Specific head
 
 By default, code blocks are expanded with `org-babel-expand-src-block'
 during tangling.  This has the effect of assigning values to variables
-specified with `:var' (see *note var::), and of replacing "noweb"
-references (see *note Noweb reference syntax::) with their targets.  The
+specified with `:var' (see *Note var::), and of replacing "noweb"
+references (see *Note Noweb reference syntax::) with their targets.  The
 `:no-expand' header argument can be used to turn off this behavior.
 
 
@@ -4332,7 +4335,7 @@ File: org,  Node: noweb,  Next: cache,  Prev: session,  Up: Specific header argu
 ..................
 
 The `:noweb' header argument controls expansion of "noweb" style (see
-*note Noweb reference syntax::) references in a code block.  This header
+*Note Noweb reference syntax::) references in a code block.  This header
 argument can have one of three values: `yes' `no' or `tangle'.
 
    * `yes' All "noweb" syntax references in the body of the code block
@@ -4879,7 +4882,7 @@ Source code blocks
      Make sure you know what you are doing before customizing the
      variables which take off the default security brakes.
 
-      -- User Option: org-confirm-babel-evaluate
+      -- ユーザオプション: org-confirm-babel-evaluate
           When set to t user is queried before code block evaluation
 
 Following `shell' and `elisp' links
@@ -4887,10 +4890,10 @@ Following `shell' and `elisp' links
      External links::).  These links can be problematic because the
      code to be evaluated is not visible.
 
-      -- User Option: org-confirm-shell-link-function
+      -- ユーザオプション: org-confirm-shell-link-function
           Function to queries user about shell link execution.
 
-      -- User Option: org-confirm-elisp-link-function
+      -- ユーザオプション: org-confirm-elisp-link-function
           Functions to query user for Emacs Lisp link execution.
 
 Formulas in tables
@@ -5091,7 +5094,7 @@ file is visited again in a new Emacs session.
 `#+LATEX_HEADER:, #+STYLE:, #+LINK_UP:, #+LINK_HOME:,'
 `#+EXPORT_SELECT_TAGS:, #+EXPORT_EXCLUDE_TAGS:'
      These lines provide settings for exporting files.  For more
-     details see *note Export options::.
+     details see *Note Export options::.
 
 `#+TODO:    #+SEQ_TODO:   #+TYP_TODO:'
      These lines set the TODO keywords and their interpretation in the
@@ -5346,7 +5349,7 @@ File: org,  Node: Cooperation,  Next: Conflicts,  Prev: Interaction,  Up: Intera
 
 `cdlatex.el' by Carsten Dominik
      Org-mode can make use of the CDLaTeX package to efficiently enter
-     LaTeX fragments into Org files.  See *note CDLaTeX mode::.
+     LaTeX fragments into Org files.  See *Note CDLaTeX mode::.
 
 `imenu.el' by Ake Stenhoff and Lars Lindberg
      Imenu allows menu access to an index of items in a file.  Org-mode
@@ -5644,7 +5647,7 @@ returns `nil' so that other, similar functions can have a try.
    ---------- Footnotes ----------
 
    (1) `org-R.el' has been replaced by the org-mode functionality
-described in *note Working With Source Code:: and is now obsolete.
+described in *Note Working With Source Code:: and is now obsolete.
 
 
 File: org,  Node: Tables in arbitrary syntax,  Next: Dynamic blocks,  Prev: Context-sensitive commands,  Up: Hacking
@@ -6197,7 +6200,7 @@ A.9 Using the property API
 Here is a description of the functions that can be used to work with
 properties.
 
- -- Function: org-entry-properties &optional pom which
+ -- 機能: org-entry-properties &optional pom which
      Get all properties of the entry at point-or-marker POM.
      This includes the TODO keyword, the tags, time strings for
      deadline, scheduled, and clocking, and any additional properties
@@ -6207,7 +6210,7 @@ properties.
      WHICH is nil or `all', get all properties.  If WHICH is `special'
      or `standard', only get that subclass.
    
- -- Function: org-entry-get pom property &optional inherit
+ -- 機能: org-entry-get pom property &optional inherit
      Get value of PROPERTY for entry at point-or-marker POM.  By
      default, this only looks at properties defined locally in the
      entry.  If INHERIT is non-nil and the entry does not have the
@@ -6216,43 +6219,41 @@ properties.
      the setting of `org-use-property-inheritance' selects PROPERTY for
      inheritance.
 
- -- Function: org-entry-delete pom property
+ -- 機能: org-entry-delete pom property
      Delete the property PROPERTY from entry at point-or-marker POM.
 
- -- Function: org-entry-put pom property value
+ -- 機能: org-entry-put pom property value
      Set PROPERTY to VALUE for entry at point-or-marker POM.
 
- -- Function: org-buffer-property-keys &optional include-specials
+ -- 機能: org-buffer-property-keys &optional include-specials
      Get all property keys in the current buffer.
 
- -- Function: org-insert-property-drawer
+ -- 機能: org-insert-property-drawer
      Insert a property drawer at point.
 
- -- Function: org-entry-put-multivalued-property pom property &rest
-          values
+ -- 機能: org-entry-put-multivalued-property pom property &rest values
      Set PROPERTY at point-or-marker POM to VALUES.  VALUES should be a
      list of strings.  They will be concatenated, with spaces as
      separators.
 
- -- Function: org-entry-get-multivalued-property pom property
+ -- 機能: org-entry-get-multivalued-property pom property
      Treat the value of the property PROPERTY as a whitespace-separated
      list of values and return the values as a list of strings.
 
- -- Function: org-entry-add-to-multivalued-property pom property value
+ -- 機能: org-entry-add-to-multivalued-property pom property value
      Treat the value of the property PROPERTY as a whitespace-separated
      list of values and make sure that VALUE is in this list.
 
- -- Function: org-entry-remove-from-multivalued-property pom property
+ -- 機能: org-entry-remove-from-multivalued-property pom property
           value
      Treat the value of the property PROPERTY as a whitespace-separated
      list of values and make sure that VALUE is _not_ in this list.
 
- -- Function: org-entry-member-in-multivalued-property pom property
-          value
+ -- 機能: org-entry-member-in-multivalued-property pom property value
      Treat the value of the property PROPERTY as a whitespace-separated
      list of values and check if VALUE is in this list.
 
- -- User Option: org-property-allowed-value-functions
+ -- ユーザオプション: org-property-allowed-value-functions
      Hook for functions supplying allowed values for a specific
      property.  The functions must take a single argument, the name of
      the property, and return a flat list of allowed values.  If `:ETC'
@@ -6272,7 +6273,7 @@ produce agenda views, but there is also an API that can be used to
 execute arbitrary functions for each or selected entries.  The main
 entry point for this API is:
 
- -- Function: org-map-entries func &optional match scope &rest skip
+ -- 機能: org-map-entries func &optional match scope &rest skip
      Call FUNC at each headline selected by MATCH in SCOPE.
 
      FUNC is a function or a Lisp form.  The function will be called
@@ -6325,23 +6326,23 @@ to gather more information about the entry, or in order to change
 metadata in the entry.  Here are a couple of functions that might be
 handy:
 
- -- Function: org-todo &optional arg
+ -- 機能: org-todo &optional arg
      Change the TODO state of the entry.  See the docstring of the
      functions for the many possible values for the argument ARG.
 
- -- Function: org-priority &optional action
+ -- 機能: org-priority &optional action
      Change the priority of the entry.  See the docstring of this
      function for the possible values for ACTION.
 
- -- Function: org-toggle-tag tag &optional onoff
+ -- 機能: org-toggle-tag tag &optional onoff
      Toggle the tag TAG in the current entry.  Setting ONOFF to either
      `on' or `off' will not toggle tag, but ensure that it is either on
      or off.
 
- -- Function: org-promote
+ -- 機能: org-promote
      Promote the current entry.
 
- -- Function: org-demote
+ -- 機能: org-demote
      Demote the current entry.
 
    Here is a simple example that will turn all entries in the current
